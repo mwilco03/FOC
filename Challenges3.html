@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Batch Cheat Sheet</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #1e1e1e;
+      color: #e5e5e5;
+      margin: 2rem;
+    }
+    h1, h2 {
+      color: #61dafb;
+    }
+    section {
+      margin-bottom: 2rem;
+      padding: 1rem;
+      background-color: #2e2e2e;
+      border-left: 5px solid #61dafb;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.5);
+    }
+    code {
+      background-color: #333;
+      color: #c5c8c6;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 1.5em;
+    }
+    pre {
+      background-color: #333;
+      color: #c5c8c6;
+      padding: 1rem;
+      border-radius: 5px;
+      overflow-x: auto;
+      font-size: 1.1em;
+    }
+    ul {
+      padding-left: 1.2em;
+    }
+    ul ul {
+      padding-left: 1.5em;
+      list-style-type: circle;
+    }
+    footer {
+      margin-top: 4rem;
+      font-size: 0.9em;
+      color: #999;
+    }
+  </style>
+</head>
+<body>
+  <h1>Windows Batch Cheat Sheet</h1>
+
+  <section>
+    <h2>📘 Basics</h2>
+    <ul>
+      <li><code>@echo off</code> — Hides command echo
+        <ul>
+          <li>Keeps output clean when running batch files</li>
+        </ul>
+      </li>
+      <li><code>echo Hello</code> — Output to console
+        <ul>
+          <li>Displays messages or variables to user</li>
+        </ul>
+      </li>
+      <li><code>pause</code> — Waits for key press
+        <ul>
+          <li>Use to keep window open after running</li>
+        </ul>
+      </li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>🔁 Logic & Control</h2>
+    <ul>
+      <li><code>if EXIST file.txt echo Found!</code>
+        <ul>
+          <li>Checks if file exists</li>
+        </ul>
+      </li>
+      <li><code>if "%var%"=="value" echo Match</code>
+        <ul>
+          <li>Conditional logic based on variables</li>
+        </ul>
+      </li>
+      <li><code>goto :label</code> — Jump to label
+        <ul>
+          <li>Basic flow control in scripts</li>
+        </ul>
+      </li>
+      <li><code>:label</code> — Script label
+        <ul>
+          <li>Used as jump destination for <code>goto</code></li>
+        </ul>
+      </li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>🔄 Loops</h2>
+    <ul>
+      <li><code>for %%A in (*.txt) do echo %%A</code>
+        <ul>
+          <li>Loop through files in folder</li>
+        </ul>
+      </li>
+      <li><code>for /L %%i in (1,1,5) do echo %%i</code>
+        <ul>
+          <li>Classic for loop (start, step, end)</li>
+        </ul>
+      </li>
+      <li><code>for /F %%A in (file.txt) do echo %%A</code>
+        <ul>
+          <li>Loop through lines of a file</li>
+        </ul>
+      </li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>📂 File Operations</h2>
+    <ul>
+      <li><code>copy file1.txt file2.txt</code> — Copy file
+        <ul>
+          <li>Simple file duplication</li>
+        </ul>
+      </li>
+      <li><code>del file.txt</code> — Delete file
+        <ul>
+          <li>Removes file permanently</li>
+        </ul>
+      </li>
+      <li><code>mkdir folder</code> — Make directory
+        <ul>
+          <li>Creates a new folder</li>
+        </ul>
+      </li>
+      <li><code>rmdir /S folder</code> — Remove directory
+        <ul>
+          <li>Deletes folder and contents</li>
+        </ul>
+      </li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>🔧 Variables</h2>
+    <ul>
+      <li><code>set var=value</code> — Set variable
+        <ul>
+          <li>Stores simple value in script</li>
+        </ul>
+      </li>
+      <li><code>echo %var%</code> — Use variable
+        <ul>
+          <li>Prints value of variable</li>
+        </ul>
+      </li>
+      <li><code>set /p name=Enter your name:</code>
+        <ul>
+          <li>Gets user input into a variable</li>
+        </ul>
+      </li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>🧪 Useful Tricks</h2>
+    <ul>
+      <li><code>%~dp0</code> — Path to current script
+        <ul>
+          <li>Useful for relative paths</li>
+        </ul>
+      </li>
+      <li><code>start notepad file.txt</code> — Open file
+        <ul>
+          <li>Launches Notepad with file</li>
+        </ul>
+      </li>
+      <li><code>timeout /t 5</code> — Delay execution
+        <ul>
+          <li>Waits 5 seconds</li>
+        </ul>
+      </li>
+    </ul>
+  </section>
+
+  <footer>
+    Windows Batch Cheat Sheet — Perfect for scripting, automation, and command-line basics on Windows. ⚙️
+  </footer>
+</body>
+</html>
