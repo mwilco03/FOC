@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Python Cheat Sheet</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #1e1e1e;
+      color: #e5e5e5;
+      margin: 2rem;
+    }
+    h1, h2 {
+      color: #61dafb;
+    }
+    section {
+      margin-bottom: 2rem;
+      padding: 1rem;
+      background-color: #2e2e2e;
+      border-left: 5px solid #61dafb;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.5);
+    }
+    code {
+      background-color: #333;
+      color: #c5c8c6;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 1.5em;
+    }
+    pre {
+      background-color: #333;
+      color: #c5c8c6;
+      padding: 1rem;
+      border-radius: 5px;
+      overflow-x: auto;
+      font-size: 1.5em;
+    }
+    ul {
+      padding-left: 1.2em;
+    }
+    ul ul {
+      padding-left: 1.5em;
+      list-style-type: circle;
+    }
+    footer {
+      margin-top: 4rem;
+      font-size: 0.9em;
+      color: #999;
+    }
+  </style>
+</head>
+<body>
+  <h1>Python Cheat Sheet</h1>
+
+  <section>
+    <h2>🔤 Basics</h2>
+    <ul>
+      <li><code>print("Hello, World!")</code>
+        <ul>
+          <li>Prints output to console</li>
+        </ul>
+      </li>
+      <li><code>input("Enter your name: ")</code>
+        <ul>
+          <li>Prompts for user input</li>
+        </ul>
+      </li>
+      <li><code># Comments</code>
+        <ul>
+          <li>Used for documentation and code clarity</li>
+        </ul>
+      </li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>🔁 Control Flow</h2>
+    <ul>
+      <li><code>if x == 10:</code>
+        <ul>
+          <li>Conditional execution</li>
+        </ul>
+      </li>
+      <li><code>for i in range(5):</code>
+        <ul>
+          <li>Loop over a range of numbers</li>
+        </ul>
+      </li>
+      <li><code>while x &lt; 5:</code>
+        <ul>
+          <li>Loop while condition is true</li>
+        </ul>
+      </li>
+      <li><code>def greet(name):</code>
+        <ul>
+          <li>Function definition</li>
+        </ul>
+      </li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>🧮 Data Types</h2>
+    <ul>
+      <li><code>int, float, str, bool</code>
+        <ul>
+          <li>Basic scalar data types</li>
+        </ul>
+      </li>
+      <li><code>list = [1, 2, 3]</code>
+        <ul>
+          <li>Mutable sequence of elements</li>
+        </ul>
+      </li>
+      <li><code>tuple = (1, 2)</code>
+        <ul>
+          <li>Immutable sequence</li>
+        </ul>
+      </li>
+      <li><code>dict = {"key": "value"}</code>
+        <ul>
+          <li>Key-value mapping</li>
+        </ul>
+      </li>
+      <li><code>set = {1, 2, 3}</code>
+        <ul>
+          <li>Unordered collection of unique values</li>
+        </ul>
+      </li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>📦 Modules & Libraries</h2>
+    <ul>
+      <li><code>import math</code>
+        <ul>
+          <li>Access mathematical functions</li>
+        </ul>
+      </li>
+      <li><code>import os</code>
+        <ul>
+          <li>Interface with the operating system</li>
+        </ul>
+      </li>
+      <li><code>import sys</code>
+        <ul>
+          <li>System-specific parameters and functions</li>
+        </ul>
+      </li>
+      <li><code>import requests</code>
+        <ul>
+          <li>Make HTTP requests (requires install)</li>
+        </ul>
+      </li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>📂 File I/O</h2>
+    <ul>
+      <li><code>open('file.txt', 'r')</code>
+        <ul>
+          <li>Read a file</li>
+        </ul>
+      </li>
+      <li><code>with open(...) as f:</code>
+        <ul>
+          <li>Safely open/close files</li>
+        </ul>
+      </li>
+      <li><code>f.read(), f.write()</code>
+        <ul>
+          <li>Read/write file contents</li>
+        </ul>
+      </li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>🧪 Data Handling</h2>
+    <ul>
+      <li><code>import json</code>
+        <ul>
+          <li>Parse and generate JSON</li>
+        </ul>
+      </li>
+      <li><code>import csv</code>
+        <ul>
+          <li>Read and write CSV files</li>
+        </ul>
+      </li>
+      <li><code>import pandas as pd</code>
+        <ul>
+          <li>Powerful data analysis (requires install)</li>
+        </ul>
+      </li>
+    </ul>
+  </section>
+
+  <footer>
+    Python Cheat Sheet — Quick reference for scripting, data wrangling, and automation. 🐍
+  </footer>
+</body>
+</html>
