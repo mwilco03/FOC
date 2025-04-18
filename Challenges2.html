@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PowerShell Cheat Sheet</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #1e1e1e;
+      color: #e5e5e5;
+      margin: 2rem;
+    }
+    h1, h2 {
+      color: #61dafb;
+    }
+    section {
+      margin-bottom: 2rem;
+      padding: 1rem;
+      background-color: #2e2e2e;
+      border-left: 5px solid #61dafb;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.5);
+    }
+    code {
+      background-color: #333;
+      color: #c5c8c6;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 1.5em;
+    }
+    pre {
+      background-color: #333;
+      color: #c5c8c6;
+      padding: 1rem;
+      border-radius: 5px;
+      overflow-x: auto;
+      font-size: 1.5em;
+    }
+    ul {
+      padding-left: 1.2em;
+    }
+    ul ul {
+      padding-left: 1.5em;
+      list-style-type: circle;
+    }
+    footer {
+      margin-top: 4rem;
+      font-size: 0.9em;
+      color: #999;
+    }
+  </style>
+</head>
+<body>
+  <h1>PowerShell Cheat Sheet</h1>
+
+  <section>
+    <h2>🧰 Extended Cmdlets for Real Use Cases</h2>
+    <ul>
+      <li><code>ConvertFrom-Json</code> / <code>ConvertTo-Json</code>
+        <ul>
+          <li>Parse API responses or structure custom output</li>
+          <li>Used in scripts to serialize/deserialize config and logs</li>
+        </ul>
+      </li>
+      <li><code>ConvertFrom-Csv</code> / <code>Export-Csv</code>
+        <ul>
+          <li>Import/export data tables from files or APIs</li>
+          <li>Used for reporting, logging, and automation pipelines</li>
+        </ul>
+      </li>
+      <li><code>ConvertFrom-StringData</code>
+        <ul>
+          <li>Converts .ini-style config blocks to hash tables</li>
+        </ul>
+      </li>
+      <li><code>Invoke-WebRequest</code> / <code>Invoke-RestMethod</code>
+        <ul>
+          <li>Used to pull files, fetch APIs, or query REST services</li>
+          <li>Frequently combined with JSON and CSV converters</li>
+        </ul>
+      </li>
+      <li><code>New-Object System.Net.WebClient</code>
+        <ul>
+          <li>Legacy file downloading method (use Invoke-WebRequest for modern)</li>
+        </ul>
+      </li>
+      <li><code>Start-Process</code> / <code>Wait-Process</code>
+        <ul>
+          <li>Run programs and wait for them to complete</li>
+          <li>Automate GUI tools, e.g., wait for Notepad to close</li>
+        </ul>
+      </li>
+      <li><code>Out-GridView -PassThru</code>
+        <ul>
+          <li>Used for user-interactive filtering of pipeline objects</li>
+        </ul>
+      </li>
+      <li><code>Group-Object</code>
+        <ul>
+          <li>Used for frequency analysis and deduplication</li>
+        </ul>
+      </li>
+      <li><code>Select-Object</code> with calculated properties
+        <ul>
+          <li>Create on-the-fly custom columns like memory in MB or file age</li>
+        </ul>
+      </li>
+      <li><code>$PSBoundParameters</code>
+        <ul>
+          <li>Check what params were actually supplied to a function</li>
+        </ul>
+      </li>
+      <li><code>Read-Host -AsSecureString</code> + <code>[Runtime.InteropServices.Marshal]</code>
+        <ul>
+          <li>Used to collect passwords securely and (optionally) convert for testing</li>
+        </ul>
+      </li>
+      <li><code>New-Variable</code> / dynamic variable access
+        <ul>
+          <li>Create and access variable names programmatically</li>
+        </ul>
+      </li>
+    </ul>
+  </section>
+
+  <footer>
+    PowerShell Cheat Sheet — Extended command reference covering real script use cases, data formats, and automation patterns. ⚡
+  </footer>
+</body>
+</html>
