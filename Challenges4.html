@@ -1,0 +1,329 @@
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bash Cheat Sheet</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #1e1e1e;
+      color: #e5e5e5;
+      margin: 2rem;
+    }
+    h1, h2 {
+      color: #61dafb;
+    }
+    section {
+      margin-bottom: 2rem;
+      padding: 1rem;
+      background-color: #2e2e2e;
+      border-left: 5px solid #61dafb;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.5);
+    }
+    code {
+      background-color: #333;
+      color: #c5c8c6;
+      padding: 2px 6px;
+      border-radius: 4px;
+ font-size: 20px;
+      font-family: monospace;
+    }
+    pre {
+      background-color: #333;
+      color: #c5c8c6;
+      padding: 1rem;
+      border-radius: 5px;
+      overflow-x: auto;
+    }
+    ul {
+      padding-left: 1.2em;
+    }
+    ul ul {
+      padding-left: 1.5em;
+      list-style-type: circle;
+    }
+    footer {
+      margin-top: 4rem;
+      font-size: 0.9em;
+      color: #999;
+    }
+  </style>
+</head>
+<body>
+  <h1>Bash Cheat Sheet</h1>
+
+  <section>
+    <h2>📘 Use Case Index</h2>
+    <ul>
+      <li><strong>Bashisms</strong>: Associative arrays, indirect variables, extended test syntax</li>
+      <li><strong>Text Processing</strong>: awk, sed, tr, sort, uniq</li>
+      <li><strong>System Tools</strong>: read, while loops, env, stat, ps</li>
+      <li><strong>Networking</strong>: nc, ping, curl, netstat, ss</li>
+      <li><strong>Arrays</strong>: seq, shuf, mapfile, declare</li>
+      <li><strong>Formatting</strong>: printf, banners</li>
+      <li><strong>Best Practices</strong>: quoting, trap, pipefail</li>
+      <li><strong>Special Operators</strong>: !!, $?, $@</li>
+      <li><strong>Command Utilities</strong>: timeout, man, examples</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>🚀 Bashisms</h2>
+    <ul>
+      <li><code>declare -A</code> — Declare associative arrays
+        <ul>
+          <li>Used for key-value pairs like "user:role"</li>
+          <li>⚠️ Not supported in Zsh</li>
+        </ul>
+      </li>
+      <li><code>${!var}</code> — Indirect variable expansion
+        <ul>
+          <li>Used to access a variable whose name is stored in another variable</li>
+        </ul>
+      </li>
+      <li><code>[[ ]]</code> — Extended test syntax
+        <ul>
+          <li>Supports pattern matching, regex, safer quoting</li>
+        </ul>
+      </li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>🔍 Text Processing</h2>
+    <ul>
+      <li><code>awk</code> — Field processing and scripting
+        <ul>
+          <li>Print selected columns: <code>awk '{print $1, $3}'</code></li>
+        </ul>
+      </li>
+      <li><code>sed</code> — Stream editor
+        <ul>
+          <li>Search and replace: <code>sed 's/old/new/g'</code></li>
+        </ul>
+      </li>
+      <li><code>tr</code> — Translate characters
+        <ul>
+          <li>Uppercase conversion: <code>tr 'a-z' 'A-Z'</code></li>
+        </ul>
+      </li>
+      <li><code>sort | uniq -c</code> — Count unique values
+        <ul>
+          <li>Great for word or line frequency analysis</li>
+        </ul>
+      </li>
+      <li><code>cut -d',' -f2</code> — Extract fields
+        <ul>
+          <li>Common in CSV and delimited data parsing</li>
+        </ul>
+      </li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>📂 File & System</h2>
+    <ul>
+      <li><code>while read line</code> — Process lines
+        <ul>
+          <li>Used in file-reading loops: <code>while read line; do ...</code></li>
+        </ul>
+      </li>
+      <li><code>find . -type f</code> — Recursive file list
+        <ul>
+          <li>Used to search directories for files</li>
+        </ul>
+      </li>
+      <li><code>stat</code> — File metadata
+        <ul>
+          <li>Used to get file size, timestamps, permissions</li>
+        </ul>
+      </li>
+      <li><code>basename / dirname</code> — Path parsing
+        <ul>
+          <li>Get file name or folder from path</li>
+        </ul>
+      </li>
+      <li><code>ps aux</code> — Process overview
+        <ul>
+          <li>See all current running processes and their owners</li>
+        </ul>
+      </li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>🌐 Networking & Ports</h2>
+    <ul>
+      <li><code>nc -zv host port</code> — Port check
+        <ul>
+          <li>Used to test open TCP/UDP ports on remote systems</li>
+        </ul>
+      </li>
+      <li><code>curl -s</code> — Fetch data
+        <ul>
+          <li>Used to get API responses or download files</li>
+        </ul>
+      </li>
+      <li><code>ping -c 3 host</code> — Network reachability
+        <ul>
+          <li>Used to test latency or connectivity to a host</li>
+        </ul>
+      </li>
+      <li><code>netstat -tulnp</code> — List sockets
+        <ul>
+          <li>Shows open ports, listening programs</li>
+        </ul>
+      </li>
+      <li><code>ss -tuln</code> — Faster socket statistics
+        <ul>
+          <li>Modern alternative to netstat</li>
+        </ul>
+      </li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>🔢 Data & Arrays</h2>
+    <ul>
+      <li><code>seq 1 10</code> — Number range
+        <ul>
+          <li>Generate ranges for loops or arrays</li>
+        </ul>
+      </li>
+      <li><code>mapfile -t arr &lt;&lt;&lt; "$(seq 1 5)"</code> — Read into array
+        <ul>
+          <li>Used to fill Bash arrays from command output</li>
+        </ul>
+      </li>
+      <li><code>declare -A map</code> — Associative arrays
+        <ul>
+          <li>Used for key-value mappings in Bash</li>
+        </ul>
+      </li>
+      <li><code>shuf -e a b c</code> — Shuffle items
+        <ul>
+          <li>Used to randomize input like quiz options</li>
+        </ul>
+      </li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>🎨 Formatting & Logging</h2>
+    <ul>
+      <li><code>printf "%‑20s\n" "$msg"</code> — Format banners
+        <ul>
+          <li>Use to center text with padding</li>
+        </ul>
+      </li>
+      <li><code>column -t -s","</code> — Table from CSV
+        <ul>
+          <li>Pretty-prints comma-separated values</li>
+        </ul>
+      </li>
+    </ul>
+    <pre><code># Example: banner format
+msg="WELCOME"
+pad=$(( (60 - ${#msg}) / 2 ))
+printf '%*s%s%*s\n' $pad '' "$msg" $pad ''</code></pre>
+  </section>
+
+  <section>
+    <h2>⚙️ Scripting Practices</h2>
+    <ul>
+      <li><code>set -euo pipefail</code> — Safe mode
+        <ul>
+          <li>Stops script on errors, undefined vars, or pipeline failure</li>
+        </ul>
+      </li>
+      <li><code>trap 'cleanup' EXIT</code> — Exit hooks
+        <ul>
+          <li>Run cleanup or logging before script ends</li>
+        </ul>
+      </li>
+      <li><code>function_name "$@"</code> — Safe arg forwarding
+        <ul>
+          <li>Ensures quoted argument passing into functions</li>
+        </ul>
+      </li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>🛠️ Command Utilities</h2>
+    <ul>
+      <li><code>timeout 5s command</code> — Run command with a time limit
+        <ul>
+          <li>Used to prevent long-running processes from hanging</li>
+          <li>Great for scripts that need to fail gracefully if something hangs</li>
+        </ul>
+      </li>
+      <li><code>man grep</code> — View manual for any command
+        <ul>
+          <li>Use to explore options, flags, and syntax for any command</li>
+          <li>Helpful for learning or troubleshooting unfamiliar tools</li>
+        </ul>
+      </li>
+      <li><code>grep -i 'search' file.txt</code> — Case-insensitive match
+        <ul>
+          <li>Search logs, files, or output for specific keywords</li>
+          <li>Case-insensitive match helps capture more results</li>
+        </ul>
+      </li>
+      <li><code>ls -lh /etc</code> — Human-readable file listing
+        <ul>
+          <li>View directory contents with file sizes in KB/MB</li>
+          <li>Useful for quickly checking what’s in a folder</li>
+        </ul>
+      </li>
+      <li><code>df -h</code> — Disk usage overview
+        <ul>
+          <li>Monitor available and used disk space on mounted filesystems</li>
+          <li>Common in server health checks and maintenance scripts</li>
+        </ul>
+      </li>
+      <li><code>du -sh *</code> — Folder sizes in current directory
+        <ul>
+          <li>See space usage of subdirectories</li>
+          <li>Great for finding which folders take up the most space</li>
+        </ul>
+      </li>
+    </ul>
+    <pre><code># Example: timeout for long-running command
+timeout 3s ping google.com
+
+# Example: check manual for tar
+man tar</code></pre>
+  </section>
+
+  <section>
+    <h2>🔣 Special Operators</h2>
+    <ul>
+      <li><code>!!</code> — Run previous command
+        <ul>
+          <li>Re-run last command quickly</li>
+        </ul>
+      </li>
+      <li><code>$?</code> — Exit status of last command
+        <ul>
+          <li>Check if last command succeeded (0) or failed (!= 0)</li>
+        </ul>
+      </li>
+      <li><code>$@</code> — All arguments passed to a script
+        <ul>
+          <li>Loop or forward script parameters safely</li>
+        </ul>
+      </li>
+    </ul>
+  </section>
+
+  <footer>
+    Built from 50+ real-world Bash challenges. Supports training, scripting, and system automation. 🐚
+  </footer>
+</body>
+</html>
