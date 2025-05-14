@@ -153,7 +153,45 @@ do write
 ```
 
 ---
+### 🧪 Use Packet Tracer Sniffer to Monitor DHCP Traffic
 
+> Cisco Packet Tracer includes a Sniffer device that can be used to filter for DHCP traffic (lab task: monitor on SW-Z2-Access).
+
+#### ✅ Setup Steps
+
+1. **Open End Devices** or **Simulation Tools**
+2. Drag and drop the **Sniffer** device into the topology
+3. Connect the Sniffer to the same switch (e.g., `SW-Z2-Access`) using a **copper straight-through cable**
+4. Ensure the Sniffer is on the **same VLAN or trunk port** as the client or DHCP server
+
+#### 🧪 Configure Filters in Simulation Mode
+
+1. Switch to **Simulation Mode**
+2. Set **Event List Filters**:
+   - ✅ Enable **DHCP**
+   - Optionally: disable other protocols (ICMP, ARP, etc.)
+
+#### 🔍 What to Look For
+
+Watch for these DHCP packets in the Event List:
+- `DHCP Discover` (from client)
+- `DHCP Offer` (from server)
+- `DHCP Request` (from client)
+- `DHCP ACK` (from server)
+
+If packets do **not appear**:
+- Ensure client is set to DHCP
+- Ensure VLAN and trunking are correctly configured
+- Ensure DHCP server or helper address is present
+
+#### ✅ Useful Verification Commands
+
+```bash
+show ip int brief         # Check if IP was assigned via DHCP
+show vlan brief           # VLAN matches for server/client
+show interfaces trunk     # Ensure VLAN allowed on uplinks
+```
+---
 ## ✅ Final Tips
 
 - Always `do write` after changes.
