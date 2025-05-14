@@ -266,6 +266,8 @@ ip access-group 187 in
 ---
 
 ## 🔹 Routing (OSPF & EIGRP)
+> 💡 Tip: If a static route exists to the same destination, it will override dynamic routes. 
+> Use `show ip route` to check if a static route is the reason a dynamic one isn’t being used.
 
 ### `show ip protocols`
 ```plaintext
@@ -353,6 +355,65 @@ Interface: FastEthernet0/2, Port ID (outgoing port): GigabitEthernet0/0
 ✅ Useful for identifying uplinks or finding default gateway IPs
 
 ---
+
+## 📍 Static Route Troubleshooting
+
+### 🔹 `show ip route`
+
+```plaintext
+S    192.168.10.0/24 [1/0] via 172.16.0.1
+D    192.168.10.0/24 [90/3072] via 172.16.0.2
+````
+
+✅ `S` = Static route (AD 1), will be preferred over EIGRP (`D`, AD 90)
+
+### 🔍 What to Look For:
+
+* Static routes overriding dynamic ones?
+* Conflicting entries? (e.g., two routes to the same network with different sources)
+
+---
+
+### 🔹 `show run | include ip route`
+
+```plaintext
+ip route 192.168.10.0 255.255.255.0 172.16.0.1
+```
+
+✅ Check static routes configured manually
+
+---
+
+### 💡 Common Fixes:
+
+* **Remove static route** if it’s interfering with dynamic:
+
+```bash
+no ip route 192.168.10.0 255.255.255.0 172.16.0.1
+```
+
+* Or **change administrative distance** (optional):
+
+```bash
+ip route 192.168.10.0 255.255.255.0 172.16.0.1 5
+```
+
+---
+
+### 🧪 Static + Dynamic Route Coexistence Example
+
+```plaintext
+S    10.10.0.0/16 [1/0] via 172.16.0.1
+D    10.10.0.0/16 [90/3072] via 172.16.0.2
+````
+
+✅ This shows the static route taking precedence.
+Use `show ip route` to confirm which path is active.
+
+### 🧠 Notes:
+
+* **Static routes are not visible via routing protocols**
+* **AD determines which route is installed**, not who advertised it
 
 ## ✅ Final Tips
 
