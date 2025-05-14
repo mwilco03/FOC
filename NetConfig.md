@@ -1,54 +1,45 @@
 # 🛠️ Cisco Packet Tracer Troubleshooting Cheat Sheet (Lab Version)
 
-> ⚠️ **Lab-Only Notice:** In this lab context, disabling port security and ACLs is acceptable to ensure successful connectivity. Do **not** apply these steps in production networks.
+> ⚠️ **Lab-Only Notice:** This guide is designed for lab environments where removing ACLs and port security is acceptable to achieve connectivity success. **Do not** apply these procedures in production.
 
 ---
 
-## ✅ Preliminary Checks (Layer 1-2)
+## 🧭 Navigation
 
-### 🟥 Identify "Down'd" Interface
+- [Layer 1–2 Preliminary Checks](#layer-1-2-preliminary-checks)
+- [Common Lab Resets](#common-lab-resets)
+- [Post-Cleanup Verification](#post-cleanup-verification)
+- [Advanced Diagnostic Commands](#advanced-diagnostic-commands)
+- [Mock Output & Troubleshooting Guide](#mock-output--troubleshooting-guide)
+- [Other Lab Essentials](#other-lab-essentials)
+
+---
+
+## 🔌 Layer 1–2 Preliminary Checks
+
+### 🟥 Check Interface Status
 ```bash
 show ip interface brief
 ```
-- `up/up`: Interface working correctly  
+- `up/up`: Interface working  
 - `administratively down`: Use `no shutdown`  
-- `down/down`: Cabling issue or port error
+- `down/down`: Physical error or no cable
 
 ---
 
-### 🟨 Port Security Violation (e.g., SW-Z2-Access)
+### 🟨 Check Port Security (Common Shutdown Cause)
 ```bash
 show port-security
 show port-security interface [interface_id]
 ```
-- `Secure-shutdown` = port disabled  
-- Violation count > 0 → see below for full reset
+- `Secure-shutdown`: Port disabled due to MAC violation  
+- Violation count > 0: Indicates blocked device
 
 ---
 
-## 🧪 Advanced Diagnostic Commands
+## 🔧 Common Lab Resets
 
-```bash
-show vlan brief                          # VLAN-to-port mapping
-show interfaces trunk                   # Trunking status and allowed VLANs
-show vtp status                         # VTP domain and mode
-show vtp password                       # VTP password match
-show port-security                      # View port security on all interfaces
-show access-lists                       # View defined ACLs
-show run | include access-group         # View where ACLs are applied
-show ip protocols                       # Shows OSPF/EIGRP summary
-show ip ospf neighbor                   # OSPF adjacents
-show ip ospf interface                  # OSPF interface details
-show ip eigrp neighbors                 # EIGRP adjacents
-show ip eigrp topology                  # EIGRP learned routes
-show interfaces status                  # Port connection and errors
-show logging                            # Log buffer for errors/events (if used)
-```
-
----
-
-## 🔧 Reset Port Security (Lab-Only Reset)
-
+### 🚫 Disable Port Security (Lab Use Only)
 ```bash
 conf t
 interface range fa0/1 - 24
@@ -63,13 +54,11 @@ interface range fa0/1 - 24
 exit
 ```
 
-- Removes all port security constraints from access ports
-
 ---
 
-## 🔧 Remove ACLs (Lab-Only Reset)
+### 🚫 Remove ACLs (Lab Use Only)
 
-### Step 1: Unapply ACLs from Interfaces
+**Step 1 – Unapply ACLs:**
 ```bash
 conf t
 interface [interface_id]
@@ -79,29 +68,27 @@ interface [interface_id]
 exit
 ```
 
-### Step 2: Remove ACL Definitions
+**Step 2 – Remove ACL Definitions:**
 ```bash
 no access-list 101
 no ip access-list extended [ACL_NAME]
 ```
 
-- Removes named or numbered ACLs entirely
-
 ---
 
-## 🔁 Post-Cleanup Verification
+## ✅ Post-Cleanup Verification
 
 ```bash
-show port-security                      # Confirm no ports are secure-shutdown
-show access-lists                       # Ensure ACLs removed
-show run | include access-group         # Ensure no interfaces have ACLs applied
-show ip interface brief                 # Interfaces up
-show interfaces status                  # Verify connected/disconnected state
+show port-security                      # Ensure ports are not shut down
+show access-lists                       # Confirm ACLs removed
+show run | include access-group         # Check for applied ACLs
+show ip interface brief                 # Confirm interface status
+show interfaces status                  # Check port status and errors
 ```
 
 ---
 
-## 🧠 Optional (Recommended): Auto-Recover from Port Security Errors
+## 🔄 Optional: Auto-Recover from Port Security Errors
 
 ```bash
 conf t
@@ -110,25 +97,11 @@ errdisable recovery interval 30
 do write
 ```
 
-- Automatically brings ports back online after a violation in 30 seconds
-
 ---
 
-## 🔁 Around-the-World Ping Test
+## 🧠 Other Lab Essentials
 
-```bash
-ping 172.16.255.2   # L3 Switch <-> RTR-Z1-Local
-ping 172.16.255.1   # RTR-Z1-Local
-ping 172.31.0.2     # RTR-Z1-Local <-> RTR-ZX-External
-ping 172.31.0.1     # RTR-ZX-External
-```
-
-Use to trace connection path and locate routing failures.
-
----
-
-## 🔒 SSH Access (SW-Z1-Core)
-
+### 🔒 Enable SSH for Device Access
 ```bash
 conf t
 line vty 0 4
@@ -141,8 +114,17 @@ do write
 
 ---
 
-## 📋 Layer 3 Switch Configuration (Enable Routing)
+### 🌍 Around-the-World Ping Test
+```bash
+ping 172.16.255.2   # L3 Switch <-> RTR-Z1-Local
+ping 172.16.255.1   # RTR-Z1-Local
+ping 172.31.0.2     # RTR-Z1-Local <-> RTR-ZX-External
+ping 172.31.0.1     # RTR-ZX-External
+```
 
+---
+
+### 📋 Configure L3 Switch Interface
 ```bash
 conf t
 interface gi0/1
@@ -153,305 +135,228 @@ do write
 ```
 
 ---
-### 🧪 Use Packet Tracer Sniffer to Monitor DHCP Traffic
 
-> Cisco Packet Tracer includes a Sniffer device that can be used to filter for DHCP traffic (lab task: monitor on SW-Z2-Access).
+### 📡 Use Sniffer to Monitor DHCP Traffic
 
-#### ✅ Setup Steps
+#### Setup:
+- Add a **Sniffer** device
+- Connect it to same switch as DHCP client/server
+- Use **Simulation Mode**
+- Filter for **DHCP** only
 
-1. **Open End Devices** or **Simulation Tools**
-2. Drag and drop the **Sniffer** device into the topology
-3. Connect the Sniffer to the same switch (e.g., `SW-Z2-Access`) using a **copper straight-through cable**
-4. Ensure the Sniffer is on the **same VLAN or trunk port** as the client or DHCP server
+#### Event Types to Capture:
+- `DHCP Discover`, `DHCP Offer`, `DHCP Request`, `DHCP ACK`
 
-#### 🧪 Configure Filters in Simulation Mode
+#### Verifying DHCP Function:
+```bash
+show ip int brief
+show vlan brief
+show interfaces trunk
+```
 
-1. Switch to **Simulation Mode**
-2. Set **Event List Filters**:
-   - ✅ Enable **DHCP**
-   - Optionally: disable other protocols (ICMP, ARP, etc.)
+---
 
-#### 🔍 What to Look For
-
-Watch for these DHCP packets in the Event List:
-- `DHCP Discover` (from client)
-- `DHCP Offer` (from server)
-- `DHCP Request` (from client)
-- `DHCP ACK` (from server)
-
-If packets do **not appear**:
-- Ensure client is set to DHCP
-- Ensure VLAN and trunking are correctly configured
-- Ensure DHCP server or helper address is present
-
-#### ✅ Useful Verification Commands
+## 🧪 Advanced Diagnostic Commands
 
 ```bash
-show ip int brief         # Check if IP was assigned via DHCP
-show vlan brief           # VLAN matches for server/client
-show interfaces trunk     # Ensure VLAN allowed on uplinks
+# VLAN & Trunking
+show vlan brief
+show interfaces trunk
+
+# VTP
+show vtp status
+show vtp password
+
+# Port Security
+show port-security
+show port-security interface [int]
+
+# ACLs
+show access-lists
+show run | include access-group
+
+# Routing Protocols
+show ip protocols
+show ip ospf neighbor
+show ip ospf interface
+show ip eigrp neighbors
+show ip eigrp topology
+
+# Interface & Log Checks
+show interfaces status
+show logging
 ```
----
-## ✅ Final Tips
-
-- Always `do write` after changes.
-- Use `interface range` to apply config faster across multiple ports.
-- Always clean up ACLs and port security in a lab if they're blocking success.
-- Use `cdp` and VLAN tools to visualize paths.
-
----
-# 🧪 Advanced Diagnostic Commands – Mock Output and What to Look For
 
 ---
 
-### 🔹 `show vlan brief`
+# 🧪 Mock Output & Troubleshooting Guide
 
-**Mock Output:**
+---
+
+## 🔹 VLAN & Trunking
+
+### `show vlan brief`
 ```plaintext
-VLAN Name                             Status    Ports
----- -------------------------------- --------- -------------------------------
-1    default                          active    Fa0/19, Fa0/20
-5    Native                           active    
 130  User-Z1                          active    Fa0/1, Fa0/2
-131  User-Z2                          active    Fa0/3
-132  VoIP-Z2                          active    
 ```
-
-**Look For:**
-- Are all required VLANs present?
-- Are the access ports assigned correctly?
-
-**Common Issues:**
-- Ports stuck in VLAN 1 (default)
-- VLAN not created but referenced elsewhere
-- Host ports not assigned to any VLAN
+✅ Ports must be in correct VLANs  
+❌ Ports in VLAN 1 = default/misconfigured
 
 ---
 
-### 🔹 `show interfaces trunk`
-
-**Mock Output:**
+### `show interfaces trunk`
 ```plaintext
-Port        Mode         Encapsulation  Status        Native vlan
-Fa0/1       on           802.1q         trunking      5
-
-Port        Vlans allowed on trunk
-Fa0/1       5,130-135
+Fa0/1       on   802.1q   trunking    5
+Allowed VLANs: 5,130-135
 ```
-
-**Look For:**
-- Trunks must allow VLANs used by hosts
-- Native VLAN must match on both ends
-
-**Common Issues:**
-- VLAN used by client not allowed on trunk
-- Native VLAN mismatches between switches
+✅ Trunks must include all used VLANs  
+❌ Mismatched VLANs = broken inter-VLAN routing
 
 ---
 
-### 🔹 `show vtp status`
+## 🔹 VTP
 
-**Mock Output:**
+### `show vtp status`
 ```plaintext
-VTP Version                     : 2
-Configuration Revision          : 5
-Maximum VLANs supported locally: 255
-Number of existing VLANs       : 7
-VTP Operating Mode              : Client
-VTP Domain Name                 : LAB-VTP
-VTP Password                   : ***
-
+VTP Domain Name: LAB-VTP
+VTP Mode: Client
+VTP Password: ***
 ```
-
-**Look For:**
-- All switches must share same **domain**, **mode**, and **password**
-- Revision should increment with updates from the server
-
-**Common Issues:**
-- Missing VTP password
-- Wrong domain name or transparent mode
+✅ All switches must match domain/mode/password  
+❌ Transparent mode won't sync VLANs
 
 ---
 
-### 🔹 `show vtp password`
-
-**Mock Output:**
+### `show vtp password`
 ```plaintext
 VTP password: labpass
 ```
 
-**Look For:**
-- Should match across all switches in same domain
-
-**Common Issues:**
-- Not configured → no VLAN propagation
-
 ---
 
-### 🔹 `show port-security`
+## 🔹 Port Security
 
-**Mock Output:**
+### `show port-security`
 ```plaintext
-Port    Security   Violations  Secure MACs  Status
-Fa0/3   Enabled     1           1            secure-shutdown
-Fa0/4   Enabled     0           1            secure-up
+Fa0/3   Enabled   1 violation   secure-shutdown
 ```
-
-**Look For:**
-- Ports in `secure-shutdown` are disabled due to violations
-- Violation count > 0 indicates dropped or blocked devices
-
-**Common Issues:**
-- Max MAC = 1 causes unnecessary shutdowns
-- No sticky MAC configured
+✅ Max MACs = 2+, or remove  
+❌ `secure-shutdown` needs interface reset
 
 ---
 
-### 🔹 `show access-lists`
+## 🔹 ACLs
 
-**Mock Output:**
+### `show access-lists`
 ```plaintext
-Standard IP access list 10
-    10 permit 192.168.1.0, wildcard bits 0.0.0.255
-
 Extended IP access list 187
-    10 deny icmp any any
-    20 permit ip any any
+  deny icmp any any
+  permit ip any any
 ```
-
-**Look For:**
-- `deny icmp` blocks ping = trouble for connectivity tests
-
-**Common Issues:**
-- Overly broad denies (e.g., `deny ip any any`)
-- ACL applied on wrong interface or in wrong direction
+❌ `deny icmp` blocks pings
 
 ---
 
-### 🔹 `show run | include access-group`
-
-**Mock Output:**
+### `show run | include access-group`
 ```plaintext
- ip access-group 187 in
+ip access-group 187 in
 ```
-
-**Look For:**
-- Where ACLs are applied (interface and direction)
-- Should be removed for lab connectivity
+✅ Use to locate interface where ACL is applied
 
 ---
 
-### 🔹 `show ip protocols`
+## 🔹 Routing (OSPF & EIGRP)
 
-**Mock Output (EIGRP):**
+### `show ip protocols`
 ```plaintext
 Routing Protocol is "eigrp 100"
-  Automatic network summarization is not in effect
-  Routing for Networks:
-    192.168.10.0
-    172.16.0.0
+  Networks: 192.168.10.0, 172.16.0.0
 ```
-
-**Look For:**
-- All subnets must be included under `network` commands
-- Correct AS number used (e.g., `eigrp 100`)
-
-**Common Issues:**
-- Subnets missing from routing advertisements
-- Wrong or mismatched AS numbers
+✅ All internal networks must be included
 
 ---
 
-### 🔹 `show ip ospf neighbor`
-
-**Mock Output:**
+### `show ip ospf neighbor`
 ```plaintext
-Neighbor ID     Pri   State           Dead Time   Address         Interface
-192.168.1.1      1    FULL/DR         00:00:38    172.16.0.2      Fa0/1
+Neighbor ID   State    Interface
+192.168.1.1   FULL     Fa0/1
 ```
-
-**Look For:**
-- At least one neighbor in `FULL` or `2WAY` state
-
-**Common Issues:**
-- Dead timer expiry (wrong timers)
-- No adjacency (area mismatch, IP mismatch)
+✅ Must be in FULL or 2WAY  
+❌ DEAD timer = adjacency failed
 
 ---
 
-### 🔹 `show ip ospf interface`
-
-**Mock Output:**
+### `show ip ospf interface`
 ```plaintext
-FastEthernet0/1 is up, line protocol is up
-  Internet Address 172.16.0.1/30, Area 0
-  Process ID 1, Router ID 1.1.1.1, Network Type BROADCAST
+Fa0/1 is up, Area 0, Router ID 1.1.1.1
 ```
-
-**Look For:**
-- Area number consistency
-- Correct OSPF process ID and IP
 
 ---
 
-### 🔹 `show ip eigrp neighbors`
-
-**Mock Output:**
+### `show ip eigrp neighbors`
 ```plaintext
-Address          Interface       Holdtime  Uptime    SRTT  RTO  Q  Seq
-172.16.1.2       Fa0/1           12        00:02:31  30    180  0  15
+172.16.1.2   Fa0/1   00:02:31
 ```
-
-**Look For:**
-- Neighbors listed (means EIGRP adjacency formed)
-
-**Common Issues:**
-- No entries = misconfigured network statements or interfaces down
 
 ---
 
-### 🔹 `show ip eigrp topology`
-
-**Mock Output:**
+### `show ip eigrp topology`
 ```plaintext
-P 192.168.10.0/24, 1 successors, FD is 3072
-        via 172.16.1.2 (3072/2816), FastEthernet0/1
+P 192.168.10.0/24, FD 3072
+ via 172.16.1.2 (3072/2816), Fa0/1
 ```
-
-**Look For:**
-- Routes learned from neighbors
-- “P” = passive (good), “A” = active (bad)
+✅ “P” = passive (good)  
+❌ “A” = active (route unresolved)
 
 ---
 
-### 🔹 `show interfaces status`
+## 🔹 Interface & Log Checks
 
-**Mock Output:**
+### `show interfaces status`
 ```plaintext
-Port      Name               Status       Vlan       Duplex  Speed Type
-Fa0/1                         connected    130        a-full  a-100 10/100BaseTX
-Fa0/2                         notconnect   130        auto    auto  10/100BaseTX
+Fa0/1   connected   VLAN 130   a-full  a-100
+Fa0/2   notconnect
 ```
-
-**Look For:**
-- Connected status for active ports
-- Duplex/speed mismatches may cause errors
 
 ---
 
-### 🔹 `show logging`
-
-**Mock Output:**
+### `show logging`
 ```plaintext
-%LINK-3-UPDOWN: Interface FastEthernet0/3, changed state to up
-%PORT_SECURITY-2-PSECURE_VIOLATION: Security violation occurred...
+%PORT_SECURITY-2-PSECURE_VIOLATION
+%LINK-3-UPDOWN
 ```
-
-**Look For:**
-- Logs of security violations or port state changes
-
-**Common Issues:**
-- Frequent port shutdowns = excessive violations
+✅ Indicates port security triggers or cable re-plugs
 
 ---
 
+## 🔹 Device Connectivity & Topology (CDP)
+
+### `show cdp neighbors`
+```plaintext
+Device ID        Local Intrfce     Holdtme    Capability  Platform  Port ID
+SW-Z2-Core       Fa0/1             131           S I      3560      Fa0/24
+RTR-Z1-Local     Fa0/2             129           R S I    2811      Gi0/0
+```
+✅ Shows which devices are connected to which interfaces  
+❌ No entries = cable missing, CDP disabled, or interface down
+
+---
+
+### `show cdp neighbors detail`
+```plaintext
+Device ID: RTR-Z1-Local
+IP address: 172.16.255.1
+Platform: cisco 2811, Capabilities: Router Switch IGMP
+Interface: FastEthernet0/2, Port ID (outgoing port): GigabitEthernet0/0
+```
+✅ Helps verify routing neighbor IPs  
+✅ Useful for identifying uplinks or finding default gateway IPs
+
+---
+
+## ✅ Final Tips
+
+- `do write` after all changes
+- Use `interface range` to clean configs faster
+- Use `cdp` and VLAN maps to trace connectivity
+- Reset ACLs and port security first when troubleshooting lab pings
