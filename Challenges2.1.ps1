@@ -1,1138 +1,1000 @@
-#================
-# 1. List Installed Drivers
-#================
-# Objective: Return a list of all installed system drivers.
-# Expected: Get-InstalledDrivers ➜ List of driver names like "wuauserv", "Tcpip", "cdrom"
-# Helper: Research 'PowerShell Get-WmiObject Win32_SystemDriver'
+# PowerShell Administrative Challenges
+# Ordered: Trivial → Advanced
+# (Drivers & BCDedit skipped; new sections injected)
 
-function Get-InstalledDrivers {
-    param()
-    # TODO: Return the names of all installed system drivers
+#===================================
+# Scripting Basics
+#===================================
+
+# 1. Greet User
+# Objective: Return a greeting for a given name.
+# Expected: Greet-User -Name "Alice" ➜ "Hello, Alice!"
+# Helper: Research string interpolation in PowerShell.
+function Greet-User {
+    param([string]$Name)
+    # TODO: Implement greeting logic
     return
 }
-Write-Output (Get-InstalledDrivers)  # Expected: A list of driver names
+Write-Output (Greet-User -Name "Alice")  # Expected: Hello, Alice!
 
-#================
-# 2. Find Kernel-Mode Drivers
-#================
-# Objective: Filter and return kernel-mode drivers currently running.
-# Expected: Get-KernelDrivers ➜ Running drivers with path in System32 (e.g., "Tcpip")
-# Helper: Research 'PowerShell Where-Object and PathName filters'
-
-function Get-KernelDrivers {
-    param()
-    # TODO: Return actively running kernel-mode drivers
+# 2. Add Two Numbers
+# Objective: Return the sum of two integers.
+# Expected: Add-Numbers -A 5 -B 7 ➜ 12
+# Helper: Review arithmetic operators (+).
+function Add-Numbers {
+    param([int]$A, [int]$B)
+    # TODO: Return sum of $A and $B
     return
 }
-Write-Output (Get-KernelDrivers)  # Expected: List of kernel drivers
+Write-Output (Add-Numbers -A 5 -B 7)    # Expected: 12
 
-#================
-# 3. Check If a Driver is Running
-#================
-# Objective: Return $true or $false depending on if the specified driver is running.
-# Expected: Is-DriverRunning "wuauserv" ➜ True or False
-# Helper: Use Get-Service or Get-WmiObject to check driver state
-
-function Is-DriverRunning {
-    param($name)
-    # TODO: Return $true if the driver is running, else $false
+# 3. Convert to Uppercase
+# Objective: Convert a string to all uppercase.
+# Expected: To-Upper "hello" ➜ HELLO
+# Helper: Research .ToUpper() string method.
+function To-Upper {
+    param([string]$Text)
+    # TODO: Return $Text in uppercase
     return
 }
-Write-Output (Is-DriverRunning "wuauserv")   # Expected: True or False
-Write-Output (Is-DriverRunning "Spooler")    # Expected: True or False
+Write-Output (To-Upper "hello")        # Expected: HELLO
 
-#================
-# 4. Toggle a Driver
-#================
-# Objective: Start or stop a driver/service based on action input.
-# Expected: Toggle-Driver "Spooler" "Stop" ➜ stops the Print Spooler service
-#           Toggle-Driver "Spooler" "Start" ➜ starts the Print Spooler service
-# Helper: Research 'PowerShell Start-Service Stop-Service'
-
-function Toggle-Driver {
-    param($name, [ValidateSet("Start","Stop")]$action)
-    # TODO: Start or stop the driver/service by name
+# 4. Format Date
+# Objective: Format a DateTime as YYYY-MM-DD.
+# Expected: Format-Date -Date (Get-Date "2020-01-01") ➜ 2020-01-01
+# Helper: Research Get-Date -Format.
+function Format-Date {
+    param([datetime]$Date)
+    # TODO: Format $Date as "yyyy-MM-dd"
     return
 }
-Write-Output (Toggle-Driver "Spooler" "Stop")  # Expected: Service stopped
-Write-Output (Toggle-Driver "Spooler" "Start") # Expected: Service started
+Write-Output (Format-Date -Date (Get-Date "2020-01-01"))  # Expected: 2020-01-01
 
-#================
-# 5. Get Driver File Metadata
-#================
-# Objective: Return the Name, Size, and LastWriteTime of the specified driver file.
-# Expected: Get-DriverFileInfo "C:\Windows\System32\drivers\ndis.sys" ➜ Name: ndis.sys, Size: <int>, LastWriteTime: <datetime>
-# Helper: Research 'PowerShell Get-Item file properties'
-
-function Get-DriverFileInfo {
-    param($path)
-    # TODO: Return a custom object with Name, Size, and LastWriteTime
+# 5. Get Month Name
+# Objective: Map month number to month name.
+# Expected: Get-MonthName -Month 1 ➜ January
+# Helper: Use switch or array mapping.
+function Get-MonthName {
+    param([int]$Month)
+    # TODO: Return month name for $Month
     return
 }
-Write-Output (Get-DriverFileInfo "C:\Windows\System32\drivers\ndis.sys")  
-# Expected: Name: ndis.sys, Size: <int>, LastWriteTime: <datetime>
+Write-Output (Get-MonthName -Month 1)   # Expected: January
 
-#================
-# 6. Get Current Boot Configuration
-#================
-# Objective: Display the current boot entries using bcdedit.
-# Expected: Get-BootConfig ➜ includes "Windows Boot Manager", identifiers, devices, paths.
-# Helper: Research 'bcdedit /enum'
-
-function Get-BootConfig {
-    param()
-    # TODO: Return the output of 'bcdedit' showing the current boot entries
+# 6. Calculate Average
+# Objective: Compute average of a numeric array.
+# Expected: Get-Average -Numbers @(2,3,5) ➜ 3.333333
+# Helper: Sum array and divide by count.
+function Get-Average {
+    param([int[]]$Numbers)
+    # TODO: Return (sum of $Numbers)/(count of $Numbers)
     return
 }
-Write-Output (Get-BootConfig)  
-# Expected: Output with boot entries and settings
+Write-Output (Get-Average -Numbers @(2,3,5))  # Expected: 3.333333
 
-#================
-# 7. Check Firmware Type
-#================
-# Objective: Return whether the system is using UEFI or BIOS firmware.
-# Expected: Get-FirmwareType ➜ "UEFI" or "BIOS"
-# Helper: Research 'PowerShell Get-WmiObject Win32_ComputerSystem'
-
-function Get-FirmwareType {
-    param()
-    # TODO: Return "UEFI" or "BIOS" depending on system firmware
+# 7. Check Substring
+# Objective: Test if $Substring is in $String.
+# Expected: Test-Substring -String "PowerShell" -Substring "Shell" ➜ True
+# Helper: Research .Contains() or -like.
+function Test-Substring {
+    param([string]$String, [string]$Substring)
+    # TODO: Return $true if $Substring in $String
     return
 }
-Write-Output (Get-FirmwareType)         # Expected: UEFI or BIOS
+Write-Output (Test-Substring -String "PowerShell" -Substring "Shell")  # Expected: True
 
-#================
-# 8. List Bootable Partitions
-#================
-# Objective: Identify partitions flagged as Boot.
-# Expected: Get-BootPartitions ➜ lists partitions DriveLetter and Boot flag.
-# Helper: Research 'PowerShell Get-Partition' and BootFlag
-
-function Get-BootPartitions {
-    param()
-    # TODO: Return all partitions flagged as "Boot"
+# 8. Find Maximum
+# Objective: Return the larger of two numbers.
+# Expected: Find-Maximum -X 3 -Y 10 ➜ 10
+# Helper: Use if/else.
+function Find-Maximum {
+    param([int]$X, [int]$Y)
+    # TODO: Return max($X, $Y)
     return
 }
-Write-Output (Get-BootPartitions)       # Expected: C: flagged as Boot, etc.
+Write-Output (Find-Maximum -X 3 -Y 10)  # Expected: 10
 
-#================
-# 9. Create New Boot Entry
-#================
-# Objective: Create a new boot entry in the BCD store.
-# Expected: Add-BootEntry "SafeMode Test" "C:\Windows\System32\winload.exe" ➜ confirmation output
-# Helper: Research 'bcdedit /copy' and '/set'
-
-function Add-BootEntry {
-    param($description, $path)
-    # TODO: Use bcdedit to add a new boot entry with the given description and path
+# 9. Check Even Number
+# Objective: Return True if number is even.
+# Expected: Is-Even -Number 4 ➜ True
+# Helper: Use modulus (%) operator.
+function Is-Even {
+    param([int]$Number)
+    # TODO: Return $true if $Number % 2 -eq 0
     return
 }
-Write-Output (Add-BootEntry "SafeMode Test" "C:\Windows\System32\winload.exe") 
-# Expected: New boot entry created with GUID and settings
+Write-Output (Is-Even -Number 4)  # Expected: True
 
-#================
-# 10. Set Default Boot Entry
-#================
-# Objective: Configure which boot entry is used by default.
-# Expected: Set-DefaultBootEntry "{current}" ➜ default set
-# Helper: Research 'bcdedit /default {identifier}'
-
-function Set-DefaultBootEntry {
-    param($identifier)
-    # TODO: Set the given boot entry as the default using bcdedit
+#10. Generate Range
+# Objective: Output numbers 1 through N.
+# Expected: Generate-Range -N 3 ➜ 1 2 3
+# Helper: Use 1..$N or a loop.
+function Generate-Range {
+    param([int]$N)
+    # TODO: Generate 1..$N sequence
     return
 }
-Write-Output (Set-DefaultBootEntry "{current}")     
-# Expected: Boot entry default updated
+Write-Output (Generate-Range -N 3)  # Expected: 1 2 3
 
-#================
-# 11. Set Boot Timeout
-#================
-# Objective: Change the timeout value for the boot menu.
-# Expected: Set-BootTimeout 15 ➜ Timeout set to 15 seconds
-#           Set-BootTimeout 0 ➜ Boots default entry immediately
-# Helper: Research 'bcdedit /timeout seconds'
-
-function Set-BootTimeout {
-    param($seconds)
-    # TODO: Use bcdedit to set the boot timeout
+#11. While Loop Timer
+# Objective: Count down from $Seconds to 0.
+# Expected: Countdown-Timer -Seconds 3 ➜ 3 2 1 0
+# Helper: Research while loops.
+function Countdown-Timer {
+    param([int]$Seconds)
+    # TODO: Loop and output countdown
     return
 }
-Write-Output (Set-BootTimeout 15)       # Expected: Timeout set to 15 seconds
-Write-Output (Set-BootTimeout 0)        # Expected: Boots default entry immediately
+Write-Output (Countdown-Timer -Seconds 3)  
 
-#================
-# 12. Read a Registry Value
-#================
-# Objective: Retrieve the data of a specified registry value.
-# Expected: Get-RegistryValue "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion" "ProductName" ➜ "Windows 10 Pro"
-# Helper: Research 'PowerShell Get-ItemProperty'
-
-function Get-RegistryValue {
-    param($path, $name)
-    # TODO: Return the value of the specified registry key
+#12. ForEach Loop Over Files
+# Objective: List file names in a folder using loop.
+# Expected: List-FileNames -Path "C:\Temp" ➜ file1.txt, file2.log
+# Helper: foreach over Get-ChildItem.
+function List-FileNames {
+    param([string]$Path)
+    # TODO: Loop files and return names
     return
 }
-Write-Output (Get-RegistryValue "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion" "ProductName")  
-# Expected: Windows 10 Pro
+Write-Output (List-FileNames -Path "C:\Temp")  
 
-#================
-# 13. Set a Registry Value
-#================
-# Objective: Create or update a registry value.
-# Expected: Set-RegistryValue "HKCU:\Software\TestKey" "Mode" "Enabled" ➜ value set
-# Helper: Research 'New-ItemProperty' or 'Set-ItemProperty'
-
-function Set-RegistryValue {
-    param($path, $name, $value)
-    # TODO: Create or update a registry value at the specified path
+#13. Square Function
+# Objective: Return square of a number.
+# Expected: Square -N 4 ➜ 16
+# Helper: Multiply $N by itself.
+function Square {
+    param([int]$N)
+    # TODO: Return $N * $N
     return
 }
-Write-Output (Set-RegistryValue "HKCU:\Software\TestKey" "Mode" "Enabled")  
-# Expected: Key 'TestKey' with value 'Mode=Enabled' now exists
+Write-Output (Square -N 4)  # Expected: 16
 
-#================
-# 14. Remove a Registry Value
-#================
-# Objective: Delete a specified value from a registry key.
-# Expected: Remove-RegistryValue "HKCU:\Software\TestKey" "Mode" ➜ value removed
-# Helper: Research 'Remove-ItemProperty'
-
-function Remove-RegistryValue {
-    param($path, $name)
-    # TODO: Delete the specified value from the registry key
+#14. Switch Statement
+# Objective: Map status codes to messages.
+# Expected: Get-StatusMessage -Code 404 ➜ Not Found
+# Helper: Use switch.
+function Get-StatusMessage {
+    param([int]$Code)
+    # TODO: Switch for 200,404,500 else Unknown
     return
 }
-Write-Output (Remove-RegistryValue "HKCU:\Software\TestKey" "Mode")  
-# Expected: Value 'Mode' removed from 'TestKey'
+Write-Output (Get-StatusMessage -Code 404)  # Expected: Not Found
 
-#================
-# 15. Check If RDP is Enabled via Registry
-#================
-# Objective: Determine if Remote Desktop (RDP) is enabled on this system.
-# Expected: Is-RDPEnabled ➜ True if fDenyTSConnections = 0, else False
-# Helper: Research 'fDenyTSConnections registry value'
+#===================================
+# File System Tasks
+#===================================
 
-function Is-RDPEnabled {
-    param()
-    # TODO: Return $true if RDP is enabled (HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server\fDenyTSConnections = 0)
-    return
-}
-Write-Output (Is-RDPEnabled)    # Expected: True or False
-
-#================
-# 16. Set Autorun for CMD
-#================
-# Objective: Configure CMD to execute a command each time it starts.
-# Expected: Set-CmdAutorun "echo Welcome!" ➜ Autorun command set
-# Helper: Research 'Registry HKCU:\Software\Microsoft\Command Processor\AutoRun'
-
-function Set-CmdAutorun {
-    param($command)
-    # TODO: Set the AutoRun registry key to launch the provided command on CMD startup
-    return
-}
-Write-Output (Set-CmdAutorun "echo Welcome!")  
-# Expected: CMD now auto-prints "Welcome!" on launch
-
-#================
-# 17. Add Folder to Windows Defender Exclusions
-#================
-# Objective: Exclude a specified folder from Windows Defender scans.
-# Expected: Add-DefenderExclusion "C:\Tools" ➜ Folder excluded
-# Helper: Research 'Add-MpPreference -ExclusionPath'
-
-function Add-DefenderExclusion {
-    param($folderPath)
-    # TODO: Add specified path to Defender's exclusion list
-    return
-}
-Write-Output (Add-DefenderExclusion "C:\Tools")  
-# Expected: Folder excluded from Defender scans
-
-#================
-# 18. List All Running Processes
-#================
-# Objective: Return the names of all currently running processes.
-# Expected: Get-RunningProcesses ➜ "explorer", "svchost", "cmd", etc.
-# Helper: Research 'Get-Process'
-
-function Get-RunningProcesses {
-    param()
-    # TODO: Return the names of all running processes
-    return
-}
-Write-Output (Get-RunningProcesses)  
-# Expected: A list like "explorer", "svchost", "cmd", etc.
-
-#================
-# 19. Check If a Process is Running
-#================
-# Objective: Return $true if a process with the given name is running, else $false.
-# Expected: Is-ProcessRunning "notepad" ➜ True if Notepad is running.
-# Helper: Research 'Get-Process'
-
-function Is-ProcessRunning {
-    param($name)
-    # TODO: Return $true if a process with the given name is running
-    return
-}
-Write-Output (Is-ProcessRunning "notepad")    # Expected: True or False
-Write-Output (Is-ProcessRunning "explorer")   # Expected: True
-
-#================
-# 20. Kill a Process by Name
-#================
-# Objective: Terminate all instances of the specified process.
-# Expected: Kill-Process "notepad" ➜ closes Notepad.
-# Helper: Research 'Stop-Process'
-
-function Kill-Process {
-    param($name)
-    # TODO: Stop a process by name
-    return
-}
-Write-Output (Kill-Process "notepad")  
-# Expected: Terminates all instances of notepad (if running)
-
-#================
-# 21. Get System Uptime
-#================
-# Objective: Report how long the system has been running.
-# Expected: Get-SystemUptime ➜ "1 day, 4 hours, 20 minutes"
-# Helper: Research 'Win32_OperatingSystem LastBootUpTime'
-
-function Get-SystemUptime {
-    param()
-    # TODO: Return how long the system has been running
-    return
-}
-Write-Output (Get-SystemUptime)  
-# Expected: "1 day, 4 hours, 20 minutes" or similar
-
-#================
-# 22. List All Services and Their States
-#================
-# Objective: Return each service name and its current status (Running/Stopped).
-# Expected: Get-AllServices ➜ "Spooler: Running", "wuauserv: Stopped", etc.
-# Helper: Research 'Get-Service'
-
-function Get-AllServices {
-    param()
-    # TODO: Return a list of all services and whether they're running
-    return
-}
-Write-Output (Get-AllServices)  
-# Expected: Name and status for each service
-
-#================
-# 23. Start a Windows Service
-#================
-# Objective: Start the specified service if it is stopped.
-# Expected: Start-ServiceByName "Spooler" ➜ starts Print Spooler.
-# Helper: Research 'Start-Service'
-
-function Start-ServiceByName {
-    param($name)
-    # TODO: Start the specified service
-    return
-}
-Write-Output (Start-ServiceByName "Spooler")  
-# Expected: Starts Print Spooler service
-
-#================
-# 24. Stop a Windows Service
-#================
-# Objective: Stop the specified service if it is running.
-# Expected: Stop-ServiceByName "Spooler" ➜ stops Print Spooler.
-# Helper: Research 'Stop-Service'
-
-function Stop-ServiceByName {
-    param($name)
-    # TODO: Stop the specified service
-    return
-}
-Write-Output (Stop-ServiceByName "Spooler")  
-# Expected: Stops Print Spooler service
-
-#================
-# 25. Restart a Windows Service
-#================
-# Objective: Restart the specified service (stop then start).
-# Expected: Restart-ServiceByName "wuauserv" ➜ restarts Windows Update.
-# Helper: Research 'Restart-Service'
-
-function Restart-ServiceByName {
-    param($name)
-    # TODO: Restart the specified service
-    return
-}
-Write-Output (Restart-ServiceByName "wuauserv")  
-# Expected: Windows Update service restarted
-
-#================
-# 26. Get Current Working Directory
-#================
-# Objective: Return the current directory path.
-# Expected: Get-WorkingDirectory ➜ "C:\Users\Username"
-# Helper: Research 'Get-Location'
-
+#15. Get Current Working Directory
+# Objective: Return current directory path.
+# Expected: Get-WorkingDirectory ➜ C:\Users\Username
+# Helper: Research Get-Location.
 function Get-WorkingDirectory {
     param()
-    # TODO: Return the current directory path
+    # TODO: Return Get-Location
     return
 }
 Write-Output (Get-WorkingDirectory)     # Expected: C:\Users\Username
 
-#================
-# 27. Change Directory
-#================
-# Objective: Change to the specified directory path.
-# Expected: Change-Directory "C:\Windows" ➜ current path is C:\Windows.
-# Helper: Research 'Set-Location'
-
+#16. Change Directory
+# Objective: Set the current location.
+# Expected: Change-Directory -Path "C:\Windows" ➜ C:\Windows
+# Helper: Research Set-Location.
 function Change-Directory {
-    param($path)
-    # TODO: Change to the specified directory
+    param([string]$Path)
+    # TODO: Change directory using Set-Location
     return
 }
-Write-Output (Change-Directory "C:\Windows")  
-# Expected: Now in C:\Windows
+Write-Output (Change-Directory -Path "C:\Windows")  # Expected: Now in C:\Windows
 
-#================
-# 28. List All Files in a Folder
-#================
-# Objective: List file names in the given directory.
-# Expected: List-Files "C:\Windows" ➜ explorer.exe, notepad.exe, etc.
-# Helper: Research 'Get-ChildItem'
-
+#17. List Files in Directory
+# Objective: List file names in a folder.
+# Expected: List-Files -Path "C:\Windows" ➜ explorer.exe, notepad.exe
+# Helper: Research Get-ChildItem.
 function List-Files {
-    param($folderPath)
-    # TODO: Return names of all files in the given directory
+    param([string]$Path)
+    # TODO: Return file names via Get-ChildItem
     return
 }
-Write-Output (List-Files "C:\Windows")  
-# Expected: explorer.exe, notepad.exe, etc.
+Write-Output (List-Files -Path "C:\Windows")  # Expected: explorer.exe, notepad.exe
 
-#================
-# 29. Create a New Folder
-#================
-# Objective: Create a new directory at the specified path.
-# Expected: Create-Folder "C:\Temp\MyTestFolder" ➜ folder created.
-# Helper: Research 'New-Item -ItemType Directory'
-
-function Create-Folder {
-    param($path)
-    # TODO: Create a folder at the given path
+#18. List Files Recursively
+# Objective: List all files under a folder tree.
+# Expected: Get-FilesRecursive -Path "." ➜ ./sub\a.txt
+# Helper: Use Get-ChildItem -Recurse.
+function Get-FilesRecursive {
+    param([string]$Path)
+    # TODO: Use -Recurse to list all files
     return
 }
-Write-Output (Create-Folder "C:\Temp\MyTestFolder")  
-# Expected: Folder C:\Temp\MyTestFolder created
+Write-Output (Get-FilesRecursive -Path ".")  # Expected: nested file paths
 
-#================
-# 30. Delete a Folder
-#================
-# Objective: Remove the specified folder and its contents.
-# Expected: Delete-Folder "C:\Temp\MyTestFolder" ➜ folder deleted.
-# Helper: Research 'Remove-Item -Recurse'
-
-function Delete-Folder {
-    param($path)
-    # TODO: Delete the folder at the given path (including contents)
+#19. Get File Size
+# Objective: Return file size in bytes.
+# Expected: Get-FileSize -Path ".\file.txt" ➜ 1024
+# Helper: (Get-Item).Length.
+function Get-FileSize {
+    param([string]$Path)
+    # TODO: Return (Get-Item $Path).Length
     return
 }
-Write-Output (Delete-Folder "C:\Temp\MyTestFolder")  
-# Expected: Folder deleted
+Write-Output (Get-FileSize -Path ".\file.txt")  # Expected: 1024
 
-#================
-# 31. Create a New Text File with Content
-#================
-# Objective: Write text to a new file (creating it if necessary).
-# Expected: Write-TextFile "C:\Temp\hello.txt" "Hello World!" ➜ file contains "Hello World!"
-# Helper: Research 'Out-File' or 'Set-Content'
-
-function Write-TextFile {
-    param($path, $text)
-    # TODO: Write the given text to the file path (create if not exists)
+#20. Create New File
+# Objective: Create an empty file.
+# Expected: New-File -Path ".\test.txt" ➜ True
+# Helper: New-Item -ItemType File.
+function New-File {
+    param([string]$Path)
+    # TODO: Create file if not exists
     return
 }
-Write-Output (Write-TextFile "C:\Temp\hello.txt" "Hello World!")  
-# Expected: File hello.txt contains "Hello World!"
+Write-Output (New-File -Path ".\test.txt")  # Expected: True
 
-#================
-# 32. Read Content from a File
-#================
-# Objective: Return the contents of the specified text file.
-# Expected: Read-TextFile "C:\Temp\hello.txt" ➜ "Hello World!"
-# Helper: Research 'Get-Content'
-
-function Read-TextFile {
-    param($path)
-    # TODO: Return the contents of the file
+#21. Delete File
+# Objective: Remove a file if it exists.
+# Expected: Remove-File -Path ".\test.txt" ➜ True
+# Helper: Test-Path + Remove-Item.
+function Remove-File {
+    param([string]$Path)
+    # TODO: Delete file if exists
     return
 }
-Write-Output (Read-TextFile "C:\Temp\hello.txt")  
-# Expected: Hello World!
+Write-Output (Remove-File -Path ".\test.txt")  # Expected: True
 
-#================
-# 33. Copy a File to New Location
-#================
-# Objective: Copy a file from source to destination.
-# Expected: Copy-File "C:\Temp\hello.txt" "C:\Temp\Backup\hello.txt" ➜ file copied.
-# Helper: Research 'Copy-Item'
-
-function Copy-File {
-    param($source, $destination)
-    # TODO: Copy the file to the new location
+#22. Copy Files by Extension
+# Objective: Copy all .txt files between folders.
+# Expected: Copy-FilesByExtension -SourceDir ".\src" -DestinationDir ".\dest" -Extension ".txt" ➜ count
+# Helper: Get-ChildItem -Filter + Copy-Item.
+function Copy-FilesByExtension {
+    param([string]$SourceDir, [string]$DestinationDir, [string]$Extension)
+    # TODO: Copy matching files and return count
     return
 }
-Write-Output (Copy-File "C:\Temp\hello.txt" "C:\Temp\Backup\hello.txt")  
-# Expected: File copied
+Write-Output (Copy-FilesByExtension -SourceDir ".\src" -DestinationDir ".\dest" -Extension ".txt")  # Expected: 2
 
-#================
-# 34. Move a File
-#================
-# Objective: Move a file from source to destination.
-# Expected: Move-File "C:\Temp\hello.txt" "C:\Temp\Moved\hello.txt" ➜ file moved.
-# Helper: Research 'Move-Item'
-
-function Move-File {
-    param($source, $destination)
-    # TODO: Move the file from source to destination
+#23. Find Text in File
+# Objective: Return lines containing text in a file.
+# Expected: Find-TextInFile -Path ".\sample.txt" -Text "hello" ➜ matching lines
+# Helper: Select-String.
+function Find-TextInFile {
+    param([string]$Path, [string]$Text)
+    # TODO: Return lines matching $Text
     return
 }
-Write-Output (Move-File "C:\Temp\hello.txt" "C:\Temp\Moved\hello.txt")  
-# Expected: File relocated to new folder
+Write-Output (Find-TextInFile -Path ".\sample.txt" -Text "hello")  # Expected: hello world
 
-#================
-# 35. Delete a File
-#================
-# Objective: Delete the specified file.
-# Expected: Delete-File "C:\Temp\Moved\hello.txt" ➜ file deleted.
-# Helper: Research 'Remove-Item'
-
-function Delete-File {
-    param($path)
-    # TODO: Delete the specified file
+#24. List Recent Files
+# Objective: List files modified in last N days.
+# Expected: Get-RecentFiles -Path "." -Days 7 ➜ recent files
+# Helper: LastWriteTime comparison.
+function Get-RecentFiles {
+    param([string]$Path, [int]$Days)
+    # TODO: Filter by LastWriteTime
     return
 }
-Write-Output (Delete-File "C:\Temp\Moved\hello.txt")  
-# Expected: File deleted
+Write-Output (Get-RecentFiles -Path "." -Days 7)  # Expected: recent1.txt
 
-#================
-# 36. Get Local IP Address
-#================
-# Objective: Return the primary IPv4 address of the local machine.
-# Expected: Get-IP ➜ 192.168.1.10
-# Helper: Research 'Get-NetIPAddress'
+#25. Read File Content
+# Objective: Return entire file content.
+# Expected: Get-FileContent -Path ".\sample.txt" ➜ file lines
+# Helper: Get-Content.
+function Get-FileContent {
+    param([string]$Path)
+    # TODO: Return file content
+    return
+}
+Write-Output (Get-FileContent -Path ".\sample.txt")  # Expected: all lines
 
-function Get-IP {
+#26. Write File Content
+# Objective: Overwrite file with provided text.
+# Expected: Set-FileContent -Path ".\out.txt" -Content "Hello" ➜ True
+# Helper: Set-Content.
+function Set-FileContent {
+    param([string]$Path, [string]$Content)
+    # TODO: Write $Content to file
+    return
+}
+Write-Output (Set-FileContent -Path ".\out.txt" -Content "Hello")  # Expected: True
+
+#===================================
+# Environment Variables & Streams
+#===================================
+
+#27. Get Environment Variable
+# Objective: Return the value of an environment variable.
+# Expected: Get-EnvVar -Name "PATH" ➜ "C:\Windows\System32;..."
+# Helper: Use Get-ChildItem Env: or [Environment]::GetEnvironmentVariable().
+function Get-EnvVar {
+    param([string]$Name)
+    # TODO: Return environment variable value
+    return
+}
+Write-Output (Get-EnvVar -Name "PATH")  # Expected: PATH value
+
+#28. Set Environment Variable
+# Objective: Set a new environment variable for current session.
+# Expected: Set-EnvVar -Name "FOO" -Value "Bar" ➜ $env:FOO="Bar"
+# Helper: $env:Name = "Value" or SetEnvironmentVariable().
+function Set-EnvVar {
+    param([string]$Name, [string]$Value)
+    # TODO: Set environment variable
+    return
+}
+Write-Output (Set-EnvVar -Name "FOO" -Value "Bar")  # Expected: True
+
+#29. Remove Environment Variable
+# Objective: Remove an environment variable from current session.
+# Expected: Remove-EnvVar -Name "FOO" ➜ $env:FOO removed
+# Helper: Remove-Item Env:Name.
+function Remove-EnvVar {
+    param([string]$Name)
+    # TODO: Remove environment variable
+    return
+}
+Write-Output (Remove-EnvVar -Name "FOO")  # Expected: True
+
+#30. Redirect Output Example
+# Objective: Demonstrate output redirection to a file.
+# Expected: Redirect-Output -Command "Get-Date" -FilePath ".\date.txt" ➜ date.txt contains date
+# Helper: Use > and >> operators.
+function Redirect-Output {
+    param([string]$Command, [string]$FilePath)
+    # TODO: Run $Command and redirect output to $FilePath
+    return
+}
+Write-Output (Redirect-Output -Command "Get-Date" -FilePath ".\date.txt")  # Expected: True
+
+#31. Pipeline Example
+# Objective: Pipe command output into a filter.
+# Expected: Pipeline-Example -Command "Get-ChildItem . -Recurse" -Filter "ps1" ➜ list .ps1 files
+# Helper: Use | Where-Object.
+function Pipeline-Example {
+    param([string]$Command, [string]$Filter)
+    # TODO: Invoke $Command and filter results by extension $Filter
+    return
+}
+Write-Output (Pipeline-Example -Command "Get-ChildItem . -Recurse" -Filter "ps1")  # Expected: .ps1 files
+
+#===================================
+# Help & Discovery
+#===================================
+
+#32. Show Command Help
+# Objective: Display help for a cmdlet or executable.
+# Expected: Show-Help -Name "Copy-Item" ➜ help text
+# Helper: Use Get-Help or /?.
+function Show-Help {
+    param([string]$Name)
+    # TODO: Invoke help for $Name
+    return
+}
+Write-Output (Show-Help -Name "Copy-Item")  # Expected: help info
+
+#33. Get All Commands
+# Objective: List all available commands.
+# Expected: Get-Commands ➜ all cmdlets, functions, aliases
+# Helper: Use Get-Command.
+function Get-Commands {
     param()
-    # TODO: Return the IPv4 address of the local machine
+    # TODO: Return Get-Command
     return
 }
-Write-Output (Get-IP)  
-# Expected: 192.168.1.10 (or similar)
+Write-Output (Get-Commands)  # Expected: command list
 
-#================
-# 37. Ping a Remote Host
-#================
-# Objective: Return $true if the specified host is reachable via ping, else $false.
-# Expected: Test-Connectivity "8.8.8.8" ➜ True; "nohost.local" ➜ False.
-# Helper: Research 'Test-Connection -Quiet'
-
-function Test-Connectivity {
-    param($hostname)
-    # TODO: Ping the specified host and return if it's reachable
+#34. Show Parameter Info
+# Objective: Show detailed parameter info for a cmdlet.
+# Expected: Show-Params -Name "Get-ChildItem" ➜ parameter descriptions
+# Helper: Get-Help -Parameter.
+function Show-Params {
+    param([string]$Name)
+    # TODO: Invoke Get-Help -Parameter for $Name
     return
 }
-Write-Output (Test-Connectivity "8.8.8.8")       # Expected: True
-Write-Output (Test-Connectivity "nohost.local")  # Expected: False
+Write-Output (Show-Params -Name "Get-ChildItem")  # Expected: parameter info
 
-#================
-# 38. Run Traceroute to Host
-#================
-# Objective: Show the route packets take to a target host.
-# Expected: Trace-Host "google.com" ➜ list of hop IPs.
-# Helper: Research 'tracert' usage
+#===================================
+# File Attributes & Permissions
+#===================================
 
-function Trace-Host {
-    param($target)
-    # TODO: Perform a traceroute (use tracert)
+#35. Set Read-Only Attribute
+# Objective: Mark a file as read-only.
+# Expected: Set-FileAttributeReadOnly -Path ".\file.txt" ➜ file is read-only
+# Helper: Use attrib +r.
+function Set-FileAttributeReadOnly {
+    param([string]$Path)
+    # TODO: Set file attribute to ReadOnly
     return
 }
-Write-Output (Trace-Host "google.com")  
-# Expected: List of hop IPs toward google.com
+Write-Output (Set-FileAttributeReadOnly -Path ".\file.txt")  # Expected: True
 
-#================
-# 39. Show All Network Interfaces
-#================
-# Objective: List each network adapter's name, status, and IP.
-# Expected: Get-NetworkInterfaces ➜ Ethernet: Up, IP=192.168.1.10; Wi-Fi: Down, etc.
-# Helper: Research 'Get-NetAdapter', 'Get-NetIPAddress'
+#36. Remove Hidden Attribute
+# Objective: Unh hide a file.
+# Expected: Remove-FileAttributeHidden -Path ".\secret.txt" ➜ file unhidden
+# Helper: Use attrib -h.
+function Remove-FileAttributeHidden {
+    param([string]$Path)
+    # TODO: Remove Hidden attribute
+    return
+}
+Write-Output (Remove-FileAttributeHidden -Path ".\secret.txt")  # Expected: True
 
-function Get-NetworkInterfaces {
+#37. Take Ownership
+# Objective: Grant current user ownership of a file.
+# Expected: Take-Ownership -Path ".\file.txt" ➜ ownership assigned
+# Helper: Use takeown /f.
+function Take-Ownership {
+    param([string]$Path)
+    # TODO: Invoke takeown for $Path
+    return
+}
+Write-Output (Take-Ownership -Path ".\file.txt")  # Expected: True
+
+#38. Modify ACL (icacls)
+# Objective: Grant Read permission to a user.
+# Expected: Set-FileAcl -Path ".\file.txt" -User "User" -Permission "R" ➜ permission set
+# Helper: Use icacls.
+function Set-FileAcl {
+    param([string]$Path, [string]$User, [string]$Permission)
+    # TODO: Invoke icacls to set ACL
+    return
+}
+Write-Output (Set-FileAcl -Path ".\file.txt" -User "User" -Permission "R")  # Expected: True
+
+#===================================
+# System Information
+#===================================
+
+#39. Get System Info
+# Objective: Retrieve a summary of system information.
+# Expected: Get-SystemInfo ➜ system summary text
+# Helper: Use systeminfo.
+function Get-SystemInfo {
     param()
-    # TODO: Return name, status, and IP of each network adapter
+    # TODO: Invoke systeminfo and return output
     return
 }
-Write-Output (Get-NetworkInterfaces)  
-# Expected: Ethernet, Wi-Fi, Virtual adapters listed with IPs
+Write-Output (Get-SystemInfo)  # Expected: OS, RAM, BIOS info
 
-#================
-# 40. Display TCP Listening Ports
-#================
-# Objective: List all TCP ports currently being listened on.
-# Expected: Get-TCPListeners ➜ Port 80 - httpd, Port 443 - svchost, etc.
-# Helper: Research 'Get-NetTCPConnection -State Listen'
+#===================================
+# Processes & Services
+#===================================
 
-function Get-TCPListeners {
+#40. List All Running Processes
+#===================================
+# Objective: Return names of all running processes.
+# Expected: Get-RunningProcesses ➜ "explorer", "svchost", etc.
+# Helper: Use Get-Process.
+function Get-RunningProcesses {
     param()
-    # TODO: List ports that are currently listening
+    # TODO: Return all process names
     return
 }
-Write-Output (Get-TCPListeners)  
-# Expected: List of ports and processes (e.g., 443 - svchost)
+Write-Output (Get-RunningProcesses)  # Expected: process list
 
-#================
-# 41. Check If Port is Listening
-#================
-# Objective: Return $true if the specified port is in listening state.
-# Expected: Is-PortListening 80 ➜ True; 9999 ➜ False.
-# Helper: Research 'Get-NetTCPConnection'
-
-function Is-PortListening {
-    param($port)
-    # TODO: Return $true if the port is in listening state
+#41. Check If a Process is Running
+#===================================
+# Objective: Return True if a process exists.
+# Expected: Is-ProcessRunning -Name "notepad" ➜ True/False
+# Helper: Get-Process -Name.
+function Is-ProcessRunning {
+    param([string]$Name)
+    # TODO: Return $true if process exists
     return
 }
-Write-Output (Is-PortListening 80)    # Expected: True or False
-Write-Output (Is-PortListening 9999)  # Expected: False
+Write-Output (Is-ProcessRunning -Name "notepad")  # Expected: True/False
 
-#================
-# 42. List Active Network Connections
-#================
-# Objective: Show current TCP/UDP connections.
-# Expected: Get-NetworkConnections ➜ list remote IPs, local ports, states like ESTABLISHED.
-# Helper: Research 'Get-NetTCPConnection'
+#42. Kill a Process by Name
+#===================================
+# Objective: Terminate all instances of a process.
+# Expected: Kill-Process -Name "notepad" ➜ closes Notepad
+# Helper: Stop-Process -Name.
+function Kill-Process {
+    param([string]$Name)
+    # TODO: Stop all processes matching $Name
+    return
+}
+Write-Output (Kill-Process -Name "notepad")  # Expected: True
 
-function Get-NetworkConnections {
+#43. List All Services and Their States
+#===================================
+# Objective: Return each service and its status.
+# Expected: Get-AllServices ➜ "Spooler: Running", ...
+# Helper: Use Get-Service.
+function Get-AllServices {
     param()
-    # TODO: Return all active TCP/UDP connections
+    # TODO: Return service Name and Status
     return
 }
-Write-Output (Get-NetworkConnections)  
-# Expected: Remote IPs, local ports, states like ESTABLISHED
+Write-Output (Get-AllServices)  # Expected: service list
 
-#================
-# 43. Release and Renew IP Address (DHCP)
-#================
-# Objective: Release and renew the DHCP lease.
-# Expected: Refresh-IP ➜ new IP assigned by DHCP server.
-# Helper: Research 'ipconfig /release' and '/renew' or equivalent cmdlets
-
-function Refresh-IP {
-    param()
-    # TODO: Release and renew the DHCP lease
+#44. Start a Windows Service
+#===================================
+# Objective: Start a service if stopped.
+# Expected: Start-ServiceByName -Name "Spooler" ➜ True
+# Helper: Start-Service.
+function Start-ServiceByName {
+    param([string]$Name)
+    # TODO: Start the specified service
     return
 }
-Write-Output (Refresh-IP)  
-# Expected: New IP assigned by DHCP server
+Write-Output (Start-ServiceByName -Name "Spooler")  # Expected: True
 
-#================
-# 44. Declare and Use a Variable
-#================
-# Objective: Assign a string to a variable and return it.
-# Expected: Use-Variable ➜ "PowerShell is fun!"
-# Helper: Research variable declaration
-
-function Use-Variable {
-    param()
-    # TODO: Assign a string to a variable and return it
+#45. Stop a Windows Service
+#===================================
+# Objective: Stop a service if running.
+# Expected: Stop-ServiceByName -Name "Spooler" ➜ True
+# Helper: Stop-Service.
+function Stop-ServiceByName {
+    param([string]$Name)
+    # TODO: Stop the specified service
     return
 }
-Write-Output (Use-Variable)   # Expected: "PowerShell is fun!"
+Write-Output (Stop-ServiceByName -Name "Spooler")  # Expected: True
 
-#================
-# 45. Perform Arithmetic with Variables
-#================
-# Objective: Return the sum of two numbers.
-# Expected: Add-Numbers 2 3 ➜ 5; 10 15 ➜ 25.
-# Helper: Research arithmetic operators
-
-function Add-Numbers {
-    param($a, $b)
-    # TODO: Return the sum of $a and $b
+#46. Restart a Windows Service
+#===================================
+# Objective: Restart a service (stop then start).
+# Expected: Restart-ServiceByName -Name "wuauserv" ➜ True
+# Helper: Restart-Service.
+function Restart-ServiceByName {
+    param([string]$Name)
+    # TODO: Restart the specified service
     return
 }
-Write-Output (Add-Numbers 2 3)     # Expected: 5
-Write-Output (Add-Numbers 10 15)   # Expected: 25
+Write-Output (Restart-ServiceByName -Name "wuauserv")  # Expected: True
 
-#================
-# 46. Get User Input
-#================
-# Objective: Prompt the user for input and return a greeting.
-# Expected: Ask-Username ➜ prompts, then returns "Hello, <name>!"
-# Helper: Research Read-Host
-
-function Ask-Username {
-    param()
-    # TODO: Ask the user for their name and return "Hello, <name>!"
+#47. Get Services by Startup Type
+#===================================
+# Objective: List services by StartMode (Auto/Manual/Disabled).
+# Expected: Get-ServicesByStartupType -Type "Automatic" ➜ list
+# Helper: Get-CimInstance Win32_Service.
+function Get-ServicesByStartupType {
+    param([string]$Type)
+    # TODO: Filter services by StartMode
     return
 }
-Write-Output (Ask-Username)   # Expected (on prompt): Hello, Jordan!
+Write-Output (Get-ServicesByStartupType -Type "Automatic")  # Expected: service names
 
-#================
-# 47. If Statement – Check Value
-#================
-# Objective: Return "Access granted" if role is "admin", else "Access denied".
-# Expected: Is-Admin "admin" ➜ Access granted; "user" ➜ Access denied.
-# Helper: Research if/else syntax
-
-function Is-Admin {
-    param($role)
-    # TODO: Return "Access granted" if role is "admin", else "Access denied"
+#48. Find Service by Name
+#===================================
+# Objective: Search services with names matching a string.
+# Expected: Find-Service -Name "Print" ➜ Print Spooler
+# Helper: Get-Service -DisplayName.
+function Find-Service {
+    param([string]$Name)
+    # TODO: Filter services by name/display name
     return
 }
-Write-Output (Is-Admin "admin")     # Expected: Access granted
-Write-Output (Is-Admin "user")      # Expected: Access denied
+Write-Output (Find-Service -Name "Print")  # Expected: Print Spooler
 
-#================
-# 48. ElseIf Chain
-#================
-# Objective: Return "Weekend" for Sat/Sun, "Weekday" for Mon-Fri, "Invalid" otherwise.
-# Expected: Get-DayType "Monday" ➜ Weekday; "Sunday" ➜ Weekend; "Caturday" ➜ Invalid.
-# Helper: Research elseif chains
+#===================================
+# Scheduled Tasks
+#===================================
 
-function Get-DayType {
-    param($day)
-    # TODO: Return "Weekend" for Sat/Sun, "Weekday" for Mon-Fri, "Invalid" otherwise
-    return
-}
-Write-Output (Get-DayType "Monday")    # Expected: Weekday
-Write-Output (Get-DayType "Sunday")    # Expected: Weekend
-Write-Output (Get-DayType "Caturday")  # Expected: Invalid
-
-#================
-# 49. While Loop Timer
-#================
-# Objective: Print a countdown from a given number to zero.
-# Expected: Countdown-Timer 3 ➜ 3 2 1 0.
-# Helper: Research while loops
-
-function Countdown-Timer {
-    param($seconds)
-    # TODO: Loop and print countdown from $seconds to 0
-    return
-}
-Write-Output (Countdown-Timer 3)  
-# Expected:
-# 3
-# 2
-# 1
-# 0
-
-#================
-# 50. ForEach Loop Over Files
-#================
-# Objective: Return names of all files in a folder using a loop.
-# Expected: List-FileNames "C:\Windows\System32" ➜ list of file names.
-# Helper: Research foreach syntax
-
-function List-FileNames {
-    param($path)
-    # TODO: Return names of all files in the folder using a loop
-    return
-}
-Write-Output (List-FileNames "C:\Windows\System32")  
-# Expected: List of file names (not directories)
-
-#================
-# 51. Function Reuse and Return
-#================
-# Objective: Return the square of a number.
-# Expected: Square 4 ➜ 16; -3 ➜ 9.
-# Helper: Research function calls
-
-function Square {
-    param($n)
-    # TODO: Return the square of a number
-    return
-}
-Write-Output (Square 4)    # Expected: 16
-Write-Output (Square -3)   # Expected: 9
-
-#================
-# 52. Switch Statement
-#================
-# Objective: Return a message based on an HTTP status code.
-# Expected: Get-StatusMessage 200 ➜ OK; 404 ➜ Not Found; 999 ➜ Unknown.
-# Helper: Research switch statement
-
-function Get-StatusMessage {
-    param($code)
-    # TODO: Use a switch to return a message for 200, 404, 500
-    return
-}
-Write-Output (Get-StatusMessage 200)  # Expected: OK
-Write-Output (Get-StatusMessage 404)  # Expected: Not Found
-Write-Output (Get-StatusMessage 999)  # Expected: Unknown
-
-#================
-# 53. Filter Processes by Name
-#================
-# Objective: Return running processes matching a given name.
-# Expected: Find-Process "svchost" ➜ multiple entries with Name=svchost.
-# Helper: Research Get-Process | Where-Object
-
-function Find-Process {
-    param($name)
-    # TODO: Return all running processes that match $name using a pipeline
-    return
-}
-Write-Output (Find-Process "svchost")  
-# Expected: Multiple entries with Name = svchost
-
-#================
-# 54. Filter by CPU Usage
-#================
-# Objective: Return processes using more CPU time than a threshold.
-# Expected: Get-HighCPUProcesses 100 ➜ processes with CPU > 100.
-# Helper: Research Get-Process CPU property and Where-Object
-
-function Get-HighCPUProcesses {
-    param($threshold)
-    # TODO: Return processes using more CPU time than the threshold
-    return
-}
-Write-Output (Get-HighCPUProcesses 100)  
-# Expected: Any process with CPU(s) > 100
-
-#================
-# 55. Select Specific Process Properties
-#================
-# Objective: Show only Name and Id for all running processes.
-# Expected: Select-ProcessProperties ➜ table of Name and Id.
-# Helper: Research Select-Object
-
-function Select-ProcessProperties {
-    param()
-    # TODO: Return just Name and Id for all running processes
-    return
-}
-Write-Output (Select-ProcessProperties)  
-# Expected: Output shows only Name and Id columns
-
-#================
-# 56. Format Output as a List
-#================
-# Objective: Display all properties of a named process using list format.
-# Expected: List-ProcessDetails "explorer" ➜ all properties via Format-List.
-# Helper: Research Format-List
-
-function List-ProcessDetails {
-    param($name)
-    # TODO: Return all properties of a named process using Format-List
-    return
-}
-Write-Output (List-ProcessDetails "explorer")  
-# Expected: Name, Id, CPU, Path, etc.
-
-#================
-# 57. Get Services That Are Running
-#================
-# Objective: List all services where status is 'Running'.
-# Expected: Get-RunningServices ➜ list of running services.
-# Helper: Research Get-Service | Where-Object
-
-function Get-RunningServices {
-    param()
-    # TODO: Return all services where status is 'Running'
-    return
-}
-Write-Output (Get-RunningServices)  
-# Expected: List of currently running Windows services
-
-#================
-# 58. Count Number of Running Processes
-#================
-# Objective: Count how many processes are currently running.
-# Expected: Count-Processes ➜ integer count.
-# Helper: Research Measure-Object
-
-function Count-Processes {
-    param()
-    # TODO: Return how many processes are currently running
-    return
-}
-Write-Output (Count-Processes)  
-# Expected: An integer (e.g., 127)
-
-#================
-# 59. Sort Services by Status
-#================
-# Objective: Return all services sorted by their Status.
-# Expected: Sort-ServicesByStatus ➜ grouped by Running then Stopped.
-# Helper: Research Sort-Object
-
-function Sort-ServicesByStatus {
-    param()
-    # TODO: Return all services sorted by Status (Running, Stopped)
-    return
-}
-Write-Output (Sort-ServicesByStatus)  
-# Expected: Services grouped by Running and Stopped
-
-#================
-# 60. Display Services as a Table
-#================
-# Objective: Show Name, Status, and StartType for each service in table format.
-# Expected: Table-Services ➜ formatted table.
-# Helper: Research Format-Table
-
-function Table-Services {
-    param()
-    # TODO: Return Service Name, Status, and StartType in table format
-    return
-}
-Write-Output (Table-Services)  
-# Expected: Nicely formatted table with Name, Status, StartType
-
-#================
-# 61. Start a Background Job
-#================
-# Objective: Start a background job that pings a host multiple times.
-# Expected: Start-BackgroundPing "8.8.8.8" ➜ Job object with Id and State.
-# Helper: Research Start-Job
-
-function Start-BackgroundPing {
-    param($host)
-    # TODO: Start a background job that pings the specified host
-    return
-}
-Write-Output (Start-BackgroundPing "8.8.8.8")  
-# Expected: Job object with Id and State
-
-#================
-# 62. Get All Background Jobs
-#================
-# Objective: List all current PowerShell jobs.
-# Expected: Get-AllJobs ➜ list of jobs with Id, Name, State.
-# Helper: Research Get-Job
-
-function Get-AllJobs {
-    param()
-    # TODO: Return a list of all current PowerShell jobs
-    return
-}
-Write-Output (Get-AllJobs)  
-# Expected: List of jobs with Id, Name, and State
-
-#================
-# 63. Receive Output from a Job
-#================
-# Objective: Retrieve the results of a completed background job.
-# Expected: Get-JobOutput 1 ➜ output from job ID 1.
-# Helper: Research Receive-Job
-
-function Get-JobOutput {
-    param($jobId)
-    # TODO: Return the output from the specified job
-    return
-}
-Write-Output (Get-JobOutput 1)  
-# Expected: Output from the background job with ID 1
-
-#================
-# 64. Remove All Completed Jobs
-#================
-# Objective: Remove jobs in the Completed state.
-# Expected: Clear-FinishedJobs ➜ all completed jobs removed.
-# Helper: Research Get-Job | Where-Object State -eq Completed | Remove-Job
-
-function Clear-FinishedJobs {
-    param()
-    # TODO: Remove all jobs that are in Completed state
-    return
-}
-Write-Output (Clear-FinishedJobs)  
-# Expected: All completed jobs removed
-
-#================
-# 65. Schedule a Task to Run a Script
-#================
-# Objective: Create a scheduled task to run a script every hour.
-# Expected: Schedule-Script "HourlyTest" "C:\Scripts\Test.ps1" ➜ task created.
-# Helper: Research Register-ScheduledTask and New-ScheduledTaskTrigger
-
+#49. Schedule a Script Task
+#===================================
+# Objective: Create a scheduled task to run a script hourly.
+# Expected: Schedule-Script -TaskName "HourlyTest" -ScriptPath "C:\Scripts\Test.ps1" ➜ True
+# Helper: Register-ScheduledTask.
 function Schedule-Script {
-    param($taskName, $scriptPath)
-    # TODO: Create a scheduled task that runs a script every hour
+    param([string]$TaskName, [string]$ScriptPath)
+    # TODO: Register a scheduled task
     return
 }
-Write-Output (Schedule-Script "HourlyTest" "C:\Scripts\Test.ps1")  
-# Expected: Task created and visible in Task Scheduler
+Write-Output (Schedule-Script -TaskName "HourlyTest" -ScriptPath "C:\Scripts\Test.ps1")  # Expected: True
 
-#================
-# 66. List All Scheduled Tasks
-#================
-# Objective: List scheduled tasks and their current status.
-# Expected: List-ScheduledTasks ➜ TaskName, State, LastRunTime.
-# Helper: Research Get-ScheduledTask
-
+#50. List All Scheduled Tasks
+#===================================
+# Objective: List scheduled tasks and statuses.
+# Expected: List-ScheduledTasks ➜ task list
+# Helper: Get-ScheduledTask.
 function List-ScheduledTasks {
     param()
-    # TODO: Return a list of scheduled tasks and their status
+    # TODO: Return scheduled tasks
     return
 }
-Write-Output (List-ScheduledTasks)  
-# Expected: TaskName, State, LastRunTime
+Write-Output (List-ScheduledTasks)  # Expected: task list
 
-#================
-# 67. Manually Run a Scheduled Task
-#================
-# Objective: Trigger a scheduled task to run immediately.
-# Expected: Run-TaskNow "HourlyTest" ➜ task launched.
-# Helper: Research Start-ScheduledTask
-
+#51. Run Scheduled Task Now
+#===================================
+# Objective: Trigger a scheduled task immediately.
+# Expected: Run-TaskNow -TaskName "HourlyTest" ➜ True
+# Helper: Start-ScheduledTask.
 function Run-TaskNow {
-    param($taskName)
-    # TODO: Run a scheduled task immediately
+    param([string]$TaskName)
+    # TODO: Start scheduled task
     return
 }
-Write-Output (Run-TaskNow "HourlyTest")  
-# Expected: Task launched and output generated
+Write-Output (Run-TaskNow -TaskName "HourlyTest")  # Expected: True
 
-#================
-# 68. Disable a Scheduled Task
-#================
-# Objective: Disable a scheduled task so it no longer runs.
-# Expected: Disable-ScheduledTask "HourlyTest" ➜ task disabled.
-# Helper: Research Disable-ScheduledTask
-
+#52. Disable a Scheduled Task
+#===================================
+# Objective: Disable a scheduled task.
+# Expected: Disable-ScheduledTask -TaskName "HourlyTest" ➜ True
+# Helper: Disable-ScheduledTask.
 function Disable-ScheduledTask {
-    param($taskName)
-    # TODO: Disable the specified task
+    param([string]$TaskName)
+    # TODO: Disable task
     return
 }
-Write-Output (Disable-ScheduledTask "HourlyTest")  
-# Expected: Task is now disabled
+Write-Output (Disable-ScheduledTask -TaskName "HourlyTest")  # Expected: True
 
-#================
-# 69. Delete a Scheduled Task
-#================
-# Objective: Permanently remove a scheduled task.
-# Expected: Delete-ScheduledTask "HourlyTest" ➜ task deleted.
-# Helper: Research Unregister-ScheduledTask
-
+#53. Delete a Scheduled Task
+#===================================
+# Objective: Remove a scheduled task permanently.
+# Expected: Delete-ScheduledTask -TaskName "HourlyTest" ➜ True
+# Helper: Unregister-ScheduledTask.
 function Delete-ScheduledTask {
-    param($taskName)
-    # TODO: Permanently remove a scheduled task by name
+    param([string]$TaskName)
+    # TODO: Unregister scheduled task
     return
 }
-Write-Output (Delete-ScheduledTask "HourlyTest")  
-# Expected: Task deleted from Task Scheduler
+Write-Output (Delete-ScheduledTask -TaskName "HourlyTest")  # Expected: True
 
-#================
-# 70. Test If Remote Machine is Reachable
-#================
-# Objective: Return $true if the remote host responds to ping.
-# Expected: Test-RemoteHost "10.0.0.5" ➜ True/False.
-# Helper: Research Test-Connection
+#===================================
+# User & Group Management
+#===================================
 
-function Test-RemoteHost {
-    param($hostname)
-    # TODO: Return $true if remote host is reachable via ping
+#54. Create Local User
+#===================================
+# Objective: Add a new local user with a password.
+# Expected: Add-LocalUser -Name "Bob" -Password "P@ssw0rd" ➜ True
+# Helper: New-LocalUser.
+function Add-LocalUser {
+    param([string]$Name, [string]$Password)
+    # TODO: Create local user
     return
 }
-Write-Output (Test-RemoteHost "10.0.0.5")    # Expected: True or False
+Write-Output (Add-LocalUser -Name "Bob" -Password "P@ssw0rd")  # Expected: True
 
-#================
-# 71. Run a Command on Remote Machine
-#================
-# Objective: Execute a command via PS Remoting and return output.
-# Expected: Invoke-RemoteCommand "SERVER01" "Get-Service Spooler" ➜ shows Spooler status.
-# Helper: Research Invoke-Command
+#55. Remove Local User
+#===================================
+# Objective: Delete a local user account.
+# Expected: Remove-LocalUser -Name "Bob" ➜ True
+# Helper: Remove-LocalUser.
+function Remove-LocalUser {
+    param([string]$Name)
+    # TODO: Remove local user
+    return
+}
+Write-Output (Remove-LocalUser -Name "Bob")  # Expected: True
 
+#56. Add User to Group
+#===================================
+# Objective: Add a user to a local group.
+# Expected: Add-LocalGroupMember -Group "Administrators" -Member "Bob" ➜ True
+# Helper: Add-LocalGroupMember.
+function Add-LocalGroupMember {
+    param([string]$Group, [string]$Member)
+    # TODO: Add user to group
+    return
+}
+Write-Output (Add-LocalGroupMember -Group "Administrators" -Member "Bob")  # Expected: True
+
+#57. Remove User from Group
+#===================================
+# Objective: Remove a user from a local group.
+# Expected: Remove-LocalGroupMember -Group "Administrators" -Member "Bob" ➜ True
+# Helper: Remove-LocalGroupMember.
+function Remove-LocalGroupMember {
+    param([string]$Group, [string]$Member)
+    # TODO: Remove user from group
+    return
+}
+Write-Output (Remove-LocalGroupMember -Group "Administrators" -Member "Bob")  # Expected: True
+
+#===================================
+# Networking Tools
+#===================================
+
+#58. Get Local IP Address
+#===================================
+# Objective: Return the primary IPv4 address.
+# Expected: Get-IP ➜ 192.168.1.10
+# Helper: Get-NetIPAddress.
+function Get-IP {
+    param()
+    # TODO: Return IPv4 address
+    return
+}
+Write-Output (Get-IP)  # Expected: 192.168.1.10
+
+#59. Release and Renew IP Address
+#===================================
+# Objective: Release and renew DHCP lease.
+# Expected: Refresh-IP ➜ new IP assigned
+# Helper: ipconfig /release; ipconfig /renew or Invoke-NetAdapter.
+function Refresh-IP {
+    param()
+    # TODO: Release and renew DHCP
+    return
+}
+Write-Output (Refresh-IP)  # Expected: New IP
+
+#60. Ping a Remote Host
+#===================================
+# Objective: Test connectivity via ping.
+# Expected: Test-Connectivity -Host "8.8.8.8" ➜ True/False
+# Helper: Test-Connection -Quiet.
+function Test-Connectivity {
+    param([string]$Host)
+    # TODO: Ping and return result
+    return
+}
+Write-Output (Test-Connectivity -Host "8.8.8.8")  # Expected: True
+
+#61. Run Traceroute to Host
+#===================================
+# Objective: Trace route to a target.
+# Expected: Trace-Host -Target "google.com" ➜ hop list
+# Helper: tracert.
+function Trace-Host {
+    param([string]$Target)
+    # TODO: Invoke tracert
+    return
+}
+Write-Output (Trace-Host -Target "google.com")  # Expected: hop list
+
+#62. Show All Network Interfaces
+#===================================
+# Objective: List adapters, status, IPs.
+# Expected: Get-NetworkInterfaces ➜ adapter info
+# Helper: Get-NetAdapter; Get-NetIPAddress.
+function Get-NetworkInterfaces {
+    param()
+    # TODO: Return adapter details
+    return
+}
+Write-Output (Get-NetworkInterfaces)  # Expected: interface list
+
+#63. Display TCP Listening Ports
+#===================================
+# Objective: List listening TCP ports.
+# Expected: Get-TCPListeners ➜ port/process.
+# Helper: Get-NetTCPConnection -State Listen.
+function Get-TCPListeners {
+    param()
+    # TODO: List listening ports
+    return
+}
+Write-Output (Get-TCPListeners)  # Expected: port list
+
+#64. Check If Port is Listening
+#===================================
+# Objective: Return True if a port is listening.
+# Expected: Is-PortListening -Port 80 ➜ True/False
+# Helper: Get-NetTCPConnection.
+function Is-PortListening {
+    param([int]$Port)
+    # TODO: Return listening state
+    return
+}
+Write-Output (Is-PortListening -Port 80)  # Expected: True
+
+#65. List Active Network Connections
+#===================================
+# Objective: Show active TCP/UDP connections.
+# Expected: Get-NetworkConnections ➜ connection list
+# Helper: Get-NetTCPConnection.
+function Get-NetworkConnections {
+    param()
+    # TODO: Return active connections
+    return
+}
+Write-Output (Get-NetworkConnections)  # Expected: connection list
+
+#===================================
+# Registry Editing
+#===================================
+
+#66. Read a Registry Value
+#===================================
+# Objective: Retrieve a registry entry.
+# Expected: Get-RegistryValue -Path "HKLM:\...\CurrentVersion" -Name "ProgramFilesDir" ➜ "C:\Program Files"
+# Helper: Get-ItemProperty.
+function Get-RegistryValue {
+    param([string]$Path, [string]$Name)
+    # TODO: Return registry value
+    return
+}
+Write-Output (Get-RegistryValue -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion" -Name "ProgramFilesDir")
+
+#67. Set a Registry Value
+#===================================
+# Objective: Create or update a registry entry.
+# Expected: Set-RegistryValue -Path "HKCU:\Software\MyKey" -Name "Mode" -Value "On" ➜ True
+# Helper: Set-ItemProperty.
+function Set-RegistryValue {
+    param([string]$Path, [string]$Name, [object]$Value)
+    # TODO: Set registry value
+    return
+}
+Write-Output (Set-RegistryValue -Path "HKCU:\Software\MyKey" -Name "Mode" -Value "On")
+
+#68. Remove a Registry Value
+#===================================
+# Objective: Delete a registry entry.
+# Expected: Remove-RegistryValue -Path "HKCU:\Software\MyKey" -Name "Mode" ➜ True
+# Helper: Remove-ItemProperty.
+function Remove-RegistryValue {
+    param([string]$Path, [string]$Name)
+    # TODO: Remove registry value
+    return
+}
+Write-Output (Remove-RegistryValue -Path "HKCU:\Software\MyKey" -Name "Mode")
+
+#69. Check If RDP is Enabled
+#===================================
+# Objective: Return True if fDenyTSConnections = 0.
+# Expected: Is-RDPEnabled ➜ True/False
+# Helper: Query Term Server registry key.
+function Is-RDPEnabled {
+    param()
+    # TODO: Return $true if RDP enabled
+    return
+}
+Write-Output (Is-RDPEnabled)  # Expected: True/False
+
+#70. Set Cmd AutoRun
+#===================================
+# Objective: Configure CMD AutoRun command.
+# Expected: Set-CmdAutorun -Command "echo Hi" ➜ True
+# Helper: Registry HKCU:\...\Command Processor\AutoRun.
+function Set-CmdAutorun {
+    param([string]$Command)
+    # TODO: Set AutoRun key
+    return
+}
+Write-Output (Set-CmdAutorun -Command "echo Hi")  # Expected: True
+
+#71. Add Defender Exclusion
+#===================================
+# Objective: Exclude folder from Defender.
+# Expected: Add-DefenderExclusion -Path "C:\Tools" ➜ True
+# Helper: Add-MpPreference.
+function Add-DefenderExclusion {
+    param([string]$Path)
+    # TODO: Add exclusion
+    return
+}
+Write-Output (Add-DefenderExclusion -Path "C:\Tools")  # Expected: True
+
+#===================================
+# Background Jobs
+#===================================
+
+#72. Start a Background Job
+#===================================
+# Objective: Ping host asynchronously.
+# Expected: Start-BackgroundPing -Host "8.8.8.8" ➜ Job object
+# Helper: Start-Job.
+function Start-BackgroundPing {
+    param([string]$Host)
+    # TODO: Start ping job
+    return
+}
+Write-Output (Start-BackgroundPing -Host "8.8.8.8")  # Expected: Job object
+
+#73. List All Background Jobs
+#===================================
+# Objective: List current PS jobs.
+# Expected: Get-AllJobs ➜ job list
+# Helper: Get-Job.
+function Get-AllJobs {
+    param()
+    # TODO: Return Get-Job
+    return
+}
+Write-Output (Get-AllJobs)  # Expected: job list
+
+#74. Receive Output from a Job
+#===================================
+# Objective: Retrieve results from a job.
+# Expected: Get-JobOutput -JobId 1 ➜ output
+# Helper: Receive-Job.
+function Get-JobOutput {
+    param([int]$JobId)
+    # TODO: Return job results
+    return
+}
+Write-Output (Get-JobOutput -JobId 1)  # Expected: job output
+
+#75. Remove Completed Jobs
+#===================================
+# Objective: Delete jobs in Completed state.
+# Expected: Clear-FinishedJobs ➜ True
+# Helper: Get-Job | Where-Object | Remove-Job.
+function Clear-FinishedJobs {
+    param()
+    # TODO: Remove completed jobs
+    return
+}
+Write-Output (Clear-FinishedJobs)  # Expected: True
+
+#===================================
+# PowerShell Remoting
+#===================================
+
+#76. Test PS Remoting
+#===================================
+# Objective: Verify WinRM availability.
+# Expected: Test-PSRemoting -ComputerName "localhost" ➜ True
+# Helper: Test-WSMan.
+function Test-PSRemoting {
+    param([string]$ComputerName)
+    # TODO: Test PS Remoting
+    return
+}
+Write-Output (Test-PSRemoting -ComputerName "localhost")  # Expected: True
+
+#77. Invoke Remote Command
+#===================================
+# Objective: Run a script block remotely.
+# Expected: Invoke-RemoteCommand -ComputerName "localhost" -ScriptBlock { hostname } ➜ hostname
+# Helper: Invoke-Command.
 function Invoke-RemoteCommand {
-    param($computerName, $command)
-    # TODO: Execute the command remotely using Invoke-Command
+    param([string]$ComputerName, [scriptblock]$ScriptBlock)
+    # TODO: Invoke remote script block
     return
 }
-Write-Output (Invoke-RemoteCommand "SERVER01" "Get-Service Spooler")  
-# Expected: Shows Spooler status from SERVER01
+Write-Output (Invoke-RemoteCommand -ComputerName "localhost" -ScriptBlock { hostname })  # Expected: LOCALHOST
 
-#================
-# 72. Enter an Interactive Session
-#================
-# Objective: Start an interactive PS session on a remote machine.
-# Expected: Enter-RemoteShell "SERVER01" ➜ PS prompt changes to [SERVER01].
-# Helper: Research Enter-PSSession
-
+#78. Enter Remote Session
+#===================================
+# Objective: Start interactive PS session.
+# Expected: Enter-RemoteShell -ComputerName "localhost" ➜ PS prompt changes
+# Helper: Enter-PSSession.
 function Enter-RemoteShell {
-    param($computerName)
-    # TODO: Enter an interactive PowerShell session with the remote machine
+    param([string]$ComputerName)
+    # TODO: Enter PS session
     return
 }
-Write-Output (Enter-RemoteShell "SERVER01")  
-# Expected: PS prompt [SERVER01]
+Write-Output (Enter-RemoteShell -ComputerName "localhost")  # Expected: PS session
 
-#================
-# 73. Copy File to Remote Machine
-#================
-# Objective: Transfer a local file to a remote session.
-# Expected: Copy-ToRemote $session "C:\Tools\script.ps1" "C:\RemoteTools\script.ps1" ➜ file copied.
-# Helper: Research Copy-Item -ToSession
-
+#79. Copy File to Remote
+#===================================
+# Objective: Transfer file via PSSession.
+# Expected: Copy-ToRemote -Session $s -Source "C:\a.txt" -Destination "C:\b.txt" ➜ True
+# Helper: Copy-Item -ToSession.
 function Copy-ToRemote {
-    param($session, $source, $destination)
-    # TODO: Copy a file to a remote session using Copy-Item
+    param($Session, [string]$Source, [string]$Destination)
+    # TODO: Copy file to remote
     return
 }
-# Example:
-# Write-Output (Copy-ToRemote $session "C:\Tools\script.ps1" "C:\RemoteTools\script.ps1")
+# Test example omitted for brevity
 
-#================
-# 74. Start a Remote Job
-#================
-# Objective: Run a background job on a remote computer.
-# Expected: Start-RemoteJob "SERVER01" { Get-Process } ➜ Job object with remote context.
-# Helper: Research Invoke-Command -AsJob
-
+#80. Start Remote Job
+#===================================
+# Objective: Run a background job remotely.
+# Expected: Start-RemoteJob -ComputerName "localhost" -ScriptBlock { Get-Process } ➜ Job object
+# Helper: Invoke-Command -AsJob.
 function Start-RemoteJob {
-    param($computerName, $scriptBlock)
-    # TODO: Run a background job on a remote system
+    param([string]$ComputerName, [scriptblock]$ScriptBlock)
+    # TODO: Run remote job
     return
 }
-Write-Output (Start-RemoteJob "SERVER01" { Get-Process })  
-# Expected: Job object with remote computer context
+Write-Output (Start-RemoteJob -ComputerName "localhost" -ScriptBlock { Get-Process })  # Expected: Job object
 
-#================
-# 75. Get Services from Multiple Computers
-#================
-# Objective: Retrieve running services from multiple remote machines.
-# Expected: Get-RemoteServices @("Server1","Server2") ➜ services grouped by computer.
-# Helper: Research Invoke-Command with -ComputerName array
-
+#81. Get Services from Multiple Computers
+#===================================
+# Objective: Retrieve services from multiple hosts.
+# Expected: Get-RemoteServices -ComputerNames @("A","B") ➜ grouped services
+# Helper: Invoke-Command on multiple computers.
 function Get-RemoteServices {
-    param($computers)
-    # TODO: Return the running services from all specified computers
+    param([string[]]$ComputerNames)
+    # TODO: Get services from each
     return
 }
-Write-Output (Get-RemoteServices @("SERVER01", "SERVER02"))  
-# Expected: Services grouped by computer
+Write-Output (Get-RemoteServices -ComputerNames @("localhost","127.0.0.1"))  # Expected: services list
 
-#================
-# 76. Reboot a Remote Computer
-#================
-# Objective: Restart the remote machine.
-# Expected: Restart-RemoteComputer "SERVER01" ➜ remote computer reboot initiated.
-# Helper: Research Restart-Computer
-
+#82. Restart Remote Computer
+#===================================
+# Objective: Restart a remote system.
+# Expected: Restart-RemoteComputer -ComputerName "localhost" ➜ True
+# Helper: Restart-Computer -ComputerName.
 function Restart-RemoteComputer {
-    param($computerName)
-    # TODO: Restart the remote system
+    param([string]$ComputerName)
+    # TODO: Restart remote computer
     return
 }
-Write-Output (Restart-RemoteComputer "SERVER01")  
-# Expected: Remote computer begins restart
+Write-Output (Restart-RemoteComputer -ComputerName "localhost")  # Expected: True
