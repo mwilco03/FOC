@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NetDrill - Networking Study Tool</title>
+<title>NetDrill - Networking Fundamentals</title>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -46,7 +46,6 @@ body {
   overflow-x: hidden;
 }
 
-/* Animated grid background */
 body::before {
   content: '';
   position: fixed;
@@ -61,7 +60,6 @@ body::before {
 
 .app { position: relative; z-index: 1; }
 
-/* Header */
 .header {
   padding: 2rem 2rem 1rem;
   text-align: center;
@@ -85,6 +83,15 @@ body::before {
   font-size: 0.9rem;
 }
 
+.header .course-name {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  color: var(--accent-cyan);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 0.5rem;
+}
+
 /* Tab navigation */
 .tabs {
   display: flex;
@@ -97,8 +104,8 @@ body::before {
 
 .tab-btn {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 0.82rem;
-  padding: 0.6rem 1.4rem;
+  font-size: 0.78rem;
+  padding: 0.55rem 1.1rem;
   border: 1px solid var(--border);
   border-radius: 999px;
   background: var(--bg-secondary);
@@ -119,7 +126,6 @@ body::before {
   color: #fff;
 }
 
-/* Main content */
 .content {
   max-width: 1100px;
   margin: 0 auto;
@@ -134,10 +140,7 @@ body::before {
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Section header */
-.section-header {
-  margin-bottom: 1.5rem;
-}
+.section-header { margin-bottom: 1.5rem; }
 
 .section-header h2 {
   font-family: 'JetBrains Mono', monospace;
@@ -152,7 +155,6 @@ body::before {
 }
 
 /* =================== OSI DRAG & DROP =================== */
-
 .osi-layout {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -174,7 +176,7 @@ body::before {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  padding: 0.7rem 1rem;
+  padding: 0.6rem 1rem;
   border: 2px dashed var(--border);
   border-radius: var(--radius);
   min-height: 52px;
@@ -221,16 +223,51 @@ body::before {
 }
 
 .layer-slot-label {
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   color: var(--text-muted);
   font-style: italic;
 }
 
 .layer-slot .placed-item {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   font-weight: 500;
   color: var(--text-primary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.layer-slot .placed-item .remove-x {
+  font-size: 0.7rem;
+  color: var(--accent-red);
+  opacity: 0.5;
+  margin-left: 0.25rem;
+  transition: opacity var(--transition);
+}
+
+.layer-slot .placed-item:hover .remove-x {
+  opacity: 1;
+}
+
+.layer-addressing {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  margin-left: auto;
+  text-align: right;
+  flex-shrink: 0;
+  line-height: 1.4;
+}
+
+.layer-addressing .addr-type {
+  color: var(--accent-amber);
+  font-weight: 600;
+}
+
+.layer-addressing .addr-pdu {
+  color: var(--text-muted);
 }
 
 /* Drag items pool */
@@ -311,6 +348,14 @@ body::before {
 
 .btn-primary:hover { background: #2563eb; }
 
+.btn-green {
+  background: var(--accent-green);
+  border-color: var(--accent-green);
+  color: #fff;
+}
+
+.btn-green:hover { background: #059669; }
+
 .score-display {
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.85rem;
@@ -321,7 +366,6 @@ body::before {
 }
 
 /* =================== PROTOCOL MATCHING =================== */
-
 .protocol-game {
   display: flex;
   flex-direction: column;
@@ -413,8 +457,339 @@ body::before {
 
 .pq-explanation.visible { display: block; animation: fadeIn 0.3s ease; }
 
-/* =================== SUBNETTING =================== */
+/* =================== NUMBER SYSTEMS =================== */
+.numsys-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  align-items: start;
+}
 
+@media (max-width: 768px) {
+  .numsys-layout { grid-template-columns: 1fr; }
+}
+
+.converter-panel {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+}
+
+.converter-panel h3 {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.converter-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.converter-row label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  width: 40px;
+  flex-shrink: 0;
+  text-transform: uppercase;
+}
+
+.converter-row input {
+  flex: 1;
+  padding: 0.6rem 0.8rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.95rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-primary);
+  outline: none;
+  transition: border-color var(--transition);
+}
+
+.converter-row input:focus {
+  border-color: var(--accent-blue);
+}
+
+.bit-chart {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 2px;
+  margin-top: 1rem;
+}
+
+.bit-cell {
+  text-align: center;
+  padding: 0.4rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  border-radius: 4px;
+}
+
+.bit-cell.header {
+  background: var(--bg-secondary);
+  color: var(--accent-cyan);
+  font-weight: 700;
+  font-size: 0.8rem;
+}
+
+.bit-cell.value {
+  background: rgba(59,130,246,0.08);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition);
+  border: 1px solid transparent;
+}
+
+.bit-cell.value:hover {
+  border-color: var(--accent-blue);
+}
+
+.bit-cell.value.active {
+  background: var(--accent-blue);
+  color: #fff;
+  font-weight: 700;
+}
+
+.bit-total {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 0.6rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1rem;
+  color: var(--accent-green);
+  font-weight: 700;
+  margin-top: 0.25rem;
+}
+
+/* Number drill */
+.drill-display {
+  text-align: center;
+  padding: 1.5rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  margin-bottom: 1rem;
+}
+
+.drill-display .drill-base {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 0.3rem;
+}
+
+.drill-display .drill-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--accent-cyan);
+}
+
+.drill-input-row {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.drill-input-row label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  width: 40px;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.drill-input-row input {
+  flex: 1;
+  padding: 0.5rem 0.7rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.9rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-primary);
+  outline: none;
+}
+
+.drill-input-row input:focus { border-color: var(--accent-blue); }
+.drill-input-row input.correct-input { border-color: var(--accent-green); background: rgba(16,185,129,0.08); }
+.drill-input-row input.incorrect-input { border-color: var(--accent-red); background: rgba(239,68,68,0.08); }
+
+/* Power of 2 chart */
+.powers-chart {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 4px;
+  margin-top: 1rem;
+}
+
+.power-cell {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.5rem;
+  text-align: center;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.power-cell .exp {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+}
+
+.power-cell .val {
+  font-size: 0.82rem;
+  color: var(--accent-cyan);
+  font-weight: 600;
+}
+
+/* hex chart */
+.hex-chart {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+  gap: 4px;
+  margin-top: 1rem;
+}
+
+.hex-cell {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.45rem;
+  text-align: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+  display: flex;
+  justify-content: space-between;
+  gap: 0.25rem;
+}
+
+.hex-cell .hc-dec { color: var(--text-secondary); }
+.hex-cell .hc-hex { color: var(--accent-purple); font-weight: 600; }
+.hex-cell .hc-bin { color: var(--accent-cyan); font-size: 0.68rem; }
+
+/* =================== SUBNET MATH =================== */
+.math-drill-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.math-drill-card h3 {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-bottom: 0.3rem;
+}
+
+.math-drill-card .drill-desc {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-bottom: 1rem;
+}
+
+.math-problem {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.math-problem .mp-question {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  margin-bottom: 0.75rem;
+}
+
+.math-problem .mp-input-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.math-problem .mp-input-row input {
+  flex: 1;
+  padding: 0.5rem 0.7rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.9rem;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-primary);
+  outline: none;
+}
+
+.math-problem .mp-input-row input:focus { border-color: var(--accent-blue); }
+.math-problem .mp-input-row input.correct-input { border-color: var(--accent-green); background: rgba(16,185,129,0.08); }
+.math-problem .mp-input-row input.incorrect-input { border-color: var(--accent-red); background: rgba(239,68,68,0.08); }
+
+.math-problem .mp-feedback {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  margin-top: 0.5rem;
+  padding: 0.4rem 0.6rem;
+  border-radius: 4px;
+  display: none;
+}
+
+.math-problem .mp-feedback.visible { display: block; }
+.math-problem .mp-feedback.correct { color: var(--accent-green); background: rgba(16,185,129,0.1); }
+.math-problem .mp-feedback.wrong { color: var(--accent-red); background: rgba(239,68,68,0.1); }
+
+.streak-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.streak-bar .streak-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.streak-bar .streak-count {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--accent-green);
+}
+
+.streak-dots {
+  display: flex;
+  gap: 3px;
+}
+
+.streak-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--border);
+  transition: all var(--transition);
+}
+
+.streak-dot.correct { background: var(--accent-green); }
+.streak-dot.wrong { background: var(--accent-red); }
+
+/* =================== SUBNETTING =================== */
 .subnet-tool {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -443,9 +818,7 @@ body::before {
   gap: 0.5rem;
 }
 
-.input-group {
-  margin-bottom: 1rem;
-}
+.input-group { margin-bottom: 1rem; }
 
 .input-group label {
   font-family: 'JetBrains Mono', monospace;
@@ -503,9 +876,7 @@ body::before {
   word-break: break-all;
 }
 
-.result-item.full-width {
-  grid-column: 1 / -1;
-}
+.result-item.full-width { grid-column: 1 / -1; }
 
 .binary-display {
   font-family: 'JetBrains Mono', monospace;
@@ -582,16 +953,8 @@ body::before {
 }
 
 .practice-field input:focus { border-color: var(--accent-blue); }
-
-.practice-field input.correct-input {
-  border-color: var(--accent-green);
-  background: rgba(16,185,129,0.08);
-}
-
-.practice-field input.incorrect-input {
-  border-color: var(--accent-red);
-  background: rgba(239,68,68,0.08);
-}
+.practice-field input.correct-input { border-color: var(--accent-green); background: rgba(16,185,129,0.08); }
+.practice-field input.incorrect-input { border-color: var(--accent-red); background: rgba(239,68,68,0.08); }
 
 .practice-feedback {
   font-family: 'JetBrains Mono', monospace;
@@ -666,7 +1029,7 @@ body::before {
   color: var(--text-primary);
 }
 
-/* =================== CIDR CHEAT SHEET =================== */
+/* CIDR cheat sheet */
 .cidr-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -686,21 +1049,59 @@ body::before {
   font-size: 0.8rem;
 }
 
-.cidr-card .cidr-prefix {
-  color: var(--accent-cyan);
-  font-weight: 600;
+.cidr-card .cidr-prefix { color: var(--accent-cyan); font-weight: 600; }
+.cidr-card .cidr-hosts { color: var(--text-muted); font-size: 0.72rem; }
+
+/* =================== WILDCARD / BITWISE =================== */
+.bitwise-viz {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.82rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem;
+  margin-top: 1rem;
+  overflow-x: auto;
 }
 
-.cidr-card .cidr-hosts {
+.bitwise-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 0.35rem;
+}
+
+.bitwise-row .bw-label {
+  width: 80px;
   color: var(--text-muted);
   font-size: 0.72rem;
+  flex-shrink: 0;
 }
+
+.bitwise-row .bw-bits {
+  display: flex;
+  gap: 1px;
+}
+
+.bitwise-row .bw-bit {
+  width: 18px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
+  border-radius: 2px;
+}
+
+.bw-bit.one { background: var(--accent-green); color: #fff; }
+.bw-bit.zero { background: rgba(239,68,68,0.2); color: var(--accent-red); }
+.bw-bit.sep { background: transparent; color: var(--text-muted); width: 8px; }
 
 /* Responsive */
 @media (max-width: 600px) {
   .content { padding: 1rem; }
   .header h1 { font-size: 1.6rem; }
-  .osi-layout, .subnet-tool { gap: 1rem; }
+  .osi-layout, .subnet-tool, .numsys-layout { gap: 1rem; }
   .result-grid { grid-template-columns: 1fr; }
 }
 </style>
@@ -709,14 +1110,17 @@ body::before {
 
 <div class="app">
   <header class="header">
+    <div class="course-name">Networking Fundamentals</div>
     <h1>&gt; NetDrill_</h1>
-    <p>Interactive networking fundamentals practice</p>
+    <p>Interactive networking practice &amp; memorization tools</p>
   </header>
 
   <nav class="tabs">
     <button class="tab-btn active" data-tab="osi-drag">OSI Layers</button>
     <button class="tab-btn" data-tab="protocol-match">Protocol Quiz</button>
-    <button class="tab-btn" data-tab="subnet-calc">Subnet Calculator</button>
+    <button class="tab-btn" data-tab="number-systems">Number Systems</button>
+    <button class="tab-btn" data-tab="subnet-math">Subnet Math</button>
+    <button class="tab-btn" data-tab="subnet-calc">Subnet Calc</button>
     <button class="tab-btn" data-tab="subnet-practice">Subnet Practice</button>
     <button class="tab-btn" data-tab="reference">Reference</button>
   </nav>
@@ -727,13 +1131,23 @@ body::before {
     <section id="osi-drag" class="section active">
       <div class="section-header">
         <h2>OSI Model Drag &amp; Drop</h2>
-        <p>Drag each layer name to its correct position in the stack (Layer 7 = top, Layer 1 = bottom)</p>
+        <p>Drag each layer name to its correct position. Click a placed item to remove it. Note the addressing &amp; PDU for each layer.</p>
       </div>
       <div class="osi-layout">
         <div class="layer-stack" id="layerStack"></div>
         <div class="drag-pool">
           <h3>Layer Names</h3>
           <div class="drag-items" id="dragItems"></div>
+          <div style="margin-top:1.25rem;padding-top:1rem;border-top:1px solid var(--border);">
+            <h3 style="font-size:0.78rem;margin-bottom:0.75rem;">Addressing &amp; PDU Reference</h3>
+            <div style="font-size:0.78rem;color:var(--text-secondary);line-height:1.8;">
+              <div><span style="color:var(--layer-7);">L7-5</span> &rarr; <span style="color:var(--accent-amber);">Data</span></div>
+              <div><span style="color:var(--layer-4);">L4</span> &rarr; <span style="color:var(--accent-amber);">Port Numbers</span> / Segments</div>
+              <div><span style="color:var(--layer-3);">L3</span> &rarr; <span style="color:var(--accent-amber);">IP Address</span> / Packets</div>
+              <div><span style="color:var(--layer-2);">L2</span> &rarr; <span style="color:var(--accent-amber);">MAC Address</span> / Frames</div>
+              <div><span style="color:var(--layer-1);">L1</span> &rarr; <span style="color:var(--accent-amber);">Signals</span> / Bits</div>
+            </div>
+          </div>
         </div>
       </div>
       <div class="controls">
@@ -756,6 +1170,166 @@ body::before {
       </div>
     </section>
 
+    <!-- ============ NUMBER SYSTEMS ============ -->
+    <section id="number-systems" class="section">
+      <div class="section-header">
+        <h2>Number Systems</h2>
+        <p>Convert between binary, decimal &amp; hexadecimal. Toggle bits to build values. Drill until it's automatic.</p>
+      </div>
+      <div class="numsys-layout">
+        <!-- Left: Converter + Bit Toggle -->
+        <div>
+          <div class="converter-panel">
+            <h3>&#9654; Live Converter</h3>
+            <div class="converter-row">
+              <label>DEC</label>
+              <input type="text" id="convDec" placeholder="0-255" value="0">
+            </div>
+            <div class="converter-row">
+              <label>BIN</label>
+              <input type="text" id="convBin" placeholder="00000000" value="00000000">
+            </div>
+            <div class="converter-row">
+              <label>HEX</label>
+              <input type="text" id="convHex" placeholder="00" value="00">
+            </div>
+          </div>
+
+          <div class="converter-panel" style="margin-top:1rem;">
+            <h3>&#9654; Bit Toggle (click bits)</h3>
+            <div class="bit-chart" id="bitChart"></div>
+            <div class="bit-total" id="bitTotal">= 0</div>
+          </div>
+
+          <div class="converter-panel" style="margin-top:1rem;">
+            <h3>&#9654; Hex &#8596; Decimal &#8596; Binary (0-15)</h3>
+            <div class="hex-chart" id="hexChart"></div>
+          </div>
+        </div>
+
+        <!-- Right: Conversion Drill -->
+        <div>
+          <div class="converter-panel">
+            <h3>&#9654; Conversion Drill</h3>
+            <p style="font-size:0.8rem;color:var(--text-muted);margin-bottom:1rem;">Convert the given value to the other two bases (0-255 range)</p>
+            <div class="drill-display" id="numDrillDisplay">
+              <div class="drill-base" id="numDrillBase">--</div>
+              <div class="drill-value" id="numDrillValue">--</div>
+            </div>
+            <div id="numDrillInputs"></div>
+            <div class="controls" style="margin-top:0.75rem;">
+              <button class="btn btn-primary" id="numDrillCheck">Check</button>
+              <button class="btn" id="numDrillShow">Show Answer</button>
+              <button class="btn" id="numDrillNext">Next</button>
+              <div class="score-display" id="numDrillScore"></div>
+            </div>
+            <div class="streak-bar" style="margin-top:1rem;" id="numDrillStreak"></div>
+          </div>
+
+          <div class="converter-panel" style="margin-top:1rem;">
+            <h3>&#9654; Powers of 2 Chart</h3>
+            <p style="font-size:0.78rem;color:var(--text-muted);margin-bottom:0.5rem;">Essential for subnetting. Memorize these.</p>
+            <div class="powers-chart" id="powersChart"></div>
+          </div>
+
+          <div class="converter-panel" style="margin-top:1rem;">
+            <h3>&#9654; Subnet Magic Number</h3>
+            <p style="font-size:0.78rem;color:var(--text-muted);line-height:1.6;">
+              For any CIDR prefix, the <strong style="color:var(--accent-cyan);">magic number</strong> = 256 - (value of the interesting octet).<br>
+              Block sizes: <span style="color:var(--accent-amber);">128, 64, 32, 16, 8, 4, 2, 1</span><br>
+              These are the only valid subnet boundary increments.
+            </p>
+            <div class="powers-chart" style="grid-template-columns: repeat(4,1fr);margin-top:0.75rem;">
+              <div class="power-cell"><div class="exp">256 - 128</div><div class="val">128</div></div>
+              <div class="power-cell"><div class="exp">256 - 192</div><div class="val">64</div></div>
+              <div class="power-cell"><div class="exp">256 - 224</div><div class="val">32</div></div>
+              <div class="power-cell"><div class="exp">256 - 240</div><div class="val">16</div></div>
+              <div class="power-cell"><div class="exp">256 - 248</div><div class="val">8</div></div>
+              <div class="power-cell"><div class="exp">256 - 252</div><div class="val">4</div></div>
+              <div class="power-cell"><div class="exp">256 - 254</div><div class="val">2</div></div>
+              <div class="power-cell"><div class="exp">256 - 255</div><div class="val">1</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ SUBNET MATH DRILLS ============ -->
+    <section id="subnet-math" class="section">
+      <div class="section-header">
+        <h2>Subnet Math Drills</h2>
+        <p>Quick-fire drills to build subnetting speed. Answer and hit Enter.</p>
+      </div>
+
+      <!-- CIDR to Mask drill -->
+      <div class="math-drill-card">
+        <h3>CIDR &#8596; Subnet Mask</h3>
+        <div class="drill-desc">Convert between CIDR notation and dotted-decimal subnet masks</div>
+        <div class="streak-bar" id="cidrStreak"></div>
+        <div class="math-problem" id="cidrProblem"></div>
+        <div class="controls" style="margin-top:0;">
+          <button class="btn btn-primary" id="cidrCheck">Check</button>
+          <button class="btn" id="cidrShow">Show</button>
+          <button class="btn" id="cidrNext">Next</button>
+          <div class="score-display" id="cidrScore"></div>
+        </div>
+      </div>
+
+      <!-- Hosts calculation drill -->
+      <div class="math-drill-card">
+        <h3>Host Count &amp; Block Size</h3>
+        <div class="drill-desc">Given a prefix, calculate usable hosts and block size</div>
+        <div class="streak-bar" id="hostStreak"></div>
+        <div class="math-problem" id="hostProblem"></div>
+        <div class="controls" style="margin-top:0;">
+          <button class="btn btn-primary" id="hostCheck">Check</button>
+          <button class="btn" id="hostShow">Show</button>
+          <button class="btn" id="hostNext">Next</button>
+          <div class="score-display" id="hostScore"></div>
+        </div>
+      </div>
+
+      <!-- Wildcard mask drill -->
+      <div class="math-drill-card">
+        <h3>Wildcard Masks</h3>
+        <div class="drill-desc">Convert subnet mask to wildcard mask (bitwise inverse)</div>
+        <div class="streak-bar" id="wcStreak"></div>
+        <div class="math-problem" id="wcProblem"></div>
+        <div class="controls" style="margin-top:0;">
+          <button class="btn btn-primary" id="wcCheck">Check</button>
+          <button class="btn" id="wcShow">Show</button>
+          <button class="btn" id="wcNext">Next</button>
+          <div class="score-display" id="wcScore"></div>
+        </div>
+      </div>
+
+      <!-- AND operation drill -->
+      <div class="math-drill-card">
+        <h3>Network Address (AND Operation)</h3>
+        <div class="drill-desc">AND the IP with the mask to find the network address</div>
+        <div class="streak-bar" id="andStreak"></div>
+        <div class="math-problem" id="andProblem"></div>
+        <div class="controls" style="margin-top:0;">
+          <button class="btn btn-primary" id="andCheck">Check</button>
+          <button class="btn" id="andShow">Show</button>
+          <button class="btn" id="andNext">Next</button>
+          <div class="score-display" id="andScore"></div>
+        </div>
+      </div>
+
+      <!-- Binary AND visualizer -->
+      <div class="math-drill-card">
+        <h3>&#9654; Bitwise AND Visualizer</h3>
+        <div class="drill-desc">See how IP AND Mask produces the network address, bit by bit</div>
+        <div style="display:flex;gap:0.5rem;margin-bottom:0.75rem;flex-wrap:wrap;">
+          <input type="text" id="andVizIp" placeholder="192.168.10.50" value="192.168.10.50" style="flex:1;padding:0.5rem;font-family:'JetBrains Mono',monospace;font-size:0.85rem;background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius);color:var(--text-primary);outline:none;min-width:140px;">
+          <input type="text" id="andVizMask" placeholder="/24 or 255.255.255.0" value="/24" style="flex:1;padding:0.5rem;font-family:'JetBrains Mono',monospace;font-size:0.85rem;background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius);color:var(--text-primary);outline:none;min-width:140px;">
+          <button class="btn btn-primary" id="andVizCalc">Visualize</button>
+        </div>
+        <div class="bitwise-viz" id="andViz"></div>
+      </div>
+    </section>
+
     <!-- ============ SUBNET CALCULATOR ============ -->
     <section id="subnet-calc" class="section">
       <div class="section-header">
@@ -774,7 +1348,6 @@ body::before {
             <input type="number" id="subnetCidr" min="0" max="32" value="24" placeholder="/24">
           </div>
           <button class="btn btn-primary" id="subnetCalc" style="width:100%;margin-top:0.5rem;">Calculate</button>
-
           <div class="binary-display" id="binaryDisplay" style="display:none;"></div>
         </div>
         <div class="subnet-panel">
@@ -881,17 +1454,17 @@ body::before {
 
 <script>
 // =====================================================================
-// DATA DEFINITIONS - single source of truth
+// DATA DEFINITIONS
 // =====================================================================
 
 const OSI_LAYERS = [
-  { num: 7, name: 'Application',   color: 'var(--layer-7)' },
-  { num: 6, name: 'Presentation',  color: 'var(--layer-6)' },
-  { num: 5, name: 'Session',       color: 'var(--layer-5)' },
-  { num: 4, name: 'Transport',     color: 'var(--layer-4)' },
-  { num: 3, name: 'Network',       color: 'var(--layer-3)' },
-  { num: 2, name: 'Data Link',     color: 'var(--layer-2)' },
-  { num: 1, name: 'Physical',      color: 'var(--layer-1)' },
+  { num: 7, name: 'Application',  color: 'var(--layer-7)', addressing: 'Data',        pdu: 'Messages' },
+  { num: 6, name: 'Presentation', color: 'var(--layer-6)', addressing: 'Data',        pdu: 'Encoding' },
+  { num: 5, name: 'Session',      color: 'var(--layer-5)', addressing: 'Data',        pdu: 'Sessions' },
+  { num: 4, name: 'Transport',    color: 'var(--layer-4)', addressing: 'Port Numbers', pdu: 'Segments' },
+  { num: 3, name: 'Network',      color: 'var(--layer-3)', addressing: 'IP Address',   pdu: 'Packets' },
+  { num: 2, name: 'Data Link',    color: 'var(--layer-2)', addressing: 'MAC Address',  pdu: 'Frames' },
+  { num: 1, name: 'Physical',     color: 'var(--layer-1)', addressing: 'Signals',      pdu: 'Bits' },
 ];
 
 const LAYER_BY_NUM = Object.fromEntries(OSI_LAYERS.map(l => [l.num, l]));
@@ -933,7 +1506,6 @@ const PROTOCOLS = [
   { name: 'Bluetooth',port:'--',     layer: 1, transport: '--', desc: 'Short-range wireless' },
 ];
 
-// Quiz question templates derived from PROTOCOLS
 const QUIZ_GENERATORS = [
   {
     id: 'which-layer',
@@ -949,11 +1521,7 @@ const QUIZ_GENERATORS = [
     id: 'which-port',
     filter: (p) => p.port !== '--',
     make: (proto) => {
-      const wrong = PROTOCOLS
-        .filter(p => p.port !== '--' && p.name !== proto.name)
-        .sort(() => Math.random() - 0.5)
-        .slice(0, 3)
-        .map(p => p.port);
+      const wrong = PROTOCOLS.filter(p => p.port !== '--' && p.name !== proto.name).sort(() => Math.random() - 0.5).slice(0, 3).map(p => p.port);
       const options = [...wrong, proto.port].sort(() => Math.random() - 0.5);
       return {
         prompt: `What port does ${proto.name} use?`,
@@ -975,20 +1543,32 @@ const QUIZ_GENERATORS = [
       explanation: `${proto.name} (port ${proto.port}) uses ${proto.transport}. ${proto.desc}.`,
     }),
   },
+  {
+    id: 'which-addressing',
+    make: (proto) => {
+      const layer = LAYER_BY_NUM[proto.layer];
+      const options = ['Data', 'Port Numbers', 'IP Address', 'MAC Address', 'Signals'];
+      return {
+        prompt: `What addressing/PDU type is used at ${proto.name}'s layer?`,
+        hint: `${proto.name} operates at Layer ${proto.layer}`,
+        options,
+        correctIdx: options.indexOf(layer.addressing),
+        explanation: `Layer ${proto.layer} (${layer.name}) uses ${layer.addressing} addressing and ${layer.pdu} as its PDU.`,
+      };
+    },
+  },
 ];
 
 const QUESTION_COUNT = 6;
 
-// CIDR cheat sheet data - generated, not hardcoded
 const CIDR_ENTRIES = Array.from({ length: 25 }, (_, i) => {
-  const prefix = 8 + i; // /8 through /32
+  const prefix = 8 + i;
   const hostBits = 32 - prefix;
   const totalAddresses = Math.pow(2, hostBits);
   const usableHosts = hostBits > 1 ? totalAddresses - 2 : (hostBits === 1 ? 2 : 1);
   return { prefix, totalAddresses, usableHosts };
 });
 
-// Practice problem IP ranges
 const PRACTICE_PREFIXES = [8, 12, 16, 18, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30];
 
 // =====================================================================
@@ -1033,19 +1613,12 @@ function calcSubnet(ipStr, prefix) {
   const usableHosts = hostBits > 1 ? totalAddresses - 2 : (hostBits === 1 ? 2 : 1);
   const firstUsable = hostBits > 1 ? network + 1 : network;
   const lastUsable = hostBits > 1 ? broadcast - 1 : broadcast;
-
   return {
-    network: intToIp(network),
-    broadcast: intToIp(broadcast),
-    mask: intToIp(mask),
-    wildcard: intToIp(~mask >>> 0),
-    usableHosts,
-    totalAddresses,
-    firstUsable: intToIp(firstUsable),
-    lastUsable: intToIp(lastUsable),
-    prefix,
-    ipBinary: intToBinary(ip),
-    maskBinary: intToBinary(mask),
+    network: intToIp(network), broadcast: intToIp(broadcast),
+    mask: intToIp(mask), wildcard: intToIp(~mask >>> 0),
+    usableHosts, totalAddresses,
+    firstUsable: intToIp(firstUsable), lastUsable: intToIp(lastUsable),
+    prefix, ipBinary: intToBinary(ip), maskBinary: intToBinary(mask),
   };
 }
 
@@ -1055,6 +1628,19 @@ function randomIp() {
   if (first === 10) return `10.${gen()}.${gen()}.${gen()}`;
   if (first === 172) return `172.${16 + Math.floor(Math.random() * 16)}.${gen()}.${gen()}`;
   return `192.168.${gen()}.${gen()}`;
+}
+
+function renderStreakBar(containerId, history) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  const last10 = history.slice(-10);
+  const total = history.length;
+  const correct = history.filter(h => h).length;
+  el.innerHTML = `
+    <span class="streak-label">Score:</span>
+    <span class="streak-count">${correct}/${total}</span>
+    <div class="streak-dots">${last10.map(h => `<div class="streak-dot ${h ? 'correct' : 'wrong'}"></div>`).join('')}</div>
+  `;
 }
 
 // =====================================================================
@@ -1071,7 +1657,7 @@ $$('.tab-btn').forEach(btn => {
 });
 
 // =====================================================================
-// OSI DRAG & DROP
+// OSI DRAG & DROP (enhanced: click-to-remove + addressing)
 // =====================================================================
 
 let placedLayers = {};
@@ -1089,6 +1675,10 @@ function renderOsiGame() {
          ondrop="handleDrop(event, ${l.num})">
       <div class="layer-num" style="background:${l.color}">L${l.num}</div>
       <span class="layer-slot-label">Drop layer name here</span>
+      <div class="layer-addressing">
+        <span class="addr-type">${l.addressing}</span><br>
+        <span class="addr-pdu">${l.pdu}</span>
+      </div>
     </div>
   `).join('');
 
@@ -1130,15 +1720,31 @@ window.handleDrop = function(e, slotNum) {
 
   const el = document.createElement('span');
   el.className = 'placed-item';
-  el.textContent = name;
+  el.innerHTML = `${name} <span class="remove-x">&#10005;</span>`;
+  el.addEventListener('click', () => removePlaced(slotNum));
   slot.appendChild(el);
 
   const chip = $(`.drag-item[data-name="${name}"]`);
   if (chip) chip.classList.add('placed');
 
-  // Clear previous styling
   slot.classList.remove('correct', 'incorrect');
 };
+
+function removePlaced(slotNum) {
+  const slot = $(`.layer-slot[data-layer="${slotNum}"]`);
+  if (!slot || !placedLayers[slotNum]) return;
+
+  const name = placedLayers[slotNum];
+  delete placedLayers[slotNum];
+
+  slot.querySelector('.placed-item')?.remove();
+  const label = slot.querySelector('.layer-slot-label');
+  if (label) label.style.display = '';
+  slot.classList.remove('correct', 'incorrect');
+
+  const chip = $(`.drag-item[data-name="${name}"]`);
+  if (chip) chip.classList.remove('placed');
+}
 
 $('#osiCheck').addEventListener('click', () => {
   let correct = 0;
@@ -1163,23 +1769,18 @@ $('#osiReset').addEventListener('click', renderOsiGame);
 
 function generateQuestions() {
   const questions = [];
-  const maxAttempts = 100;
   let attempts = 0;
-
-  while (questions.length < QUESTION_COUNT && attempts < maxAttempts) {
+  while (questions.length < QUESTION_COUNT && attempts < 100) {
     attempts++;
     const gen = QUIZ_GENERATORS[Math.floor(Math.random() * QUIZ_GENERATORS.length)];
     const candidates = PROTOCOLS.filter(gen.filter || (() => true));
     const proto = candidates[Math.floor(Math.random() * candidates.length)];
-
     const key = `${gen.id}-${proto.name}`;
     if (questions.some(q => q.key === key)) continue;
-
     const q = gen.make(proto);
     q.key = key;
     questions.push(q);
   }
-
   return questions;
 }
 
@@ -1224,11 +1825,444 @@ window.handleQuizAnswer = function(qi, oi) {
 
   container.classList.add(isCorrect ? 'answered-correct' : 'answered-wrong');
   $(`#pqe-${qi}`).classList.add('visible');
-
   $('#protoScore').textContent = `${quizCorrect} / ${quizAnswered} correct`;
 };
 
 $('#protoNew').addEventListener('click', renderProtocolQuiz);
+
+// =====================================================================
+// NUMBER SYSTEMS
+// =====================================================================
+
+// Live converter
+function updateFromDec(val) {
+  val = Math.max(0, Math.min(255, parseInt(val, 10) || 0));
+  $('#convDec').value = val;
+  $('#convBin').value = val.toString(2).padStart(8, '0');
+  $('#convHex').value = val.toString(16).toUpperCase().padStart(2, '0');
+  updateBitChart(val);
+}
+
+function updateFromBin(val) {
+  val = val.replace(/[^01]/g, '').slice(0, 8);
+  const dec = parseInt(val || '0', 2);
+  $('#convBin').value = val.padStart(8, '0');
+  $('#convDec').value = dec;
+  $('#convHex').value = dec.toString(16).toUpperCase().padStart(2, '0');
+  updateBitChart(dec);
+}
+
+function updateFromHex(val) {
+  val = val.replace(/[^0-9a-fA-F]/g, '').slice(0, 2);
+  const dec = parseInt(val || '0', 16);
+  $('#convHex').value = val.toUpperCase();
+  $('#convDec').value = dec;
+  $('#convBin').value = dec.toString(2).padStart(8, '0');
+  updateBitChart(dec);
+}
+
+$('#convDec').addEventListener('input', (e) => updateFromDec(e.target.value));
+$('#convBin').addEventListener('input', (e) => updateFromBin(e.target.value));
+$('#convHex').addEventListener('input', (e) => updateFromHex(e.target.value));
+
+// Bit toggle chart
+const bitValues = [128, 64, 32, 16, 8, 4, 2, 1];
+let activeBits = [0, 0, 0, 0, 0, 0, 0, 0];
+
+function renderBitChart() {
+  const chart = $('#bitChart');
+  chart.innerHTML =
+    bitValues.map(v => `<div class="bit-cell header">${v}</div>`).join('') +
+    activeBits.map((b, i) => `<div class="bit-cell value ${b ? 'active' : ''}" data-idx="${i}">${b}</div>`).join('');
+
+  chart.querySelectorAll('.bit-cell.value').forEach(cell => {
+    cell.addEventListener('click', () => {
+      const idx = parseInt(cell.dataset.idx);
+      activeBits[idx] = activeBits[idx] ? 0 : 1;
+      renderBitChart();
+      const total = activeBits.reduce((sum, b, i) => sum + b * bitValues[i], 0);
+      updateFromDec(total);
+    });
+  });
+
+  const total = activeBits.reduce((sum, b, i) => sum + b * bitValues[i], 0);
+  $('#bitTotal').textContent = `= ${total}`;
+}
+
+function updateBitChart(dec) {
+  for (let i = 0; i < 8; i++) {
+    activeBits[i] = (dec >> (7 - i)) & 1;
+  }
+  renderBitChart();
+}
+
+// Hex reference chart
+$('#hexChart').innerHTML = Array.from({ length: 16 }, (_, i) => `
+  <div class="hex-cell">
+    <span class="hc-dec">${i}</span>
+    <span class="hc-hex">0x${i.toString(16).toUpperCase()}</span>
+    <span class="hc-bin">${i.toString(2).padStart(4, '0')}</span>
+  </div>
+`).join('');
+
+// Powers of 2 chart
+$('#powersChart').innerHTML = Array.from({ length: 17 }, (_, i) => `
+  <div class="power-cell">
+    <div class="exp">2^${i}</div>
+    <div class="val">${Math.pow(2, i).toLocaleString()}</div>
+  </div>
+`).join('');
+
+// Number drill
+let numDrillAnswer = {};
+let numDrillHistory = [];
+let numDrillCorrectCount = 0;
+let numDrillTotal = 0;
+
+function newNumDrill() {
+  const bases = ['DEC', 'BIN', 'HEX'];
+  const fromBase = bases[Math.floor(Math.random() * bases.length)];
+  const dec = Math.floor(Math.random() * 256);
+  const bin = dec.toString(2).padStart(8, '0');
+  const hex = dec.toString(16).toUpperCase().padStart(2, '0');
+
+  let displayValue, targetBases;
+  if (fromBase === 'DEC') {
+    displayValue = String(dec);
+    targetBases = [{ label: 'BIN', answer: bin }, { label: 'HEX', answer: hex }];
+  } else if (fromBase === 'BIN') {
+    displayValue = bin;
+    targetBases = [{ label: 'DEC', answer: String(dec) }, { label: 'HEX', answer: hex }];
+  } else {
+    displayValue = '0x' + hex;
+    targetBases = [{ label: 'DEC', answer: String(dec) }, { label: 'BIN', answer: bin }];
+  }
+
+  numDrillAnswer = { fromBase, displayValue, targets: targetBases };
+  $('#numDrillBase').textContent = `Convert from ${fromBase}`;
+  $('#numDrillValue').textContent = displayValue;
+
+  $('#numDrillInputs').innerHTML = targetBases.map((t, i) => `
+    <div class="drill-input-row">
+      <label>${t.label}</label>
+      <input type="text" id="numDrillIn${i}" placeholder="?">
+    </div>
+  `).join('');
+
+  // Enter key support
+  const inputs = $('#numDrillInputs').querySelectorAll('input');
+  inputs.forEach(inp => {
+    inp.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') checkNumDrill();
+    });
+  });
+  if (inputs[0]) inputs[0].focus();
+}
+
+function checkNumDrill() {
+  let allCorrect = true;
+  numDrillAnswer.targets.forEach((t, i) => {
+    const inp = $(`#numDrillIn${i}`);
+    const userVal = inp.value.trim().toUpperCase().replace(/^0X/, '');
+    const answer = t.answer.toUpperCase();
+    const isCorrect = userVal === answer;
+    inp.classList.remove('correct-input', 'incorrect-input');
+    inp.classList.add(isCorrect ? 'correct-input' : 'incorrect-input');
+    if (!isCorrect) allCorrect = false;
+  });
+
+  numDrillTotal++;
+  if (allCorrect) numDrillCorrectCount++;
+  numDrillHistory.push(allCorrect);
+  $('#numDrillScore').textContent = `${numDrillCorrectCount}/${numDrillTotal}`;
+  renderStreakBar('numDrillStreak', numDrillHistory);
+}
+
+function showNumDrill() {
+  numDrillAnswer.targets.forEach((t, i) => {
+    const inp = $(`#numDrillIn${i}`);
+    inp.value = t.answer;
+    inp.classList.remove('incorrect-input');
+    inp.classList.add('correct-input');
+  });
+}
+
+$('#numDrillCheck').addEventListener('click', checkNumDrill);
+$('#numDrillShow').addEventListener('click', showNumDrill);
+$('#numDrillNext').addEventListener('click', newNumDrill);
+
+// =====================================================================
+// SUBNET MATH DRILLS
+// =====================================================================
+
+// --- CIDR <-> Mask Drill ---
+let cidrDrillData = {};
+let cidrHistory = [];
+
+function newCidrDrill() {
+  const direction = Math.random() < 0.5 ? 'toMask' : 'toCidr';
+  const prefix = Math.floor(Math.random() * 25) + 8; // /8 to /32
+  const mask = intToIp(cidrToMask(prefix));
+
+  if (direction === 'toMask') {
+    cidrDrillData = { question: `What is the subnet mask for /${prefix}?`, answer: mask, direction };
+    $('#cidrProblem').innerHTML = `
+      <div class="mp-question">What is the subnet mask for <strong style="color:var(--accent-cyan)">/${prefix}</strong> ?</div>
+      <div class="mp-input-row">
+        <input type="text" id="cidrAnswer" placeholder="e.g. 255.255.255.0">
+      </div>
+      <div class="mp-feedback" id="cidrFeedback"></div>
+    `;
+  } else {
+    cidrDrillData = { question: `What CIDR prefix is ${mask}?`, answer: `/${prefix}`, answerNum: prefix, direction };
+    $('#cidrProblem').innerHTML = `
+      <div class="mp-question">What CIDR prefix equals <strong style="color:var(--accent-cyan)">${mask}</strong> ?</div>
+      <div class="mp-input-row">
+        <input type="text" id="cidrAnswer" placeholder="e.g. /24 or 24">
+      </div>
+      <div class="mp-feedback" id="cidrFeedback"></div>
+    `;
+  }
+
+  $('#cidrAnswer').addEventListener('keydown', (e) => { if (e.key === 'Enter') checkCidrDrill(); });
+  $('#cidrAnswer').focus();
+}
+
+function checkCidrDrill() {
+  const inp = $('#cidrAnswer');
+  const fb = $('#cidrFeedback');
+  let userVal = inp.value.trim();
+  let isCorrect;
+
+  if (cidrDrillData.direction === 'toMask') {
+    isCorrect = userVal === cidrDrillData.answer;
+  } else {
+    userVal = userVal.replace('/', '');
+    isCorrect = parseInt(userVal) === cidrDrillData.answerNum;
+  }
+
+  inp.classList.remove('correct-input', 'incorrect-input');
+  inp.classList.add(isCorrect ? 'correct-input' : 'incorrect-input');
+  fb.className = 'mp-feedback visible ' + (isCorrect ? 'correct' : 'wrong');
+  fb.textContent = isCorrect ? 'Correct!' : `Answer: ${cidrDrillData.answer}`;
+  cidrHistory.push(isCorrect);
+  renderStreakBar('cidrStreak', cidrHistory);
+  $('#cidrScore').textContent = `${cidrHistory.filter(h=>h).length}/${cidrHistory.length}`;
+}
+
+$('#cidrCheck').addEventListener('click', checkCidrDrill);
+$('#cidrShow').addEventListener('click', () => {
+  $('#cidrAnswer').value = cidrDrillData.answer;
+  $('#cidrAnswer').classList.add('correct-input');
+  const fb = $('#cidrFeedback');
+  fb.className = 'mp-feedback visible correct';
+  fb.textContent = cidrDrillData.answer;
+});
+$('#cidrNext').addEventListener('click', newCidrDrill);
+
+// --- Hosts & Block Size Drill ---
+let hostDrillData = {};
+let hostHistory = [];
+
+function newHostDrill() {
+  const prefix = Math.floor(Math.random() * 25) + 8;
+  const hostBits = 32 - prefix;
+  const totalAddresses = Math.pow(2, hostBits);
+  const usableHosts = hostBits > 1 ? totalAddresses - 2 : (hostBits === 1 ? 2 : 1);
+  const blockSize = totalAddresses;
+
+  hostDrillData = { prefix, usableHosts, blockSize };
+
+  $('#hostProblem').innerHTML = `
+    <div class="mp-question">For <strong style="color:var(--accent-cyan)">/${prefix}</strong> — how many <strong>usable hosts</strong> and what is the <strong>block size</strong>?</div>
+    <div class="mp-input-row" style="margin-bottom:0.5rem;">
+      <input type="text" id="hostAnswerHosts" placeholder="Usable hosts" style="flex:1;">
+      <input type="text" id="hostAnswerBlock" placeholder="Block size" style="flex:1;">
+    </div>
+    <div class="mp-feedback" id="hostFeedback"></div>
+  `;
+
+  $('#hostProblem').querySelectorAll('input').forEach(inp => {
+    inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') checkHostDrill(); });
+  });
+  $('#hostAnswerHosts').focus();
+}
+
+function checkHostDrill() {
+  const hostsInp = $('#hostAnswerHosts');
+  const blockInp = $('#hostAnswerBlock');
+  const fb = $('#hostFeedback');
+
+  const hostsCorrect = parseInt(hostsInp.value) === hostDrillData.usableHosts;
+  const blockCorrect = parseInt(blockInp.value) === hostDrillData.blockSize;
+
+  hostsInp.classList.remove('correct-input', 'incorrect-input');
+  blockInp.classList.remove('correct-input', 'incorrect-input');
+  hostsInp.classList.add(hostsCorrect ? 'correct-input' : 'incorrect-input');
+  blockInp.classList.add(blockCorrect ? 'correct-input' : 'incorrect-input');
+
+  const allCorrect = hostsCorrect && blockCorrect;
+  fb.className = 'mp-feedback visible ' + (allCorrect ? 'correct' : 'wrong');
+  fb.textContent = allCorrect ? 'Correct!' : `Hosts: ${hostDrillData.usableHosts}, Block size: ${hostDrillData.blockSize} (2^${32-hostDrillData.prefix})`;
+  hostHistory.push(allCorrect);
+  renderStreakBar('hostStreak', hostHistory);
+  $('#hostScore').textContent = `${hostHistory.filter(h=>h).length}/${hostHistory.length}`;
+}
+
+$('#hostCheck').addEventListener('click', checkHostDrill);
+$('#hostShow').addEventListener('click', () => {
+  $('#hostAnswerHosts').value = hostDrillData.usableHosts;
+  $('#hostAnswerBlock').value = hostDrillData.blockSize;
+  $('#hostAnswerHosts').classList.add('correct-input');
+  $('#hostAnswerBlock').classList.add('correct-input');
+  const fb = $('#hostFeedback');
+  fb.className = 'mp-feedback visible correct';
+  fb.textContent = `Hosts: ${hostDrillData.usableHosts}, Block size: ${hostDrillData.blockSize}`;
+});
+$('#hostNext').addEventListener('click', newHostDrill);
+
+// --- Wildcard Mask Drill ---
+let wcDrillData = {};
+let wcHistory = [];
+
+function newWcDrill() {
+  const prefix = Math.floor(Math.random() * 25) + 8;
+  const mask = cidrToMask(prefix);
+  const wildcard = (~mask >>> 0);
+  const direction = Math.random() < 0.5 ? 'toWildcard' : 'toMask';
+
+  if (direction === 'toWildcard') {
+    wcDrillData = { question: intToIp(mask), answer: intToIp(wildcard), direction };
+    $('#wcProblem').innerHTML = `
+      <div class="mp-question">Wildcard mask for subnet <strong style="color:var(--accent-cyan)">${intToIp(mask)}</strong> ?</div>
+      <div class="mp-input-row"><input type="text" id="wcAnswer" placeholder="e.g. 0.0.0.255"></div>
+      <div class="mp-feedback" id="wcFeedback"></div>
+    `;
+  } else {
+    wcDrillData = { question: intToIp(wildcard), answer: intToIp(mask), direction };
+    $('#wcProblem').innerHTML = `
+      <div class="mp-question">Subnet mask for wildcard <strong style="color:var(--accent-cyan)">${intToIp(wildcard)}</strong> ?</div>
+      <div class="mp-input-row"><input type="text" id="wcAnswer" placeholder="e.g. 255.255.255.0"></div>
+      <div class="mp-feedback" id="wcFeedback"></div>
+    `;
+  }
+
+  $('#wcAnswer').addEventListener('keydown', (e) => { if (e.key === 'Enter') checkWcDrill(); });
+  $('#wcAnswer').focus();
+}
+
+function checkWcDrill() {
+  const inp = $('#wcAnswer');
+  const fb = $('#wcFeedback');
+  const isCorrect = inp.value.trim() === wcDrillData.answer;
+  inp.classList.remove('correct-input', 'incorrect-input');
+  inp.classList.add(isCorrect ? 'correct-input' : 'incorrect-input');
+  fb.className = 'mp-feedback visible ' + (isCorrect ? 'correct' : 'wrong');
+  fb.textContent = isCorrect ? 'Correct!' : `Answer: ${wcDrillData.answer}`;
+  wcHistory.push(isCorrect);
+  renderStreakBar('wcStreak', wcHistory);
+  $('#wcScore').textContent = `${wcHistory.filter(h=>h).length}/${wcHistory.length}`;
+}
+
+$('#wcCheck').addEventListener('click', checkWcDrill);
+$('#wcShow').addEventListener('click', () => {
+  $('#wcAnswer').value = wcDrillData.answer;
+  $('#wcAnswer').classList.add('correct-input');
+  const fb = $('#wcFeedback');
+  fb.className = 'mp-feedback visible correct';
+  fb.textContent = wcDrillData.answer;
+});
+$('#wcNext').addEventListener('click', newWcDrill);
+
+// --- AND Operation Drill ---
+let andDrillData = {};
+let andHistory = [];
+
+function newAndDrill() {
+  const ip = randomIp();
+  const prefix = PRACTICE_PREFIXES[Math.floor(Math.random() * PRACTICE_PREFIXES.length)];
+  const mask = intToIp(cidrToMask(prefix));
+  const network = intToIp((ipToInt(ip) & cidrToMask(prefix)) >>> 0);
+
+  andDrillData = { ip, prefix, mask, answer: network };
+
+  $('#andProblem').innerHTML = `
+    <div class="mp-question">
+      <strong style="color:var(--accent-cyan)">${ip}</strong> AND <strong style="color:var(--accent-amber)">${mask}</strong> = ?
+    </div>
+    <div class="mp-input-row"><input type="text" id="andAnswer" placeholder="Network address"></div>
+    <div class="mp-feedback" id="andFeedback"></div>
+  `;
+
+  $('#andAnswer').addEventListener('keydown', (e) => { if (e.key === 'Enter') checkAndDrill(); });
+  $('#andAnswer').focus();
+}
+
+function checkAndDrill() {
+  const inp = $('#andAnswer');
+  const fb = $('#andFeedback');
+  const isCorrect = inp.value.trim() === andDrillData.answer;
+  inp.classList.remove('correct-input', 'incorrect-input');
+  inp.classList.add(isCorrect ? 'correct-input' : 'incorrect-input');
+  fb.className = 'mp-feedback visible ' + (isCorrect ? 'correct' : 'wrong');
+  fb.textContent = isCorrect ? 'Correct!' : `Answer: ${andDrillData.answer}`;
+  andHistory.push(isCorrect);
+  renderStreakBar('andStreak', andHistory);
+  $('#andScore').textContent = `${andHistory.filter(h=>h).length}/${andHistory.length}`;
+}
+
+$('#andCheck').addEventListener('click', checkAndDrill);
+$('#andShow').addEventListener('click', () => {
+  $('#andAnswer').value = andDrillData.answer;
+  $('#andAnswer').classList.add('correct-input');
+  const fb = $('#andFeedback');
+  fb.className = 'mp-feedback visible correct';
+  fb.textContent = andDrillData.answer;
+});
+$('#andNext').addEventListener('click', newAndDrill);
+
+// --- Bitwise AND Visualizer ---
+$('#andVizCalc').addEventListener('click', () => {
+  const ipStr = $('#andVizIp').value.trim();
+  let maskInput = $('#andVizMask').value.trim();
+  let maskInt;
+
+  if (maskInput.startsWith('/')) {
+    maskInt = cidrToMask(parseInt(maskInput.slice(1)));
+  } else if (/^\d+$/.test(maskInput)) {
+    maskInt = cidrToMask(parseInt(maskInput));
+  } else {
+    maskInt = ipToInt(maskInput);
+  }
+
+  if (!/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(ipStr)) return;
+
+  const ipInt = ipToInt(ipStr);
+  const netInt = (ipInt & maskInt) >>> 0;
+  const ipBits = intToBinary(ipInt).join('');
+  const maskBits = intToBinary(maskInt).join('');
+  const netBits = intToBinary(netInt).join('');
+
+  function renderRow(label, bits, maskBitsRef) {
+    let html = `<div class="bitwise-row"><span class="bw-label">${label}</span><div class="bw-bits">`;
+    for (let i = 0; i < 32; i++) {
+      if (i > 0 && i % 8 === 0) html += `<div class="bw-bit sep">.</div>`;
+      const isNet = maskBitsRef ? maskBitsRef[i] === '1' : true;
+      html += `<div class="bw-bit ${bits[i] === '1' ? 'one' : 'zero'}">${bits[i]}</div>`;
+    }
+    html += `</div></div>`;
+    return html;
+  }
+
+  $('#andViz').innerHTML =
+    renderRow(`IP`, ipBits, maskBits) +
+    renderRow(`Mask`, maskBits, null) +
+    `<div style="border-top:1px solid var(--border);margin:0.4rem 0;"></div>` +
+    renderRow(`Net`, netBits, maskBits) +
+    `<div style="margin-top:0.5rem;font-size:0.78rem;color:var(--text-muted);">
+      ${ipStr} AND ${intToIp(maskInt)} = <strong style="color:var(--accent-green)">${intToIp(netInt)}</strong>
+    </div>`;
+});
 
 // =====================================================================
 // SUBNET CALCULATOR
@@ -1261,7 +2295,6 @@ $('#subnetCalc').addEventListener('click', () => {
     </div>
   `).join('');
 
-  // Binary display
   const bd = $('#binaryDisplay');
   bd.style.display = 'block';
   const ipBin = r.ipBinary.join('.');
@@ -1283,7 +2316,6 @@ $('#subnetCalc').addEventListener('click', () => {
   `;
 });
 
-// CIDR cheat sheet
 $('#cidrGrid').innerHTML = CIDR_ENTRIES.map(e => `
   <div class="cidr-card">
     <span class="cidr-prefix">/${e.prefix}</span>
@@ -1324,15 +2356,13 @@ const PRACTICE_FIELDS = [
 
 $('#practiceCheck').addEventListener('click', () => {
   if (!practiceAnswer) return;
-
   let allCorrect = true;
 
   PRACTICE_FIELDS.forEach(({ id, key, transform }) => {
     const el = $(`#${id}`);
     const userVal = transform ? transform(el.value.trim()) : el.value.trim();
-    const correctVal = typeof practiceAnswer[key] === 'number' ? practiceAnswer[key] : practiceAnswer[key];
+    const correctVal = practiceAnswer[key];
     const isCorrect = String(userVal) === String(correctVal);
-
     el.classList.remove('correct-input', 'incorrect-input');
     el.classList.add(isCorrect ? 'correct-input' : 'incorrect-input');
     if (!isCorrect) allCorrect = false;
@@ -1347,14 +2377,12 @@ $('#practiceCheck').addEventListener('click', () => {
 
 $('#practiceShow').addEventListener('click', () => {
   if (!practiceAnswer) return;
-
   PRACTICE_FIELDS.forEach(({ id, key }) => {
     const el = $(`#${id}`);
     el.value = practiceAnswer[key];
     el.classList.remove('incorrect-input');
     el.classList.add('correct-input');
   });
-
   const fb = $('#practiceFeedback');
   fb.classList.add('visible', 'success');
   fb.classList.remove('error');
@@ -1383,10 +2411,15 @@ $('#refBody').innerHTML = PROTOCOLS.map(p => `
 
 renderOsiGame();
 renderProtocolQuiz();
+renderBitChart();
+newNumDrill();
+newCidrDrill();
+newHostDrill();
+newWcDrill();
+newAndDrill();
 newPractice();
-
-// Trigger initial subnet calc
 $('#subnetCalc').click();
+$('#andVizCalc').click();
 </script>
 
 </body>
