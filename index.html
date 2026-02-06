@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FOC - Networking Fundamentals</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-primary: #0a0e17;
+  --bg-card: #1a2235;
+  --border: #2a3650;
+  --text-primary: #e2e8f0;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --accent-blue: #3b82f6;
+  --accent-cyan: #06b6d4;
+  --accent-purple: #8b5cf6;
+  --radius-lg: 12px;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  min-height: 100vh;
+}
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    linear-gradient(rgba(59,130,246,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(59,130,246,0.03) 1px, transparent 1px);
+  background-size: 60px 60px;
+  pointer-events: none;
+}
+.container {
+  position: relative;
+  z-index: 1;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 4rem 2rem;
+  text-align: center;
+}
+.course-name {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  color: var(--accent-cyan);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 0.5rem;
+}
+h1 {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 2.5rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue), var(--accent-purple));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 0.5rem;
+}
+.subtitle {
+  color: var(--text-muted);
+  font-size: 1rem;
+  margin-bottom: 3rem;
+}
+.card-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  text-align: left;
+}
+@media (max-width: 600px) {
+  .card-grid { grid-template-columns: 1fr; }
+}
+.card {
+  display: block;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  text-decoration: none;
+  color: var(--text-primary);
+  transition: all 0.2s ease;
+}
+.card:hover {
+  border-color: var(--accent-blue);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(59,130,246,0.15);
+}
+.card .card-icon {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+.card h2 {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-bottom: 0.3rem;
+}
+.card p {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+.card.featured {
+  grid-column: 1 / -1;
+  background: linear-gradient(135deg, rgba(59,130,246,0.08), rgba(139,92,246,0.08));
+  border-color: rgba(59,130,246,0.3);
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="course-name">Networking Fundamentals</div>
+  <h1>&gt; FOC_</h1>
+  <p class="subtitle">Foundations of Computing &mdash; Interactive Study Tools</p>
+
+  <div class="card-grid">
+    <a href="Networking/subnetting.html" class="card featured">
+      <div class="card-icon">&#9881;</div>
+      <h2>NetDrill</h2>
+      <p>OSI model, subnetting, binary/hex/dec conversion, protocol quiz, subnet math drills, and more. The main interactive study tool.</p>
+    </a>
+    <a href="Challenges1.html" class="card">
+      <div class="card-icon">&#128013;</div>
+      <h2>Python Cheat Sheet</h2>
+      <p>Quick reference for Python scripting fundamentals.</p>
+    </a>
+    <a href="Challenges2.html" class="card">
+      <div class="card-icon">&#9889;</div>
+      <h2>PowerShell Cheat Sheet</h2>
+      <p>PowerShell commands and scripting patterns.</p>
+    </a>
+    <a href="Challenges3.html" class="card">
+      <div class="card-icon">&#128187;</div>
+      <h2>Batch Cheat Sheet</h2>
+      <p>Windows command line and batch scripting.</p>
+    </a>
+    <a href="Challenges4.html" class="card">
+      <div class="card-icon">&#128258;</div>
+      <h2>Bash Cheat Sheet</h2>
+      <p>Linux shell scripting essentials.</p>
+    </a>
+  </div>
+</div>
+</body>
+</html>
