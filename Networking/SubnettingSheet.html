@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Subnetting Notes</title>
+<style>
+  :root[data-theme="dark"] {
+    --bg: #1a1a2e;
+    --bg-table: #0f0f23;
+    --bg-th: #1a1a3a;
+    --text: #e0e0e0;
+    --border: #444;
+    --highlight-yellow: #c8b832;
+    --highlight-red: #e74c3c;
+    --highlight-green: #2ecc71;
+    --red-cell-bg: rgba(231, 76, 60, 0.35);
+    --yellow-cell-bg: rgba(200, 184, 50, 0.2);
+  }
+  :root[data-theme="light"] {
+    --bg: #f5f5f0;
+    --bg-table: #ffffff;
+    --bg-th: #e0e0e0;
+    --text: #1a1a1a;
+    --border: #aaa;
+    --highlight-yellow: #b8860b;
+    --highlight-red: #cc0000;
+    --highlight-green: #1a8a1a;
+    --red-cell-bg: rgba(231, 76, 60, 0.15);
+    --yellow-cell-bg: rgba(200, 180, 50, 0.12);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: 'Segoe UI', Tahoma, Verdana, sans-serif;
+    font-size: 14px; line-height: 1.5; padding: 20px;
+  }
+  .theme-toggle {
+    position: fixed; top: 15px; right: 15px; z-index: 100;
+    background: var(--bg-th); border: 1px solid var(--border); color: var(--text);
+    padding: 6px 14px; border-radius: 4px; cursor: pointer; font-size: 13px;
+  }
+  .page { max-width: 750px; margin: 0 auto; }
+  .centered { text-align: center; }
+  .bold { font-weight: bold; }
+  .underline { text-decoration: underline; }
+  .italic { font-style: italic; }
+  .yellow { color: var(--highlight-yellow); }
+  .red { color: var(--highlight-red); }
+  .green { color: var(--highlight-green); }
+  p { margin: 6px 0; }
+  sup { font-size: 0.7em; }
+  table { border-collapse: collapse; margin: 10px auto; background: var(--bg-table); }
+  th, td { border: 1px solid var(--border); padding: 4px 10px; text-align: center; font-size: 13px; }
+  th { background: var(--bg-th); font-weight: bold; }
+  td.red-bg, th.red-bg { background: var(--red-cell-bg); color: var(--highlight-red); font-weight: bold; }
+  .yellow-row td { background: var(--yellow-cell-bg); }
+  ol { margin: 8px 0 8px 30px; }
+  ol li { margin: 4px 0; }
+  .indent { margin-left: 30px; }
+  hr { border: none; border-top: 1px solid var(--border); margin: 30px 0; }
+  .section-title { text-align: center; font-size: 16px; font-weight: bold; text-decoration: underline; margin: 20px 0 8px; }
+</style>
+</head>
+<body>
+<button class="theme-toggle" onclick="document.documentElement.setAttribute('data-theme', document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark')">Toggle Light/Dark</button>
+<div class="page">
+
+<!-- ========== IMAGE 1 ========== -->
+
+<p class="centered bold" style="font-size:20px;">Subnetting</p>
+<p class="centered bold" style="font-size:17px;">Binary Chart</p>
+
+<table>
+  <tr><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td></tr>
+  <tr><td>128</td><td>64</td><td>32</td><td>16</td><td>8</td><td>4</td><td>2</td><td>1</td></tr>
+  <tr><td>2<sup>7</sup></td><td>2<sup>6</sup></td><td>2<sup>5</sup></td><td>2<sup>4</sup></td><td>2<sup>3</sup></td><td>2<sup>2</sup></td><td>2<sup>1</sup></td><td>2<sup>0</sup></td></tr>
+</table>
+
+<p class="centered">For example, the number 7, with only 4 bits, is equal to 0111.</p>
+<p class="centered">Using the above binary chart, any number can be created with 8 bits from 0-255</p>
+
+<p class="section-title">IPv4 Binary</p>
+
+<table>
+  <tr><td>162</td><td>168</td><td>0</td><td>1</td></tr>
+  <tr><td>11000000</td><td>10101000</td><td>00000000</td><td>00000001</td></tr>
+</table>
+
+<p class="section-title">Hexadecimal Calculation</p>
+<p class="centered">Hexadecimal uses 16 Digits</p>
+
+<table>
+  <tr><th>Number</th><td>0</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td><td>8</td><td>9</td></tr>
+  <tr><th>Equals</th><td>0</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td><td>8</td><td>9</td></tr>
+</table>
+
+<table>
+  <tr><th>Letter</th><td>A</td><td>B</td><td>C</td><td>D</td><td>E</td><td>F</td></tr>
+  <tr><th>Equals</th><td>10</td><td>11</td><td>12</td><td>13</td><td>14</td><td>15</td></tr>
+</table>
+
+<p class="centered">In hex (base 16), place values are powers of 16.</p>
+
+<table>
+  <tr><td>16<sup>3</sup></td><td>16<sup>2</sup></td><td>16<sup>1</sup></td><td>16<sup>0</sup></td></tr>
+  <tr><td>4096</td><td>256</td><td>16</td><td>1</td></tr>
+</table>
+
+<p class="centered underline">Example, convert 3BF2 to decimal</p>
+
+<table>
+  <tr><th>Hexadecimal Number</th><td>3</td><td>B</td><td>F</td><td>2</td></tr>
+  <tr><th>Hex Digits</th><td>3</td><td>11</td><td>15</td><td>2</td></tr>
+  <tr><th>Place Value in Hex</th><td>16<sup>3</sup></td><td>16<sup>2</sup></td><td>16<sup>1</sup></td><td>16<sup>0</sup></td></tr>
+</table>
+
+<p class="centered italic yellow">These values are assigned from chart above</p>
+
+<hr>
+
+<!-- ========== IMAGE 2 ========== -->
+
+<p class="section-title">Calculate</p>
+
+<table>
+  <tr><td class="bold">3</td><td>16<sup>3</sup> = 4096</td><td></td><td>3 x 4096 = 12288</td></tr>
+  <tr><td class="bold">B</td><td>16<sup>2</sup> = 256</td><td></td><td>11 x 256 = 2816</td></tr>
+  <tr><td class="bold">F</td><td>16<sup>1</sup> = 16</td><td></td><td>15 x 16 = 240</td></tr>
+  <tr><td class="bold">2</td><td>16<sup>0</sup> = 1</td><td></td><td>2 x 1 = 2</td></tr>
+</table>
+
+<p class="centered yellow">12288 + 2816 + 240 + 2 = 15346</p>
+<p class="centered yellow bold">3BF2 = 15346</p>
+
+<p class="centered underline bold">Example, 15346 back to hexadecimal</p>
+<p class="centered">Key: multiples of 16</p>
+
+<table>
+  <tr><th></th><th>Divide by 16</th><th>Take solution<br>and x by 16</th><th>Subtract by initial<br>decimal</th><th>Hex<br>Digit</th></tr>
+  <tr><td class="bold">1</td><td>15346 / 16 = 959 r 2</td><td>16 x 959 = 15344</td><td>15346 – 15344 = 2</td><td>2</td></tr>
+  <tr><td class="bold">2</td><td>959 / 16 = 59 r 15</td><td>16 x 59 = 944</td><td>959 - 944 = 15 (15 = F)</td><td>F</td></tr>
+  <tr><td class="bold">3</td><td>59 / 16 = 3 r 11</td><td>16 x 3 = 48</td><td>59 – 48 = 11 (11 = B)</td><td>B</td></tr>
+  <tr><td class="bold">4</td><td>Remainder 3</td><td>-&gt;</td><td>-&gt;</td><td>3</td></tr>
+</table>
+
+<p class="centered">Take Hex Digit in reverse (2FB3 to 3BF2)</p>
+<p class="centered bold yellow">Solution: 3BF3</p>
+
+<p class="section-title">IP Address Classes</p>
+
+<table>
+  <tr class="yellow-row"><td>Class A</td><td>First octet between 0-127</td></tr>
+  <tr class="yellow-row"><td>Class B</td><td>First octet between 128-191</td></tr>
+  <tr class="yellow-row"><td>Class C</td><td>First octet between 192-223</td></tr>
+  <tr class="yellow-row"><td>Class D</td><td>First octet between 224-239</td></tr>
+  <tr class="yellow-row"><td>Class E</td><td>First octet between 240-255</td></tr>
+</table>
+
+<p class="section-title">Calculating Subnet Mask</p>
+<p class="centered bold">Subnet Mask for <span class="underline">10.200.20.0/27</span></p>
+<p class="centered">Based off the CIDR for IPv4 Address. Move 27 bits from left to right.</p>
+
+<hr>
+
+<!-- ========== IMAGE 3 ========== -->
+
+<table>
+  <tr><th>Details</th><th>1<sup>st</sup> Octet</th><th>2<sup>nd</sup> Octet</th><th>3<sup>rd</sup> Octet</th><th>4<sup>th</sup> Octet</th><th>Decimal</th></tr>
+  <tr><td class="bold">IPv4</td><td>0000 1010</td><td>1100 1000</td><td>0001 0100</td><td>000|0 0000</td><td>10.200.20.0/<span class="yellow">27</span></td></tr>
+  <tr><td class="bold">Subnet Mask</td><td class="red-bg">1111 1111</td><td class="red-bg">1111 1111</td><td class="red-bg">1111 1111</td><td class="red-bg">111|0 0000</td><td>255.255.255.224</td></tr>
+  <tr><td class="bold">Bits</td><td>/8</td><td>/16</td><td>/24</td><td>/32</td><td></td></tr>
+</table>
+
+<p class="section-title">Calculating Subnet ID</p>
+<p class="centered bold">Subnet ID for 10.200.20.0/27</p>
+<p class="centered">See /27, which translates to 11111111.11111111.11111111.11100000, in binary.</p>
+<p class="centered">This equals 255.255.255.224, which is the subnet mask.</p>
+<p class="centered">Take 256 – 224 = 32 (This means each subnet has 32 IPs)</p>
+<p class="centered">256 is the total number of values on one octet (0-255, including the 0)</p>
+
+<table>
+  <tr><th>Subnet</th><th>Range of Addresses</th><th>Broadcast</th></tr>
+  <tr><td>10.200.20.0/27</td><td>10.200.20.0-10.200.20.31</td><td>10.200.20.31</td></tr>
+  <tr><td>10.200.20.32/27</td><td>10.200.20.32-10.200.20.63</td><td>10.200.20.63</td></tr>
+  <tr><td>10.200.20.64/27</td><td>10.200.20.32-10.200.20.95</td><td>10.200.20.95</td></tr>
+</table>
+
+<p class="centered bold">The subnet ID is the first address in the range 10.200.20.0</p>
+
+<p class="section-title">Calculating Broadcast Address</p>
+<p class="centered bold">Broadcast Address for 10.200.20.0/27</p>
+<p class="centered">Set bits in the host part to 1, see IPv4 4<sup>th</sup> octet.</p>
+
+<table>
+  <tr><th>Details</th><th>1<sup>st</sup> Octet</th><th>2<sup>nd</sup> Octet</th><th>3<sup>rd</sup> Octet</th><th>4<sup>th</sup> Octet</th><th>Decimal</th></tr>
+  <tr><td class="bold">IPv4</td><td>0000 1010</td><td>1100 1000</td><td>0001 0100</td><td>000|<span class="red">0 0000</span></td><td>10.200.20.0/27</td></tr>
+  <tr><td class="bold">Subnet Mask</td><td class="red-bg">1111 1111</td><td class="red-bg">1111 1111</td><td class="red-bg">1111 1111</td><td class="red-bg">111|0 0000</td><td>255.255.255.224</td></tr>
+  <tr><td class="bold">Bits</td><td>/8</td><td>/16</td><td>/24</td><td>/32</td><td></td></tr>
+</table>
+
+<table>
+  <tr><td colspan="2" class="bold">4<sup>th</sup> Octet</td></tr>
+  <tr><td>&rarr;</td><td>000|<span class="red">0 0000</span></td></tr>
+  <tr><td></td><td><span class="red">111</span>|0 0000</td></tr>
+  <tr><td></td><td>/32</td></tr>
+</table>
+
+<p class="centered bold">Broadcast Address is 10.200.20.<span class="red">31</span></p>
+<p class="centered">Found by taking the first 3 octets (10.200.20.XXX) and then turning the red 0s on, in the fourth octet, making 000|1 1111, which is 31.</p>
+
+<hr>
+
+<!-- ========== IMAGE 4: HOMEWORK ========== -->
+
+<p class="centered bold" style="font-size:18px;">Homework</p>
+
+<table>
+  <tr><th>Binary Address</th><th>Dotted Decimal</th></tr>
+  <tr><td>01101000 11110001 00001101 10110110</td><td></td></tr>
+  <tr><td>10100000 11111111 11111110 01011000</td><td></td></tr>
+  <tr><td>01111001 00110011 10000001 11100000</td><td></td></tr>
+  <tr><td>11110000 11111110 10110001 00110001</td><td></td></tr>
+  <tr><td>10101010 00011100 10100110 11100011</td><td></td></tr>
+</table>
+
+<table>
+  <tr><th>Dotted Decimal</th><th>Binary Address</th></tr>
+  <tr><td>188.26.221.100</td><td></td></tr>
+  <tr><td>88.91.200.84</td><td></td></tr>
+  <tr><td>150.15.60.20</td><td></td></tr>
+  <tr><td>222.161.25.10</td><td></td></tr>
+  <tr><td>220.10.5.18</td><td></td></tr>
+</table>
+
+<br>
+
+<table>
+  <tr><th>Hexadecimal Number</th><th>Decimal Equivalent</th></tr>
+  <tr><td>3BF2</td><td></td></tr>
+  <tr><td>468A</td><td></td></tr>
+  <tr><td>C40E</td><td></td></tr>
+  <tr><td>1D16</td><td></td></tr>
+  <tr><td>2EE2</td><td></td></tr>
+</table>
+
+<table>
+  <tr><th>Decimal</th><th>Hexadecimal Equivalent</th></tr>
+  <tr><td>586</td><td></td></tr>
+  <tr><td>5289</td><td></td></tr>
+  <tr><td>25840</td><td></td></tr>
+  <tr><td>252</td><td></td></tr>
+  <tr><td>14732</td><td></td></tr>
+</table>
+
+<br>
+
+<table>
+  <tr><th>IP Address</th><th>Subnet Mask</th><th>Class</th><th># of bits taken<br>for subnet</th><th>Network ID</th><th>Subnet ID</th></tr>
+  <tr><td>188.26.221.100</td><td>255.255.255.240</td><td>B</td><td>12</td><td>118.26.221.100</td><td>118.26.221.96</td></tr>
+  <tr><td>128.125.132.191</td><td>255.255.255.128</td><td></td><td></td><td></td><td></td></tr>
+  <tr><td>83.93.100.48</td><td>255.255.0.0</td><td></td><td></td><td></td><td></td></tr>
+  <tr><td>204.158.32.45</td><td>255.255.255.248</td><td></td><td></td><td></td><td></td></tr>
+  <tr><td>132.158.70.30</td><td>255.255.224.0</td><td></td><td></td><td></td><td></td></tr>
+  <tr><td>158.157.68.25</td><td>255.255.252.0</td><td></td><td></td><td></td><td></td></tr>
+</table>
+
+<hr>
+
+<!-- ========== IMAGE 5 ========== -->
+
+<p class="centered bold">IP Address 188.26.221.100 Subnet Mask 255.255.255.240</p>
+
+<ol>
+  <li>188.26.221.100 is class A</li>
+  <li>Bits taken for subnetting is taking the CIDR of the current subnet mask and subtracting the default subnet mask for class B (/28 - /16), which is 12</li>
+  <li>The network ID for 188.26.221.100, being class B, is 118.26.221.100</li>
+  <li>Subnet ID can be found with AND method</li>
+</ol>
+
+<p class="indent">IP Address 188.26.221.100 Subnet Mask 255.255.255.240, as every bit in the first 3 octets for the subnet mask is turned on, the first 3 octets remain the same for subnet ID (188.26.221.<span class="bold">???</span>). Now the focus is solving the 4<sup>th</sup> octet.</p>
+
+<table>
+  <tr>
+    <td class="bold">IP 4<sup>th</sup> Octet: 100</td>
+    <td>0</td><td class="red-bg">1</td><td class="red-bg">1</td><td>0</td><td>0</td><td>1</td><td>1</td><td>0</td>
+  </tr>
+  <tr>
+    <td class="bold">Subnet Mask 4<sup>th</sup> Octet: 240</td>
+    <td>1</td><td class="red-bg">1</td><td class="red-bg">1</td><td>1</td><td>0</td><td>0</td><td>0</td><td>0</td>
+  </tr>
+  <tr>
+    <td class="bold green">4<sup>th</sup> Octet Subnet ID: 96</td>
+    <td>0</td><td class="red-bg">1</td><td class="red-bg">1</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td>
+  </tr>
+</table>
+
+<p class="centered">The AND method is taking the last octet in the subnet mask, that's not 255, and the same octet in the IP address. Convert those octets to binary and any bits that are 1 AND 1 keep them for the subnet ID.</p>
+
+<br>
+
+<table>
+  <tr><th>Network ID</th><th>Subnet<br>Requests</th><th>Class</th><th>Subnet Mask</th><th>Bits<br>Taken</th><th>Second Subnet<br>ID</th><th>Next to last Subnet<br>ID</th></tr>
+  <tr><td>172.15.0.0</td><td>50</td><td>B</td><td>255.255.252.0/22</td><td>6</td><td>172.15.4.0</td><td>172.15.248.0</td></tr>
+  <tr><td>16.0.0.0</td><td>500</td><td></td><td></td><td></td><td></td><td></td></tr>
+  <tr><td>121.0.0.0</td><td>1000</td><td></td><td></td><td></td><td></td><td></td></tr>
+  <tr><td>157.158.0.0</td><td>20</td><td></td><td></td><td></td><td></td><td></td></tr>
+  <tr><td>215.100.10.0</td><td>16</td><td></td><td></td><td></td><td></td><td></td></tr>
+</table>
+
+<p class="centered bold">Network ID 172.15.0.0 Subnet Requests 50</p>
+<ol>
+  <li>172.x.x.x = Class B Default Subnet Mask = 255.255.0.0 /16</li>
+  <li>Bits taken for subnetting (subnet requests 50) 2<sup>5</sup> = 32 (not enough) 2<sup>6</sup> = 64 (Good)<br>
+    2<sup>6</sup> Borrow these 6 bits and add to default subnet (/16 + 6 bits = /22)</li>
+  <li>Subnet mask is 255.255.252.0/22 (found by taking the default subnet mask and adding bits taken.</li>
+</ol>
+
+<hr>
+
+<!-- ========== IMAGE 6 ========== -->
+
+<ol start="4">
+  <li>Second subnet ID is found by taking the 3<sup>rd</sup> octet of the subnet mask (252) and subtracting from block size (256). 256 – 252 = 4. This means that subnets will start every 4 from that octet. 172.15.0.0, 172.15.4.0, 172.15.8.0, ... concluding that the second subnet ID is 172.15.4.0.</li>
+  <li>Next to last is calculated by running up the 3<sup>rd</sup> octet by 4 to the end and then subtracting 4. So, 172.15.252.0 (252-4) 172.15.248.0</li>
+</ol>
+
+<br>
+
+<table>
+  <tr><th>Subnet ID</th><th>Subnet Mask</th><th>Class</th><th>First IP Address</th><th>Last IP Address</th><th>Broadcast Address</th></tr>
+  <tr><td>40.50.240.0</td><td>/20</td><td>A</td><td>40.50.240.1</td><td>40.50.255.254</td><td>40.50.255.255</td></tr>
+  <tr><td>143.30.64.0</td><td>/18</td><td></td><td></td><td></td><td></td></tr>
+  <tr><td>220.200.50.96</td><td>/28</td><td></td><td></td><td></td><td></td></tr>
+  <tr><td>210.120.50.160</td><td>/27</td><td></td><td></td><td></td><td></td></tr>
+  <tr><td>129.100.128.0</td><td>/20</td><td></td><td></td><td></td><td></td></tr>
+</table>
+
+<p class="centered bold underline">Subnet ID 40.50.240.0 Subnet Mask /20</p>
+<ol>
+  <li>40.50.240.0 is class A (1-126)</li>
+  <li>/20 = 255.255.240.0<br>
+    256 – 240 = 16 This means each subnet jumps by 16 in the 3<sup>rd</sup> octet.</li>
+  <li>1<sup>st</sup> IP address is the subnet ID + 1, 40.50.240.1</li>
+  <li>Broadcast is the top of the range for /20.</li>
+</ol>
+
+<table>
+  <tr><td class="bold">Subnet ID</td><td>40</td><td>50</td><td>240</td><td>0</td></tr>
+  <tr><td class="bold">Subnet Mask</td><td class="red-bg">255</td><td class="red-bg">255</td><td>240</td><td>0</td></tr>
+  <tr><td class="bold">Broadcast</td><td>40</td><td>50</td><td>255</td><td>255</td></tr>
+</table>
+
+<ol start="5">
+  <li>Last usable IP address is the broadcast address minus 1 (40.50.255.254)</li>
+</ol>
+
+</div>
+</body>
+</html>
