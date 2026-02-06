@@ -14,6 +14,7 @@ Interactive study tools for **Networking Fundamentals** and scripting, built as 
 | **OSI Tower** | [Open](https://mwilco03.github.io/FOC/Networking/tower.html) | Progressive 3-stage OSI model builder |
 | **Bit Flip** | [Open](https://mwilco03.github.io/FOC/Networking/bitflip.html) | Toggle 32 bits to build CIDR subnet masks |
 | **Hex Trainer** | [Open](https://mwilco03.github.io/FOC/Networking/hex.html) | Guided long-division hex conversion trainer |
+| **Subnetting Sheet** | [Open](https://mwilco03.github.io/FOC/Networking/SubnettingSheet.html) | Interactive subnetting notes & homework with editable cells |
 | Python Cheat Sheet | [Open](https://mwilco03.github.io/FOC/Challenges1.html) | Python scripting quick reference |
 | PowerShell Cheat Sheet | [Open](https://mwilco03.github.io/FOC/Challenges2.html) | PowerShell commands and patterns |
 | Batch Cheat Sheet | [Open](https://mwilco03.github.io/FOC/Challenges3.html) | Windows command line reference |
