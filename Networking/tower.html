@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OSI Tower - NetDrill</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-primary:#0a0e17;--bg-secondary:#111827;--bg-card:#1a2235;--border:#2a3650;
+  --text-primary:#e2e8f0;--text-secondary:#94a3b8;--text-muted:#64748b;
+  --accent-blue:#3b82f6;--accent-cyan:#06b6d4;--accent-green:#10b981;
+  --accent-amber:#f59e0b;--accent-red:#ef4444;--accent-purple:#8b5cf6;--accent-pink:#ec4899;
+  --layer-7:#ec4899;--layer-6:#a855f7;--layer-5:#8b5cf6;--layer-4:#3b82f6;
+  --layer-3:#06b6d4;--layer-2:#10b981;--layer-1:#f59e0b;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'JetBrains Mono',monospace;background:var(--bg-primary);color:var(--text-primary);min-height:100vh;}
+body::before{content:'';position:fixed;inset:0;background:linear-gradient(rgba(59,130,246,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,0.03) 1px,transparent 1px);background-size:60px 60px;pointer-events:none;}
+.container{position:relative;z-index:1;max-width:800px;margin:0 auto;padding:1rem;}
+.top-bar{display:flex;justify-content:space-between;align-items:center;padding:0.5rem 0;border-bottom:1px solid var(--border);margin-bottom:1rem;}
+.top-bar a{color:var(--text-muted);text-decoration:none;font-size:0.75rem;}
+.top-bar a:hover{color:var(--accent-cyan);}
+.top-bar h1{font-family:'Press Start 2P',monospace;font-size:0.85rem;color:var(--accent-amber);}
+
+/* Progress */
+.stage-progress{display:flex;gap:0.5rem;justify-content:center;margin-bottom:1.5rem;}
+.stage-dot{font-family:'Press Start 2P',monospace;font-size:0.55rem;padding:0.5rem 1rem;border-radius:999px;border:2px solid var(--border);color:var(--text-muted);transition:all 0.3s;}
+.stage-dot.active{border-color:var(--accent-amber);color:var(--accent-amber);}
+.stage-dot.done{border-color:var(--accent-green);color:var(--accent-green);background:rgba(16,185,129,0.1);}
+.stage-dot.locked{opacity:0.4;}
+
+.stage-title{text-align:center;margin-bottom:0.5rem;}
+.stage-title h2{font-family:'Press Start 2P',monospace;font-size:0.75rem;color:var(--accent-cyan);margin-bottom:0.3rem;}
+.stage-title p{font-size:0.75rem;color:var(--text-muted);}
+
+/* Tower layout */
+.tower-layout{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;align-items:start;}
+@media(max-width:650px){.tower-layout{grid-template-columns:1fr;}}
+
+.tower-stack{display:flex;flex-direction:column;gap:4px;}
+.tower-row{display:flex;align-items:center;gap:0.5rem;padding:0.55rem 0.75rem;border:2px dashed var(--border);border-radius:6px;min-height:48px;transition:all 0.2s;position:relative;}
+.tower-row.drag-over{border-color:var(--accent-blue);background:rgba(59,130,246,0.08);}
+.tower-row.correct{border-color:var(--accent-green);border-style:solid;background:rgba(16,185,129,0.08);}
+.tower-row.incorrect{border-color:var(--accent-red);border-style:solid;background:rgba(239,68,68,0.08);animation:shake 0.4s;}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+
+.row-label{font-family:'Press Start 2P',monospace;font-size:0.45rem;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0;}
+.row-placeholder{font-size:0.72rem;color:var(--text-muted);font-style:italic;}
+.row-placed{font-size:0.78rem;color:var(--text-primary);cursor:pointer;display:flex;align-items:center;gap:0.4rem;}
+.row-placed .rx{font-size:0.6rem;color:var(--accent-red);opacity:0.5;transition:opacity 0.2s;}
+.row-placed:hover .rx{opacity:1;}
+.row-hint{font-size:0.55rem;color:var(--text-muted);margin-left:auto;}
+
+/* Pool */
+.pool-panel{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:1rem;}
+.pool-panel h3{font-family:'Press Start 2P',monospace;font-size:0.55rem;color:var(--text-muted);margin-bottom:0.75rem;text-transform:uppercase;}
+.pool-items{display:flex;flex-wrap:wrap;gap:0.4rem;}
+.pool-chip{font-size:0.75rem;padding:0.4rem 0.8rem;background:var(--bg-secondary);border:1px solid var(--border);border-radius:999px;cursor:grab;transition:all 0.2s;user-select:none;color:var(--text-primary);}
+.pool-chip:hover{border-color:var(--accent-blue);transform:translateY(-1px);}
+.pool-chip:active{cursor:grabbing;}
+.pool-chip.placed{opacity:0.25;pointer-events:none;}
+
+.controls{display:flex;gap:0.5rem;margin-top:1.25rem;justify-content:center;flex-wrap:wrap;}
+.btn{font-family:'Press Start 2P',monospace;font-size:0.55rem;padding:0.6rem 1.2rem;border-radius:6px;border:none;cursor:pointer;transition:all 0.2s;}
+.btn-check{background:var(--accent-blue);color:#fff;}
+.btn-check:hover{background:#2563eb;}
+.btn-reset{background:var(--bg-card);color:var(--text-primary);border:1px solid var(--border);}
+.btn-reset:hover{border-color:var(--accent-blue);}
+.btn-next{background:var(--accent-green);color:#fff;}
+.btn-next:hover{background:#059669;}
+.btn-next:disabled{opacity:0.4;cursor:not-allowed;}
+
+.score-bar{text-align:center;margin-top:0.75rem;font-size:0.7rem;color:var(--text-muted);}
+.score-bar span{color:var(--accent-green);font-weight:700;}
+
+/* Victory */
+.victory-screen{text-align:center;padding:2rem;display:none;}
+.victory-screen.visible{display:block;animation:fadeIn 0.5s;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.victory-screen h2{font-family:'Press Start 2P',monospace;font-size:1rem;color:var(--accent-green);margin-bottom:1rem;}
+.victory-screen p{font-size:0.78rem;color:var(--text-secondary);margin-bottom:0.5rem;}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="top-bar">
+    <a href="../index.html">&larr; Back</a>
+    <h1>OSI TOWER</h1>
+    <span style="font-size:0.6rem;color:var(--text-muted);">BUILD IT</span>
+  </div>
+
+  <div class="stage-progress">
+    <div class="stage-dot active" id="dot0">1: NAMES</div>
+    <div class="stage-dot locked" id="dot1">2: ADDRESSING</div>
+    <div class="stage-dot locked" id="dot2">3: PDUs</div>
+  </div>
+
+  <div class="stage-title">
+    <h2 id="stageTitle">Stage 1: Layer Names</h2>
+    <p id="stageDesc">Drag each OSI layer name to the correct position (L7 top, L1 bottom)</p>
+  </div>
+
+  <div id="gameArea">
+    <div class="tower-layout">
+      <div class="tower-stack" id="towerStack"></div>
+      <div class="pool-panel">
+        <h3 id="poolTitle">DRAG TO PLACE</h3>
+        <div class="pool-items" id="poolItems"></div>
+      </div>
+    </div>
+    <div class="controls">
+      <button class="btn btn-check" id="btnCheck">CHECK</button>
+      <button class="btn btn-reset" id="btnReset">RESET</button>
+      <button class="btn btn-next" id="btnNext" disabled>NEXT STAGE &rarr;</button>
+    </div>
+    <div class="score-bar" id="scoreBar"></div>
+  </div>
+
+  <div class="victory-screen" id="victoryScreen">
+    <h2>TOWER COMPLETE!</h2>
+    <p>You built the entire OSI model!</p>
+    <p id="victoryStats"></p>
+    <button class="btn btn-check" id="btnPlayAgain" style="margin-top:1rem;">PLAY AGAIN</button>
+  </div>
+</div>
+
+<script>
+const LAYERS = [
+  {num:7,name:'Application',color:'var(--layer-7)',addr:'Data',pdu:'Messages'},
+  {num:6,name:'Presentation',color:'var(--layer-6)',addr:'Data',pdu:'Encoding'},
+  {num:5,name:'Session',color:'var(--layer-5)',addr:'Data',pdu:'Sessions'},
+  {num:4,name:'Transport',color:'var(--layer-4)',addr:'Port Numbers',pdu:'Segments'},
+  {num:3,name:'Network',color:'var(--layer-3)',addr:'IP Address',pdu:'Packets'},
+  {num:2,name:'Data Link',color:'var(--layer-2)',addr:'MAC Address',pdu:'Frames'},
+  {num:1,name:'Physical',color:'var(--layer-1)',addr:'Signals',pdu:'Bits'},
+];
+
+const STAGES = [
+  {title:'Stage 1: Layer Names', desc:'Drag each OSI layer name to the correct position', key:'name', poolTitle:'LAYER NAMES'},
+  {title:'Stage 2: Addressing', desc:'Match the addressing type to each layer', key:'addr', poolTitle:'ADDRESSING TYPES'},
+  {title:'Stage 3: PDUs', desc:'Match the Protocol Data Unit to each layer', key:'pdu', poolTitle:'PDU TYPES'},
+];
+
+let currentStage = 0;
+let placed = {};
+let stageResults = [null, null, null];
+let totalAttempts = 0;
+
+function shuffle(arr){const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+const $=s=>document.querySelector(s);
+
+function getPoolItems(){
+  const key = STAGES[currentStage].key;
+  const items = [...new Set(LAYERS.map(l => l[key]))];
+  return shuffle(LAYERS.map(l => l[key]));
+}
+
+function renderStage(){
+  const stage = STAGES[currentStage];
+  placed = {};
+
+  // Update dots
+  for(let i=0;i<3;i++){
+    const dot = $(`#dot${i}`);
+    dot.className = 'stage-dot';
+    if(stageResults[i] === true) dot.classList.add('done');
+    else if(i === currentStage) dot.classList.add('active');
+    else if(i > currentStage) dot.classList.add('locked');
+  }
+
+  $('#stageTitle').textContent = stage.title;
+  $('#stageDesc').textContent = stage.desc;
+  $('#poolTitle').textContent = stage.poolTitle;
+  $('#btnNext').disabled = true;
+  $('#scoreBar').textContent = '';
+
+  // Tower
+  const stack = $('#towerStack');
+  stack.innerHTML = LAYERS.map(l => {
+    const hint = currentStage === 0 ? '' : `<span class="row-hint">${l.name}</span>`;
+    return `<div class="tower-row" data-layer="${l.num}"
+      ondragover="event.preventDefault();this.classList.add('drag-over')"
+      ondragleave="this.classList.remove('drag-over')"
+      ondrop="handleDrop(event,${l.num})">
+      <div class="row-label" style="background:${l.color}">L${l.num}</div>
+      <span class="row-placeholder">Drop here</span>
+      ${hint}
+    </div>`;
+  }).join('');
+
+  // Pool
+  const items = getPoolItems();
+  $('#poolItems').innerHTML = items.map(v =>
+    `<div class="pool-chip" draggable="true" data-val="${v}" ondragstart="event.dataTransfer.setData('text','${v}')">${v}</div>`
+  ).join('');
+}
+
+window.handleDrop = function(e, slotNum){
+  e.preventDefault();
+  const slot = e.currentTarget;
+  slot.classList.remove('drag-over');
+  const val = e.dataTransfer.getData('text');
+
+  // Remove from previous slot
+  Object.entries(placed).forEach(([num, v]) => {
+    if(v === val){
+      delete placed[num];
+      const prev = document.querySelector(`.tower-row[data-layer="${num}"]`);
+      const pi = prev.querySelector('.row-placed');
+      if(pi) pi.remove();
+      const ph = prev.querySelector('.row-placeholder');
+      if(ph) ph.style.display = '';
+    }
+  });
+
+  // Remove existing in this slot
+  if(placed[slotNum]){
+    const old = placed[slotNum];
+    slot.querySelector('.row-placed')?.remove();
+    const oldChip = document.querySelector(`.pool-chip[data-val="${old}"]`);
+    if(oldChip) oldChip.classList.remove('placed');
+  }
+
+  placed[slotNum] = val;
+  const ph = slot.querySelector('.row-placeholder');
+  if(ph) ph.style.display = 'none';
+
+  const el = document.createElement('span');
+  el.className = 'row-placed';
+  el.innerHTML = `${val} <span class="rx">\u2715</span>`;
+  el.addEventListener('click', () => removePlaced(slotNum));
+  slot.insertBefore(el, slot.querySelector('.row-hint'));
+
+  const chip = document.querySelector(`.pool-chip[data-val="${val}"]`);
+  if(chip) chip.classList.add('placed');
+
+  slot.classList.remove('correct','incorrect');
+};
+
+function removePlaced(slotNum){
+  const slot = document.querySelector(`.tower-row[data-layer="${slotNum}"]`);
+  if(!placed[slotNum]) return;
+  const val = placed[slotNum];
+  delete placed[slotNum];
+  slot.querySelector('.row-placed')?.remove();
+  const ph = slot.querySelector('.row-placeholder');
+  if(ph) ph.style.display = '';
+  slot.classList.remove('correct','incorrect');
+  const chip = document.querySelector(`.pool-chip[data-val="${val}"]`);
+  if(chip) chip.classList.remove('placed');
+}
+
+$('#btnCheck').addEventListener('click', () => {
+  const key = STAGES[currentStage].key;
+  let correct = 0;
+  totalAttempts++;
+
+  LAYERS.forEach(l => {
+    const slot = document.querySelector(`.tower-row[data-layer="${l.num}"]`);
+    slot.classList.remove('correct','incorrect');
+    if(placed[l.num] === l[key]){
+      slot.classList.add('correct');
+      correct++;
+    } else if(placed[l.num]){
+      slot.classList.add('incorrect');
+    }
+  });
+
+  $('#scoreBar').innerHTML = `${correct}/7 correct`;
+
+  if(correct === 7){
+    stageResults[currentStage] = true;
+    if(currentStage < 2){
+      $('#btnNext').disabled = false;
+    } else {
+      // Victory!
+      setTimeout(() => showVictory(), 600);
+    }
+  }
+});
+
+$('#btnReset').addEventListener('click', renderStage);
+
+$('#btnNext').addEventListener('click', () => {
+  if(currentStage < 2){
+    currentStage++;
+    renderStage();
+  }
+});
+
+function showVictory(){
+  $('#gameArea').style.display = 'none';
+  const vs = $('#victoryScreen');
+  vs.classList.add('visible');
+  $('#victoryStats').textContent = `Completed in ${totalAttempts} total checks`;
+}
+
+$('#btnPlayAgain').addEventListener('click', () => {
+  currentStage = 0;
+  stageResults = [null,null,null];
+  totalAttempts = 0;
+  $('#gameArea').style.display = '';
+  $('#victoryScreen').classList.remove('visible');
+  renderStage();
+});
+
+renderStage();
+</script>
+</body>
+</html>

@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Subnet Invaders - NetDrill</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-primary: #0a0e17;
+  --bg-secondary: #111827;
+  --bg-card: #1a2235;
+  --border: #2a3650;
+  --text-primary: #e2e8f0;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --accent-blue: #3b82f6;
+  --accent-cyan: #06b6d4;
+  --accent-green: #10b981;
+  --accent-amber: #f59e0b;
+  --accent-red: #ef4444;
+  --accent-purple: #8b5cf6;
+  --accent-pink: #ec4899;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'JetBrains Mono', monospace;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    linear-gradient(rgba(59,130,246,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(59,130,246,0.03) 1px, transparent 1px);
+  background-size: 60px 60px;
+  pointer-events: none;
+}
+.game-container {
+  position: relative;
+  z-index: 1;
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 1rem;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+.top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 0.5rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.top-bar .back-link {
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: 0.75rem;
+}
+.top-bar .back-link:hover { color: var(--accent-cyan); }
+.top-bar h1 {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.9rem;
+  background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.stats-bar {
+  display: flex;
+  gap: 1.5rem;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  padding: 0.5rem 0;
+  flex-wrap: wrap;
+}
+.stats-bar .stat-val { color: var(--accent-cyan); font-weight: 700; }
+.stats-bar .stat-lives { color: var(--accent-red); }
+
+/* Game canvas area */
+.game-field {
+  flex: 1;
+  position: relative;
+  background: rgba(0,0,0,0.3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  min-height: 320px;
+  max-height: 450px;
+}
+canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Wave banner */
+.wave-banner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-family: 'Press Start 2P', monospace;
+  font-size: 1.2rem;
+  color: var(--accent-amber);
+  text-align: center;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s;
+  text-shadow: 0 0 20px rgba(245,158,11,0.5);
+  z-index: 10;
+}
+.wave-banner.visible { opacity: 1; }
+.wave-banner .wave-topic {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  margin-top: 0.5rem;
+}
+
+/* Question area */
+.question-area {
+  padding: 1rem 0;
+}
+.question-text {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.7rem;
+  line-height: 1.6;
+  color: var(--text-primary);
+  text-align: center;
+  margin-bottom: 0.75rem;
+  min-height: 2.5em;
+}
+.answer-cards {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.answer-card {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.82rem;
+  padding: 0.7rem 1.2rem;
+  background: var(--bg-card);
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.15s;
+  min-width: 80px;
+  text-align: center;
+}
+.answer-card:hover {
+  border-color: var(--accent-blue);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(59,130,246,0.2);
+}
+.answer-card.correct {
+  border-color: var(--accent-green);
+  background: rgba(16,185,129,0.15);
+  color: var(--accent-green);
+}
+.answer-card.wrong {
+  border-color: var(--accent-red);
+  background: rgba(239,68,68,0.15);
+  color: var(--accent-red);
+}
+.answer-card.disabled { pointer-events: none; opacity: 0.5; }
+
+/* Game over / start screen */
+.overlay-screen {
+  position: absolute;
+  inset: 0;
+  background: rgba(10,14,23,0.92);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 20;
+  padding: 2rem;
+  text-align: center;
+}
+.overlay-screen.hidden { display: none; }
+.overlay-screen h2 {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+  color: var(--accent-cyan);
+}
+.overlay-screen p {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
+  line-height: 1.6;
+}
+.overlay-screen .final-score {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 1.5rem;
+  color: var(--accent-amber);
+  margin: 1rem 0;
+}
+.btn-play {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.75rem;
+  padding: 0.8rem 2rem;
+  background: var(--accent-blue);
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  cursor: pointer;
+  margin-top: 1rem;
+  transition: all 0.2s;
+}
+.btn-play:hover { background: #2563eb; transform: scale(1.05); }
+@media (max-width: 500px) {
+  .answer-card { font-size: 0.75rem; padding: 0.6rem 0.8rem; min-width: 60px; }
+  .question-text { font-size: 0.6rem; }
+  .top-bar h1 { font-size: 0.7rem; }
+}
+</style>
+</head>
+<body>
+<div class="game-container">
+  <div class="top-bar">
+    <a href="../index.html" class="back-link">&larr; Back</a>
+    <h1>SUBNET INVADERS</h1>
+    <span style="font-size:0.65rem;color:var(--text-muted);">WAVE <span id="waveNum">1</span>/8</span>
+  </div>
+  <div class="stats-bar">
+    <div>SCORE: <span class="stat-val" id="score">0</span></div>
+    <div>STREAK: <span class="stat-val" id="streak">0</span></div>
+    <div class="stat-lives">LIVES: <span id="lives">&#9829;&#9829;&#9829;</span></div>
+  </div>
+
+  <div class="game-field" id="gameField">
+    <canvas id="gameCanvas"></canvas>
+    <div class="wave-banner" id="waveBanner">
+      <div id="waveBannerText">WAVE 1</div>
+      <div class="wave-topic" id="waveBannerTopic">Binary Basics</div>
+    </div>
+
+    <div class="overlay-screen" id="startScreen">
+      <h2>SUBNET INVADERS</h2>
+      <p>Enemies descend from above.</p>
+      <p>Answer correctly to destroy them.</p>
+      <p>Wrong answers bring them closer!</p>
+      <p style="color:var(--accent-amber);margin-top:0.5rem;">8 waves &bull; Binary &rarr; Subnetting</p>
+      <button class="btn-play" id="btnStart">START GAME</button>
+    </div>
+
+    <div class="overlay-screen hidden" id="gameOverScreen">
+      <h2 id="gameOverTitle">GAME OVER</h2>
+      <div class="final-score" id="finalScore">0</div>
+      <p id="finalWave">Reached Wave 1</p>
+      <p id="finalAccuracy">Accuracy: 0%</p>
+      <button class="btn-play" id="btnRestart">PLAY AGAIN</button>
+    </div>
+  </div>
+
+  <div class="question-area">
+    <div class="question-text" id="questionText">Press START to begin</div>
+    <div class="answer-cards" id="answerCards"></div>
+  </div>
+</div>
+
+<script>
+// =====================================================================
+// QUESTION DATABASE — organized by wave/topic
+// =====================================================================
+const WAVES = [
+  {
+    name: 'Binary Basics', enemies: 4, speed: 0.3,
+    questions: [
+      { q: 'What is 11001010 in decimal?', opts: ['192','202','200','210'], correct: 1 },
+      { q: 'What is 10101000 in decimal?', opts: ['168','172','160','176'], correct: 0 },
+      { q: 'What is 11111111 in decimal?', opts: ['256','254','255','250'], correct: 2 },
+      { q: 'What is 11000000 in decimal?', opts: ['196','192','188','200'], correct: 1 },
+      { q: 'What is 10110100 in decimal?', opts: ['184','180','176','164'], correct: 1 },
+      { q: 'How many bits in an IPv4 address?', opts: ['16','24','32','64'], correct: 2 },
+      { q: 'What is 00001010 in decimal?', opts: ['8','10','12','14'], correct: 1 },
+      { q: 'What is the binary for 255?', opts: ['11111110','11111111','11111100','10111111'], correct: 1 },
+      { q: 'What is 01111111 in decimal?', opts: ['126','127','128','129'], correct: 1 },
+      { q: 'What is the binary for 128?', opts: ['10000000','01111111','11000000','10000001'], correct: 0 },
+    ]
+  },
+  {
+    name: 'Hex Conversion', enemies: 4, speed: 0.35,
+    questions: [
+      { q: 'What is 0xBF in decimal?', opts: ['191','186','195','201'], correct: 0 },
+      { q: 'What is 0xFF in decimal?', opts: ['254','256','255','250'], correct: 2 },
+      { q: 'What is 0x0A in decimal?', opts: ['12','10','8','16'], correct: 1 },
+      { q: 'What is decimal 200 in hex?', opts: ['0xC8','0xCA','0xD0','0xCC'], correct: 0 },
+      { q: 'How many digits does hex use?', opts: ['10','12','16','8'], correct: 2 },
+      { q: 'What hex digit equals decimal 15?', opts: ['E','F','D','10'], correct: 1 },
+      { q: 'What is 0x10 in decimal?', opts: ['10','16','32','8'], correct: 1 },
+      { q: 'What is decimal 255 in hex?', opts: ['0xFE','0xFF','0xF0','0xEF'], correct: 1 },
+      { q: '16^2 equals?', opts: ['32','64','128','256'], correct: 3 },
+      { q: 'What is 0xC0 in decimal?', opts: ['192','196','200','188'], correct: 0 },
+    ]
+  },
+  {
+    name: 'IP Address Classes', enemies: 5, speed: 0.38,
+    questions: [
+      { q: 'What class is 172.16.5.1?', opts: ['Class A','Class B','Class C','Class D'], correct: 1 },
+      { q: 'What class is 10.0.0.1?', opts: ['Class A','Class B','Class C','Class D'], correct: 0 },
+      { q: 'What class is 192.168.1.1?', opts: ['Class A','Class B','Class C','Class D'], correct: 2 },
+      { q: 'Class A first octet range?', opts: ['0-127','128-191','192-223','224-239'], correct: 0 },
+      { q: 'Class B first octet range?', opts: ['0-127','128-191','192-223','224-239'], correct: 1 },
+      { q: 'Default mask for Class C?', opts: ['255.0.0.0','255.255.0.0','255.255.255.0','255.255.255.255'], correct: 2 },
+      { q: 'Default mask for Class A?', opts: ['255.0.0.0','255.255.0.0','255.255.255.0','255.255.255.255'], correct: 0 },
+      { q: 'What class is 224.0.0.5?', opts: ['Class B','Class C','Class D','Class E'], correct: 2 },
+      { q: '127.0.0.1 is used for?', opts: ['Gateway','Loopback','Broadcast','DNS'], correct: 1 },
+      { q: 'Class C range starts at?', opts: ['128','172','192','224'], correct: 2 },
+    ]
+  },
+  {
+    name: 'CIDR & Subnet Masks', enemies: 5, speed: 0.42,
+    questions: [
+      { q: 'What mask is /24?', opts: ['255.255.255.0','255.255.0.0','255.255.255.128','255.255.254.0'], correct: 0 },
+      { q: 'What mask is /26?', opts: ['255.255.255.128','255.255.255.192','255.255.255.224','255.255.255.240'], correct: 1 },
+      { q: 'What mask is /20?', opts: ['255.255.240.0','255.255.248.0','255.255.224.0','255.255.192.0'], correct: 0 },
+      { q: 'What is 255.255.254.0 in CIDR?', opts: ['/22','/23','/24','/25'], correct: 1 },
+      { q: 'What does CIDR stand for?', opts: ['Classful Internet Domain Routing','Classless Inter-Domain Routing','Central Internet Data Routing','Classless Internal Domain Registry'], correct: 1 },
+      { q: 'What mask is /27?', opts: ['255.255.255.192','255.255.255.224','255.255.255.240','255.255.255.128'], correct: 1 },
+      { q: 'What mask is /16?', opts: ['255.0.0.0','255.255.0.0','255.255.255.0','255.255.128.0'], correct: 1 },
+      { q: '/32 represents?', opts: ['Network','Single host','Broadcast','Subnet mask'], correct: 1 },
+      { q: 'Why is 255.255.253.0 invalid?', opts: ['Non-contiguous 1s','Too many bits','Wrong octet','Not binary'], correct: 0 },
+      { q: 'What mask is /28?', opts: ['255.255.255.224','255.255.255.240','255.255.255.248','255.255.255.192'], correct: 1 },
+    ]
+  },
+  {
+    name: 'Block Size & Hosts', enemies: 6, speed: 0.45,
+    questions: [
+      { q: 'Block size for /27?', opts: ['16','32','64','8'], correct: 1 },
+      { q: 'Block size for /26?', opts: ['32','64','128','16'], correct: 1 },
+      { q: 'Usable hosts in /24?', opts: ['256','255','254','253'], correct: 2 },
+      { q: 'Usable hosts in /29?', opts: ['8','6','4','2'], correct: 1 },
+      { q: 'Block size for mask 255.255.255.240?', opts: ['16','32','64','8'], correct: 0 },
+      { q: 'Usable hosts in /26?', opts: ['64','62','60','32'], correct: 1 },
+      { q: 'Which mask gives exactly 62 hosts?', opts: ['.192','.224','.240','.128'], correct: 0 },
+      { q: 'Usable host formula?', opts: ['2^n','2^n - 1','2^n - 2','2^(n-1)'], correct: 2 },
+      { q: 'Block size for /29?', opts: ['4','8','16','32'], correct: 1 },
+      { q: 'How many /26 from a /24?', opts: ['2','4','8','16'], correct: 1 },
+      { q: 'Bits borrowed: /24 to /28?', opts: ['2','3','4','5'], correct: 2 },
+    ]
+  },
+  {
+    name: 'Network Address', enemies: 6, speed: 0.48,
+    questions: [
+      { q: 'Network addr for 192.168.5.130/26?', opts: ['.0','.64','.128','.192'], correct: 2 },
+      { q: 'Network addr for 192.168.100.75/27?', opts: ['.0','.64','.32','.96'], correct: 1 },
+      { q: 'Network addr for 172.16.45.200/22?', opts: ['172.16.44.0','172.16.45.0','172.16.40.0','172.16.0.0'], correct: 0 },
+      { q: 'Subnet ranges for 192.168.1.0/26?', opts: ['.0, .64, .128, .192','.0, .32, .64, .96','.0, .16, .32, .48','.0, .128, .192, .255'], correct: 0 },
+      { q: '10.50.100.75/22 — boundary octet?', opts: ['First','Second','Third','Fourth'], correct: 2 },
+      { q: 'Network addr for 10.10.10.130/25?', opts: ['10.10.10.0','10.10.10.128','10.10.10.64','10.10.10.192'], correct: 1 },
+      { q: 'Network addr: 192.168.1.200/28?', opts: ['.192','.200','.208','.196'], correct: 0 },
+      { q: 'Network addr: 10.0.5.100/22?', opts: ['10.0.4.0','10.0.5.0','10.0.0.0','10.0.6.0'], correct: 0 },
+    ]
+  },
+  {
+    name: 'Broadcast Address', enemies: 7, speed: 0.5,
+    questions: [
+      { q: 'Broadcast for 192.168.1.64/26?', opts: ['.127','.128','.255','.63'], correct: 0 },
+      { q: 'Last usable host in 10.20.30.0/28?', opts: ['.14','.15','.16','.13'], correct: 0 },
+      { q: 'First usable host in 10.10.10.0/25?', opts: ['.0','.1','.2','.127'], correct: 1 },
+      { q: 'Valid range for 192.168.5.128/26?', opts: ['.129-.190','.128-.191','.129-.191','.130-.190'], correct: 0 },
+      { q: 'Broadcast for 172.16.44.0/22?', opts: ['172.16.47.255','172.16.45.255','172.16.44.255','172.16.48.0'], correct: 0 },
+      { q: 'Broadcast for 10.10.10.128/25?', opts: ['10.10.10.254','10.10.10.255','10.10.10.191','10.10.10.127'], correct: 1 },
+      { q: 'Broadcast: set host bits to?', opts: ['All 0s','All 1s','Same as IP','Invert IP'], correct: 1 },
+      { q: 'Broadcast for 192.168.1.0/24?', opts: ['.254','.255','.256','.0'], correct: 1 },
+    ]
+  },
+  {
+    name: 'VLSM & Supernetting', enemies: 8, speed: 0.52,
+    questions: [
+      { q: 'VLSM solves what problem?', opts: ['Efficient IP allocation','Routing loops','Broadcast storms','Collisions'], correct: 0 },
+      { q: 'How many /24s in a /22?', opts: ['1','2','4','8'], correct: 2 },
+      { q: 'Supernetting does what?', opts: ['Combines networks','Divides subnets','Encrypts traffic','Filters packets'], correct: 0 },
+      { q: 'How many /16s from 10.0.0.0/8?', opts: ['256','512','1024','65536'], correct: 0 },
+      { q: 'Host on wrong subnet = ?', opts: ['Normal','Comm fails','Slow','Broadcast storm'], correct: 1 },
+      { q: '/24 has how many usable hosts?', opts: ['256','255','254','253'], correct: 2 },
+      { q: 'Default Class B mask?', opts: ['255.0.0.0','255.255.0.0','255.255.255.0','255.255.255.255'], correct: 1 },
+      { q: 'Private Class A range?', opts: ['10.x.x.x','172.16-31.x.x','192.168.x.x','127.x.x.x'], correct: 0 },
+      { q: '192.168.10.0 is Class?', opts: ['A','B','C','D'], correct: 2 },
+      { q: '/24 subnet mask in dotted decimal?', opts: ['255.255.255.0','255.255.0.0','255.0.0.0','255.255.255.128'], correct: 0 },
+    ]
+  }
+];
+
+// =====================================================================
+// PIXEL ART SPRITES (drawn to canvas)
+// =====================================================================
+const SHIP_COLORS = ['#3b82f6','#06b6d4','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899','#f97316'];
+
+function drawInvader(ctx, x, y, size, color, frame) {
+  const s = size / 8;
+  ctx.fillStyle = color;
+  // Classic invader shape with animation frame
+  const pattern = frame % 2 === 0 ? [
+    [0,0,1,0,0,0,1,0,0],
+    [0,0,0,1,0,1,0,0,0],
+    [0,0,1,1,1,1,1,0,0],
+    [0,1,1,0,1,0,1,1,0],
+    [1,1,1,1,1,1,1,1,1],
+    [1,0,1,1,1,1,1,0,1],
+    [1,0,1,0,0,0,1,0,1],
+    [0,0,0,1,0,1,0,0,0],
+  ] : [
+    [0,0,1,0,0,0,1,0,0],
+    [1,0,0,1,0,1,0,0,1],
+    [1,0,1,1,1,1,1,0,1],
+    [1,1,1,0,1,0,1,1,1],
+    [0,1,1,1,1,1,1,1,0],
+    [0,0,1,1,1,1,1,0,0],
+    [0,0,1,0,0,0,1,0,0],
+    [0,1,0,0,0,0,0,1,0],
+  ];
+  const pw = size / 9;
+  pattern.forEach((row, ry) => {
+    row.forEach((pixel, rx) => {
+      if (pixel) {
+        ctx.fillRect(x + rx * pw, y + ry * pw, pw + 0.5, pw + 0.5);
+      }
+    });
+  });
+}
+
+function drawExplosion(ctx, x, y, size, progress) {
+  const particles = 8;
+  const maxDist = size * 1.5;
+  const dist = maxDist * progress;
+  const alpha = 1 - progress;
+  for (let i = 0; i < particles; i++) {
+    const angle = (Math.PI * 2 * i) / particles;
+    const px = x + size/2 + Math.cos(angle) * dist;
+    const py = y + size/2 + Math.sin(angle) * dist;
+    const pSize = (size / 4) * (1 - progress);
+    ctx.fillStyle = `rgba(245, 158, 11, ${alpha})`;
+    ctx.fillRect(px - pSize/2, py - pSize/2, pSize, pSize);
+  }
+}
+
+// =====================================================================
+// GAME STATE
+// =====================================================================
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const gameField = document.getElementById('gameField');
+
+let gameState = 'start'; // start, playing, waveIntro, answering, gameover, victory
+let score = 0;
+let lives = 3;
+let currentWave = 0;
+let streak = 0;
+let totalAnswered = 0;
+let totalCorrect = 0;
+let enemies = [];
+let explosions = [];
+let animFrame = 0;
+let frameCount = 0;
+let currentQuestion = null;
+let questionPool = [];
+let answered = false;
+let waveIntroTimer = 0;
+let enemyBaseY = 0;
+let shakeTimer = 0;
+
+function resizeCanvas() {
+  const rect = gameField.getBoundingClientRect();
+  canvas.width = rect.width;
+  canvas.height = rect.height;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+// =====================================================================
+// ENEMY MANAGEMENT
+// =====================================================================
+function spawnWaveEnemies() {
+  enemies = [];
+  const wave = WAVES[currentWave];
+  const count = wave.enemies;
+  const cols = Math.min(count, 6);
+  const rows = Math.ceil(count / cols);
+  const spacing = canvas.width / (cols + 1);
+  const size = Math.min(36, spacing * 0.6);
+
+  let idx = 0;
+  for (let r = 0; r < rows; r++) {
+    const rowCount = Math.min(cols, count - r * cols);
+    const rowOffset = (canvas.width - (rowCount * spacing)) / 2;
+    for (let c = 0; c < rowCount; c++) {
+      enemies.push({
+        x: rowOffset + spacing * (c + 0.5) - size / 2,
+        y: 20 + r * (size + 12),
+        size: size,
+        alive: true,
+        color: SHIP_COLORS[currentWave % SHIP_COLORS.length],
+      });
+      idx++;
+    }
+  }
+  enemyBaseY = 0;
+}
+
+function advanceEnemies() {
+  const wave = WAVES[currentWave];
+  enemyBaseY += 25;
+  shakeTimer = 8;
+}
+
+// =====================================================================
+// QUESTIONS
+// =====================================================================
+function loadQuestionPool() {
+  const wave = WAVES[currentWave];
+  questionPool = [...wave.questions].sort(() => Math.random() - 0.5);
+}
+
+function nextQuestion() {
+  if (enemies.every(e => !e.alive)) {
+    // Wave complete
+    currentWave++;
+    if (currentWave >= WAVES.length) {
+      gameState = 'victory';
+      showGameOver(true);
+      return;
+    }
+    startWaveIntro();
+    return;
+  }
+
+  if (questionPool.length === 0) {
+    loadQuestionPool();
+  }
+
+  currentQuestion = questionPool.pop();
+  answered = false;
+  renderQuestion();
+  gameState = 'answering';
+}
+
+function renderQuestion() {
+  document.getElementById('questionText').textContent = currentQuestion.q;
+  const container = document.getElementById('answerCards');
+  container.innerHTML = currentQuestion.opts.map((opt, i) => `
+    <button class="answer-card" data-idx="${i}">${opt}</button>
+  `).join('');
+
+  container.querySelectorAll('.answer-card').forEach(card => {
+    card.addEventListener('click', () => handleAnswer(parseInt(card.dataset.idx)));
+  });
+}
+
+function handleAnswer(idx) {
+  if (answered) return;
+  answered = true;
+  totalAnswered++;
+
+  const cards = document.querySelectorAll('.answer-card');
+  const isCorrect = idx === currentQuestion.correct;
+
+  cards.forEach((card, i) => {
+    card.classList.add('disabled');
+    if (i === currentQuestion.correct) card.classList.add('correct');
+    if (i === idx && !isCorrect) card.classList.add('wrong');
+  });
+
+  if (isCorrect) {
+    totalCorrect++;
+    streak++;
+    score += 100 + (streak * 10);
+    // Destroy an enemy
+    const alive = enemies.filter(e => e.alive);
+    if (alive.length > 0) {
+      const target = alive[Math.floor(Math.random() * alive.length)];
+      target.alive = false;
+      explosions.push({ x: target.x, y: target.y + enemyBaseY, size: target.size, progress: 0 });
+    }
+  } else {
+    streak = 0;
+    advanceEnemies();
+    // Check if enemies reached bottom
+    const maxY = enemies.reduce((max, e) => e.alive ? Math.max(max, e.y + enemyBaseY + e.size) : max, 0);
+    if (maxY > canvas.height - 20) {
+      lives--;
+      if (lives <= 0) {
+        gameState = 'gameover';
+        showGameOver(false);
+        updateStats();
+        return;
+      }
+    }
+  }
+
+  updateStats();
+  setTimeout(() => nextQuestion(), isCorrect ? 600 : 1200);
+}
+
+// =====================================================================
+// UI
+// =====================================================================
+function updateStats() {
+  document.getElementById('score').textContent = score;
+  document.getElementById('streak').textContent = streak;
+  document.getElementById('waveNum').textContent = currentWave + 1;
+  let hearts = '';
+  for (let i = 0; i < 3; i++) hearts += i < lives ? '\u2665' : '\u2661';
+  document.getElementById('lives').textContent = hearts;
+}
+
+function showGameOver(victory) {
+  const screen = document.getElementById('gameOverScreen');
+  screen.classList.remove('hidden');
+  document.getElementById('gameOverTitle').textContent = victory ? 'VICTORY!' : 'GAME OVER';
+  document.getElementById('gameOverTitle').style.color = victory ? 'var(--accent-green)' : 'var(--accent-red)';
+  document.getElementById('finalScore').textContent = score;
+  document.getElementById('finalWave').textContent = `Reached Wave ${currentWave + (victory ? 0 : 1)} of ${WAVES.length}`;
+  const acc = totalAnswered > 0 ? Math.round((totalCorrect / totalAnswered) * 100) : 0;
+  document.getElementById('finalAccuracy').textContent = `Accuracy: ${acc}%`;
+  document.getElementById('questionText').textContent = '';
+  document.getElementById('answerCards').innerHTML = '';
+}
+
+function startWaveIntro() {
+  gameState = 'waveIntro';
+  waveIntroTimer = 90;
+  const banner = document.getElementById('waveBanner');
+  document.getElementById('waveBannerText').textContent = `WAVE ${currentWave + 1}`;
+  document.getElementById('waveBannerTopic').textContent = WAVES[currentWave].name;
+  banner.classList.add('visible');
+  document.getElementById('questionText').textContent = '';
+  document.getElementById('answerCards').innerHTML = '';
+  spawnWaveEnemies();
+  loadQuestionPool();
+}
+
+// =====================================================================
+// GAME LOOP
+// =====================================================================
+function gameLoop() {
+  frameCount++;
+  if (frameCount % 30 === 0) animFrame++;
+
+  // Clear
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Shake
+  let shakeX = 0, shakeY = 0;
+  if (shakeTimer > 0) {
+    shakeX = (Math.random() - 0.5) * 6;
+    shakeY = (Math.random() - 0.5) * 6;
+    shakeTimer--;
+  }
+
+  ctx.save();
+  ctx.translate(shakeX, shakeY);
+
+  // Draw enemies
+  enemies.forEach(e => {
+    if (e.alive) {
+      drawInvader(ctx, e.x, e.y + enemyBaseY, e.size, e.color, animFrame);
+    }
+  });
+
+  // Draw explosions
+  explosions = explosions.filter(ex => {
+    ex.progress += 0.04;
+    if (ex.progress >= 1) return false;
+    drawExplosion(ctx, ex.x, ex.y, ex.size, ex.progress);
+    return true;
+  });
+
+  // Danger line
+  const dangerY = canvas.height - 30;
+  ctx.strokeStyle = `rgba(239,68,68,${0.3 + 0.2 * Math.sin(frameCount * 0.05)})`;
+  ctx.setLineDash([6, 4]);
+  ctx.beginPath();
+  ctx.moveTo(0, dangerY);
+  ctx.lineTo(canvas.width, dangerY);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  ctx.restore();
+
+  // Wave intro countdown
+  if (gameState === 'waveIntro') {
+    waveIntroTimer--;
+    if (waveIntroTimer <= 0) {
+      document.getElementById('waveBanner').classList.remove('visible');
+      nextQuestion();
+    }
+  }
+
+  requestAnimationFrame(gameLoop);
+}
+
+// =====================================================================
+// START / RESTART
+// =====================================================================
+function startGame() {
+  score = 0; lives = 3; currentWave = 0; streak = 0;
+  totalAnswered = 0; totalCorrect = 0;
+  enemies = []; explosions = [];
+  document.getElementById('startScreen').classList.add('hidden');
+  document.getElementById('gameOverScreen').classList.add('hidden');
+  updateStats();
+  startWaveIntro();
+}
+
+document.getElementById('btnStart').addEventListener('click', startGame);
+document.getElementById('btnRestart').addEventListener('click', startGame);
+
+gameLoop();
+</script>
+</body>
+</html>

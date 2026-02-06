@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hex Trainer - NetDrill</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+:root{--bg-primary:#0a0e17;--bg-secondary:#111827;--bg-card:#1a2235;--border:#2a3650;--text-primary:#e2e8f0;--text-secondary:#94a3b8;--text-muted:#64748b;--accent-blue:#3b82f6;--accent-cyan:#06b6d4;--accent-green:#10b981;--accent-amber:#f59e0b;--accent-red:#ef4444;--accent-purple:#8b5cf6;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'JetBrains Mono',monospace;background:var(--bg-primary);color:var(--text-primary);min-height:100vh;}
+body::before{content:'';position:fixed;inset:0;background:linear-gradient(rgba(59,130,246,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,0.03) 1px,transparent 1px);background-size:60px 60px;pointer-events:none;}
+.container{position:relative;z-index:1;max-width:750px;margin:0 auto;padding:1rem;}
+.top-bar{display:flex;justify-content:space-between;align-items:center;padding:0.5rem 0;border-bottom:1px solid var(--border);margin-bottom:1rem;}
+.top-bar a{color:var(--text-muted);text-decoration:none;font-size:0.75rem;}
+.top-bar a:hover{color:var(--accent-cyan);}
+.top-bar h1{font-family:'Press Start 2P',monospace;font-size:0.85rem;color:var(--accent-purple);}
+
+/* Mode tabs */
+.mode-tabs{display:flex;justify-content:center;gap:0.5rem;margin-bottom:1.5rem;flex-wrap:wrap;}
+.mode-tab{font-family:'Press Start 2P',monospace;font-size:0.5rem;padding:0.5rem 1rem;border:1px solid var(--border);border-radius:999px;background:var(--bg-secondary);color:var(--text-muted);cursor:pointer;transition:all 0.2s;}
+.mode-tab:hover{border-color:var(--accent-blue);color:var(--text-primary);}
+.mode-tab.active{background:var(--accent-purple);border-color:var(--accent-purple);color:#fff;}
+
+.stats{display:flex;justify-content:center;gap:1.5rem;font-size:0.7rem;color:var(--text-muted);margin-bottom:1rem;}
+.stats .sv{color:var(--accent-green);font-weight:700;}
+
+.panel{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:1.25rem;margin-bottom:1rem;}
+.panel h3{font-family:'Press Start 2P',monospace;font-size:0.6rem;color:var(--accent-cyan);margin-bottom:0.75rem;}
+
+/* Guided division */
+.guided-display{text-align:center;margin-bottom:1rem;}
+.guided-display .gd-label{font-size:0.7rem;color:var(--text-muted);margin-bottom:0.3rem;}
+.guided-display .gd-value{font-family:'Press Start 2P',monospace;font-size:1.6rem;color:var(--accent-amber);}
+.guided-display .gd-dir{font-size:0.7rem;color:var(--accent-cyan);margin-top:0.3rem;}
+
+.step-display{background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:1rem;margin-bottom:0.75rem;}
+.step-row{display:flex;align-items:center;gap:0.75rem;margin-bottom:0.5rem;font-size:0.82rem;flex-wrap:wrap;}
+.step-row .step-num{font-family:'Press Start 2P',monospace;font-size:0.5rem;color:var(--text-muted);width:50px;flex-shrink:0;}
+.step-row .step-math{color:var(--text-secondary);}
+.step-row .step-result{color:var(--accent-green);font-weight:600;}
+.step-row .step-input input{width:80px;padding:0.35rem 0.5rem;font-family:'JetBrains Mono',monospace;font-size:0.82rem;background:var(--bg-primary);border:1px solid var(--border);border-radius:4px;color:var(--text-primary);outline:none;text-align:center;}
+.step-row .step-input input:focus{border-color:var(--accent-blue);}
+.step-row .step-input input.correct{border-color:var(--accent-green);background:rgba(16,185,129,0.08);}
+.step-row .step-input input.wrong{border-color:var(--accent-red);background:rgba(239,68,68,0.08);}
+
+.hex-answer{text-align:center;margin-top:1rem;padding:1rem;background:var(--bg-secondary);border-radius:8px;border:1px solid var(--border);}
+.hex-answer .ha-label{font-size:0.7rem;color:var(--text-muted);margin-bottom:0.3rem;}
+.hex-answer .ha-value{font-family:'Press Start 2P',monospace;font-size:1.2rem;color:var(--accent-green);}
+
+/* Speed drill */
+.drill-card{text-align:center;}
+.drill-card .dc-from{font-size:0.65rem;color:var(--text-muted);margin-bottom:0.3rem;}
+.drill-card .dc-value{font-family:'Press Start 2P',monospace;font-size:1.8rem;color:var(--accent-amber);margin-bottom:0.75rem;}
+.drill-card input{width:200px;padding:0.6rem;font-family:'JetBrains Mono',monospace;font-size:1rem;background:var(--bg-secondary);border:2px solid var(--border);border-radius:8px;color:var(--text-primary);outline:none;text-align:center;}
+.drill-card input:focus{border-color:var(--accent-blue);}
+.drill-card input.correct{border-color:var(--accent-green);background:rgba(16,185,129,0.08);}
+.drill-card input.wrong{border-color:var(--accent-red);background:rgba(239,68,68,0.08);}
+.drill-target{font-size:0.72rem;color:var(--text-muted);margin-bottom:0.5rem;}
+
+.controls{display:flex;gap:0.5rem;justify-content:center;flex-wrap:wrap;margin-top:1rem;}
+.btn{font-family:'Press Start 2P',monospace;font-size:0.55rem;padding:0.6rem 1.2rem;border-radius:6px;border:none;cursor:pointer;transition:all 0.2s;}
+.btn-check{background:var(--accent-blue);color:#fff;}.btn-check:hover{background:#2563eb;}
+.btn-skip{background:var(--accent-amber);color:#000;}.btn-skip:hover{background:#d97706;}
+.btn-next{background:var(--accent-green);color:#fff;}.btn-next:hover{background:#059669;}
+.btn-reset{background:var(--bg-card);color:var(--text-primary);border:1px solid var(--border);}
+
+.feedback{text-align:center;font-family:'Press Start 2P',monospace;font-size:0.6rem;min-height:1.5em;margin-top:0.5rem;}
+.feedback.correct{color:var(--accent-green);}
+.feedback.wrong{color:var(--accent-red);}
+
+/* Hex reference */
+.hex-ref{display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:4px;margin-top:0.75rem;}
+.hex-ref-cell{background:var(--bg-secondary);border:1px solid var(--border);border-radius:4px;padding:0.35rem;text-align:center;font-size:0.72rem;display:flex;justify-content:space-between;}
+.hex-ref-cell .hrc-dec{color:var(--text-secondary);}
+.hex-ref-cell .hrc-hex{color:var(--accent-purple);font-weight:600;}
+
+/* Reverse mode: place value table */
+.pv-table{width:100%;border-collapse:collapse;font-size:0.78rem;margin-top:0.75rem;}
+.pv-table th{font-size:0.6rem;color:var(--text-muted);padding:0.4rem;text-align:center;border-bottom:1px solid var(--border);}
+.pv-table td{padding:0.4rem;text-align:center;border-bottom:1px solid rgba(42,54,80,0.3);}
+.pv-table .pv-digit{color:var(--accent-purple);font-weight:700;font-size:0.9rem;}
+.pv-table .pv-val{color:var(--accent-cyan);}
+.pv-table input{width:70px;padding:0.3rem;font-family:'JetBrains Mono',monospace;font-size:0.78rem;background:var(--bg-primary);border:1px solid var(--border);border-radius:4px;color:var(--text-primary);outline:none;text-align:center;}
+.pv-table input:focus{border-color:var(--accent-blue);}
+.pv-table input.correct{border-color:var(--accent-green);}
+.pv-table input.wrong{border-color:var(--accent-red);}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="top-bar">
+    <a href="../index.html">&larr; Back</a>
+    <h1>HEX TRAINER</h1>
+    <span style="font-size:0.6rem;color:var(--text-muted);">CONVERT</span>
+  </div>
+
+  <div class="mode-tabs">
+    <button class="mode-tab active" data-mode="guided">GUIDED DEC\u2192HEX</button>
+    <button class="mode-tab" data-mode="reverse">HEX\u2192DEC</button>
+    <button class="mode-tab" data-mode="speed">SPEED DRILL</button>
+  </div>
+
+  <div class="stats">
+    <div>CORRECT: <span class="sv" id="score">0</span></div>
+    <div>STREAK: <span class="sv" id="streak">0</span></div>
+  </div>
+
+  <div id="modeContent"></div>
+</div>
+
+<script>
+let mode = 'guided';
+let sc = 0, streak = 0;
+const $ = s => document.querySelector(s);
+const randInt = (min,max) => Math.floor(Math.random()*(max-min+1))+min;
+
+function updateStats(){ $('#score').textContent=sc; $('#streak').textContent=streak; }
+
+// =====================================================================
+// GUIDED: Decimal → Hex (long division)
+// =====================================================================
+let guidedNum = 0;
+let guidedSteps = [];
+
+function newGuided(){
+  guidedNum = randInt(100, 65535);
+  guidedSteps = [];
+  let n = guidedNum;
+  while(n > 0){
+    const q = Math.floor(n/16);
+    const r = n % 16;
+    guidedSteps.push({dividend:n, quotient:q, remainder:r, hexDigit: r.toString(16).toUpperCase()});
+    n = q;
+  }
+
+  const content = $('#modeContent');
+  content.innerHTML = `
+    <div class="panel">
+      <h3>DECIMAL \u2192 HEXADECIMAL</h3>
+      <div class="guided-display">
+        <div class="gd-label">Convert this decimal number to hex</div>
+        <div class="gd-value">${guidedNum}</div>
+        <div class="gd-dir">Divide by 16 repeatedly. Remainders become hex digits (read bottom to top).</div>
+      </div>
+      <div id="stepsArea">
+        ${guidedSteps.map((s,i) => `
+          <div class="step-display">
+            <div class="step-row">
+              <span class="step-num">Step ${i+1}</span>
+              <span class="step-math">${s.dividend} \u00F7 16 =</span>
+              <span class="step-input"><input type="text" id="gq-${i}" placeholder="quotient"></span>
+              <span class="step-math">remainder</span>
+              <span class="step-input"><input type="text" id="gr-${i}" placeholder="rem"></span>
+              <span class="step-math">hex digit:</span>
+              <span class="step-input"><input type="text" id="gh-${i}" placeholder="?" style="width:50px;"></span>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+      <div class="hex-answer" id="guidedAnswer" style="display:none;">
+        <div class="ha-label">RESULT</div>
+        <div class="ha-value" id="guidedResult"></div>
+      </div>
+      <div class="controls">
+        <button class="btn btn-check" id="guidedCheck">CHECK</button>
+        <button class="btn btn-skip" id="guidedSkip">I KNOW IT</button>
+        <button class="btn btn-next" id="guidedNext">NEXT</button>
+      </div>
+      <div class="feedback" id="guidedFb"></div>
+    </div>
+    <div class="panel">
+      <h3>HEX REFERENCE (0-15)</h3>
+      <div class="hex-ref">${Array.from({length:16},(_,i)=>`<div class="hex-ref-cell"><span class="hrc-dec">${i}</span><span class="hrc-hex">0x${i.toString(16).toUpperCase()}</span></div>`).join('')}</div>
+    </div>
+  `;
+
+  // Enter support on all inputs
+  content.querySelectorAll('input').forEach(inp => {
+    inp.addEventListener('keydown', e => { if(e.key==='Enter') checkGuided(); });
+  });
+
+  $('#guidedCheck').addEventListener('click', checkGuided);
+  $('#guidedSkip').addEventListener('click', skipGuided);
+  $('#guidedNext').addEventListener('click', newGuided);
+}
+
+function checkGuided(){
+  let allCorrect = true;
+  guidedSteps.forEach((s,i) => {
+    const qInp = $(`#gq-${i}`), rInp = $(`#gr-${i}`), hInp = $(`#gh-${i}`);
+    [qInp,rInp,hInp].forEach(inp => inp.classList.remove('correct','wrong'));
+
+    const qOk = parseInt(qInp.value) === s.quotient;
+    const rOk = parseInt(rInp.value) === s.remainder;
+    const hOk = hInp.value.trim().toUpperCase() === s.hexDigit;
+
+    qInp.classList.add(qOk?'correct':'wrong');
+    rInp.classList.add(rOk?'correct':'wrong');
+    hInp.classList.add(hOk?'correct':'wrong');
+
+    if(!qOk||!rOk||!hOk) allCorrect = false;
+  });
+
+  const fb = $('#guidedFb');
+  const correctHex = guidedNum.toString(16).toUpperCase();
+  if(allCorrect){
+    fb.textContent='CORRECT!';fb.className='feedback correct';
+    sc++;streak++;
+    $('#guidedAnswer').style.display='';
+    $('#guidedResult').textContent = `0x${correctHex}`;
+  } else {
+    fb.textContent=`Check your steps. Answer: 0x${correctHex}`;fb.className='feedback wrong';
+    streak=0;
+    $('#guidedAnswer').style.display='';
+    $('#guidedResult').textContent = `0x${correctHex}`;
+  }
+  updateStats();
+}
+
+function skipGuided(){
+  const correctHex = guidedNum.toString(16).toUpperCase();
+  // Show quick input
+  const fb = $('#guidedFb');
+  const area = $('#stepsArea');
+  area.innerHTML = `<div style="text-align:center;"><input type="text" id="skipInput" placeholder="Type hex answer" style="width:180px;padding:0.5rem;font-family:'JetBrains Mono',monospace;font-size:1rem;background:var(--bg-secondary);border:2px solid var(--border);border-radius:8px;color:var(--text-primary);outline:none;text-align:center;"></div>`;
+  const skipInp = $('#skipInput');
+  skipInp.focus();
+  skipInp.addEventListener('keydown', e => {
+    if(e.key==='Enter'){
+      const val = skipInp.value.trim().toUpperCase().replace(/^0X/,'');
+      skipInp.classList.remove('correct','wrong');
+      if(val === correctHex){
+        skipInp.classList.add('correct');
+        fb.textContent='CORRECT!';fb.className='feedback correct';
+        sc++;streak++;
+      } else {
+        skipInp.classList.add('wrong');
+        fb.textContent=`Answer: 0x${correctHex}`;fb.className='feedback wrong';
+        streak=0;
+      }
+      $('#guidedAnswer').style.display='';
+      $('#guidedResult').textContent = `0x${correctHex}`;
+      updateStats();
+    }
+  });
+}
+
+// =====================================================================
+// REVERSE: Hex → Decimal (place value)
+// =====================================================================
+let reverseHex = '';
+let reverseDigits = [];
+
+function newReverse(){
+  const dec = randInt(100, 65535);
+  reverseHex = dec.toString(16).toUpperCase();
+  reverseDigits = reverseHex.split('').map((d,i) => {
+    const val = parseInt(d, 16);
+    const power = reverseHex.length - 1 - i;
+    const placeVal = Math.pow(16, power);
+    return {digit: d, val, power, placeVal, product: val * placeVal};
+  });
+
+  const content = $('#modeContent');
+  content.innerHTML = `
+    <div class="panel">
+      <h3>HEXADECIMAL \u2192 DECIMAL</h3>
+      <div class="guided-display">
+        <div class="gd-label">Convert this hex number to decimal</div>
+        <div class="gd-value">0x${reverseHex}</div>
+        <div class="gd-dir">Multiply each digit by its place value (power of 16), then sum.</div>
+      </div>
+      <table class="pv-table">
+        <thead><tr><th>Hex Digit</th><th>Decimal</th><th>Place (16^n)</th><th>Product</th></tr></thead>
+        <tbody>
+          ${reverseDigits.map((d,i) => `<tr>
+            <td class="pv-digit">${d.digit}</td>
+            <td class="pv-val">${d.val}</td>
+            <td class="pv-val">16^${d.power} = ${d.placeVal.toLocaleString()}</td>
+            <td><input type="text" id="rv-${i}" placeholder="?"></td>
+          </tr>`).join('')}
+          <tr><td colspan="3" style="text-align:right;color:var(--text-muted);font-weight:700;">SUM =</td>
+            <td><input type="text" id="rv-sum" placeholder="total" style="font-weight:700;"></td></tr>
+        </tbody>
+      </table>
+      <div class="controls">
+        <button class="btn btn-check" id="revCheck">CHECK</button>
+        <button class="btn btn-next" id="revNext">NEXT</button>
+      </div>
+      <div class="feedback" id="revFb"></div>
+    </div>
+    <div class="panel">
+      <h3>POWERS OF 16</h3>
+      <div class="hex-ref">
+        ${[0,1,2,3,4].map(p=>`<div class="hex-ref-cell"><span class="hrc-dec">16^${p}</span><span class="hrc-hex">${Math.pow(16,p).toLocaleString()}</span></div>`).join('')}
+      </div>
+    </div>
+  `;
+
+  content.querySelectorAll('input').forEach(inp => {
+    inp.addEventListener('keydown', e => { if(e.key==='Enter') checkReverse(); });
+  });
+  $('#revCheck').addEventListener('click', checkReverse);
+  $('#revNext').addEventListener('click', newReverse);
+}
+
+function checkReverse(){
+  let allCorrect = true;
+  const correctTotal = parseInt(reverseHex, 16);
+
+  reverseDigits.forEach((d,i) => {
+    const inp = $(`#rv-${i}`);
+    inp.classList.remove('correct','wrong');
+    const ok = parseInt(inp.value) === d.product;
+    inp.classList.add(ok?'correct':'wrong');
+    if(!ok) allCorrect = false;
+  });
+
+  const sumInp = $('#rv-sum');
+  sumInp.classList.remove('correct','wrong');
+  const sumOk = parseInt(sumInp.value) === correctTotal;
+  sumInp.classList.add(sumOk?'correct':'wrong');
+  if(!sumOk) allCorrect = false;
+
+  const fb = $('#revFb');
+  if(allCorrect){
+    fb.textContent='CORRECT!';fb.className='feedback correct';sc++;streak++;
+  } else {
+    fb.textContent=`Answer: ${correctTotal.toLocaleString()}`;fb.className='feedback wrong';streak=0;
+  }
+  updateStats();
+}
+
+// =====================================================================
+// SPEED DRILL
+// =====================================================================
+let speedDirection = '';
+let speedAnswer = '';
+
+function newSpeed(){
+  const dir = Math.random() < 0.5 ? 'toHex' : 'toDec';
+  speedDirection = dir;
+
+  let displayVal, targetLabel;
+  if(dir === 'toHex'){
+    const dec = randInt(0, 65535);
+    displayVal = String(dec);
+    speedAnswer = dec.toString(16).toUpperCase();
+    targetLabel = 'Convert to HEX';
+  } else {
+    const dec = randInt(0, 65535);
+    const hex = dec.toString(16).toUpperCase();
+    displayVal = '0x' + hex;
+    speedAnswer = String(dec);
+    targetLabel = 'Convert to DECIMAL';
+  }
+
+  const content = $('#modeContent');
+  content.innerHTML = `
+    <div class="panel">
+      <h3>SPEED DRILL</h3>
+      <div class="drill-card">
+        <div class="dc-from">${targetLabel}</div>
+        <div class="dc-value">${displayVal}</div>
+        <div class="drill-target">Type your answer and hit Enter</div>
+        <input type="text" id="speedInput" placeholder="?" autofocus>
+      </div>
+      <div class="controls">
+        <button class="btn btn-check" id="speedCheck">CHECK</button>
+        <button class="btn btn-next" id="speedNext">SKIP</button>
+      </div>
+      <div class="feedback" id="speedFb"></div>
+    </div>
+  `;
+
+  const inp = $('#speedInput');
+  inp.focus();
+  inp.addEventListener('keydown', e => { if(e.key==='Enter') checkSpeed(); });
+  $('#speedCheck').addEventListener('click', checkSpeed);
+  $('#speedNext').addEventListener('click', newSpeed);
+}
+
+function checkSpeed(){
+  const inp = $('#speedInput');
+  const val = inp.value.trim().toUpperCase().replace(/^0X/,'');
+  const answer = speedAnswer.replace(/^0X/,'');
+  inp.classList.remove('correct','wrong');
+  const fb = $('#speedFb');
+
+  if(val === answer){
+    inp.classList.add('correct');
+    fb.textContent='CORRECT!';fb.className='feedback correct';sc++;streak++;
+    updateStats();
+    setTimeout(newSpeed, 500);
+  } else {
+    inp.classList.add('wrong');
+    fb.textContent=`Answer: ${speedDirection==='toHex'?'0x':''}${speedAnswer}`;
+    fb.className='feedback wrong';streak=0;
+    updateStats();
+  }
+}
+
+// =====================================================================
+// MODE SWITCHING
+// =====================================================================
+document.querySelectorAll('.mode-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    mode = tab.dataset.mode;
+    if(mode==='guided') newGuided();
+    else if(mode==='reverse') newReverse();
+    else newSpeed();
+  });
+});
+
+newGuided();
+</script>
+</body>
+</html>
