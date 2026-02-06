@@ -60,20 +60,22 @@
   .indent { margin-left: 30px; }
   hr { border: none; border-top: 1px solid var(--border); margin: 30px 0; }
   .section-title { text-align: center; font-size: 16px; font-weight: bold; text-decoration: underline; margin: 20px 0 8px; }
-  td.editable {
-    background: rgba(59,130,246,0.08);
-    border: 1px dashed rgba(59,130,246,0.4);
-    min-width: 60px;
-    cursor: text;
+  td.editable { padding: 0; }
+  td.editable input {
+    width: 100%;
+    min-width: 80px;
+    padding: 4px 8px;
+    font-family: inherit;
+    font-size: 13px;
+    color: var(--text);
+    background: transparent;
+    border: none;
     outline: none;
+    text-align: center;
   }
-  td.editable:focus {
-    background: rgba(59,130,246,0.15);
-    border-style: solid;
-    box-shadow: 0 0 0 2px rgba(59,130,246,0.3);
-  }
-  td.editable:empty::before {
-    content: '\00a0';
+  td.editable input::placeholder {
+    color: var(--border);
+    font-style: italic;
   }
 </style>
 </head>
@@ -374,8 +376,11 @@
 <script>
 document.querySelectorAll('td').forEach(td => {
   if (td.textContent.trim() === '' && !td.querySelector('*')) {
-    td.contentEditable = 'true';
     td.classList.add('editable');
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.placeholder = '...';
+    td.appendChild(input);
   }
 });
 </script>
