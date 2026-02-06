@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bit Flip - NetDrill</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+:root{--bg-primary:#0a0e17;--bg-secondary:#111827;--bg-card:#1a2235;--border:#2a3650;--text-primary:#e2e8f0;--text-secondary:#94a3b8;--text-muted:#64748b;--accent-blue:#3b82f6;--accent-cyan:#06b6d4;--accent-green:#10b981;--accent-amber:#f59e0b;--accent-red:#ef4444;--accent-purple:#8b5cf6;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'JetBrains Mono',monospace;background:var(--bg-primary);color:var(--text-primary);min-height:100vh;}
+body::before{content:'';position:fixed;inset:0;background:linear-gradient(rgba(59,130,246,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,0.03) 1px,transparent 1px);background-size:60px 60px;pointer-events:none;}
+.container{position:relative;z-index:1;max-width:750px;margin:0 auto;padding:1rem;}
+.top-bar{display:flex;justify-content:space-between;align-items:center;padding:0.5rem 0;border-bottom:1px solid var(--border);margin-bottom:1rem;}
+.top-bar a{color:var(--text-muted);text-decoration:none;font-size:0.75rem;}
+.top-bar a:hover{color:var(--accent-cyan);}
+.top-bar h1{font-family:'Press Start 2P',monospace;font-size:0.85rem;color:var(--accent-cyan);}
+
+/* Challenge display */
+.challenge{text-align:center;margin-bottom:1.5rem;}
+.challenge .ch-label{font-size:0.7rem;color:var(--text-muted);margin-bottom:0.3rem;}
+.challenge .ch-value{font-family:'Press Start 2P',monospace;font-size:1.8rem;color:var(--accent-amber);}
+.challenge .ch-hint{font-size:0.7rem;color:var(--text-muted);margin-top:0.5rem;}
+.challenge .ch-hint span{color:var(--accent-cyan);}
+
+/* Mode tabs */
+.mode-tabs{display:flex;justify-content:center;gap:0.5rem;margin-bottom:1rem;}
+.mode-tab{font-family:'Press Start 2P',monospace;font-size:0.5rem;padding:0.5rem 1rem;border:1px solid var(--border);border-radius:999px;background:var(--bg-secondary);color:var(--text-muted);cursor:pointer;transition:all 0.2s;}
+.mode-tab:hover{border-color:var(--accent-blue);color:var(--text-primary);}
+.mode-tab.active{background:var(--accent-blue);border-color:var(--accent-blue);color:#fff;}
+
+/* Bit grid */
+.bit-grid{display:flex;flex-direction:column;gap:0.5rem;margin-bottom:1rem;}
+.octet-group{display:flex;align-items:center;gap:0.25rem;}
+.octet-label{font-family:'Press Start 2P',monospace;font-size:0.45rem;color:var(--text-muted);width:60px;text-align:right;flex-shrink:0;margin-right:0.5rem;cursor:pointer;transition:color 0.2s;}
+.octet-label:hover{color:var(--accent-cyan);}
+.bit-positions{display:flex;gap:0.25rem;margin-bottom:0.25rem;}
+.bit-pos{font-size:0.5rem;color:var(--text-muted);width:36px;text-align:center;cursor:pointer;}
+.bit-pos:hover{color:var(--accent-amber);}
+.bits-row{display:flex;gap:0.25rem;}
+.bit-cell{width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-family:'Press Start 2P',monospace;font-size:0.6rem;border-radius:4px;cursor:pointer;transition:all 0.15s;border:2px solid var(--border);background:var(--bg-secondary);color:var(--text-muted);user-select:none;}
+.bit-cell:hover{border-color:var(--accent-blue);}
+.bit-cell.on{background:var(--accent-blue);border-color:var(--accent-blue);color:#fff;}
+.bit-cell.correct-bit{background:var(--accent-green);border-color:var(--accent-green);color:#fff;}
+.bit-cell.wrong-bit{background:var(--accent-red);border-color:var(--accent-red);color:#fff;}
+.octet-sep{font-size:1.2rem;color:var(--text-muted);margin:0 0.15rem;align-self:center;}
+
+/* Result display */
+.result-display{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:1rem;text-align:center;margin-bottom:1rem;}
+.result-display .rd-label{font-size:0.65rem;color:var(--text-muted);margin-bottom:0.3rem;}
+.result-display .rd-value{font-family:'JetBrains Mono',monospace;font-size:1.2rem;color:var(--accent-cyan);font-weight:700;}
+.result-display .rd-binary{font-size:0.72rem;color:var(--text-secondary);margin-top:0.3rem;}
+
+.controls{display:flex;gap:0.5rem;justify-content:center;flex-wrap:wrap;margin-bottom:1rem;}
+.btn{font-family:'Press Start 2P',monospace;font-size:0.55rem;padding:0.6rem 1.2rem;border-radius:6px;border:none;cursor:pointer;transition:all 0.2s;}
+.btn-check{background:var(--accent-blue);color:#fff;}.btn-check:hover{background:#2563eb;}
+.btn-reset{background:var(--bg-card);color:var(--text-primary);border:1px solid var(--border);}.btn-reset:hover{border-color:var(--accent-blue);}
+.btn-next{background:var(--accent-green);color:#fff;}.btn-next:hover{background:#059669;}
+.btn-hint{background:var(--accent-amber);color:#000;}.btn-hint:hover{background:#d97706;}
+
+.stats{display:flex;justify-content:center;gap:1.5rem;font-size:0.7rem;color:var(--text-muted);margin-bottom:1rem;}
+.stats .sv{color:var(--accent-green);font-weight:700;}
+
+.feedback{text-align:center;font-family:'Press Start 2P',monospace;font-size:0.6rem;min-height:1.5em;margin-bottom:0.5rem;}
+.feedback.correct{color:var(--accent-green);}
+.feedback.wrong{color:var(--accent-red);}
+
+/* Timer */
+.timer-bar{text-align:center;margin-bottom:1rem;font-family:'Press Start 2P',monospace;}
+.timer-bar .timer-val{font-size:1rem;color:var(--accent-amber);}
+.timer-bar .timer-label{font-size:0.5rem;color:var(--text-muted);}
+
+/* Shortcut help */
+.shortcut-help{background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:0.75rem;font-size:0.68rem;color:var(--text-secondary);line-height:1.6;margin-top:1rem;}
+.shortcut-help strong{color:var(--accent-amber);}
+
+@media(max-width:500px){
+  .bit-cell{width:28px;height:28px;font-size:0.5rem;}
+  .octet-label{width:40px;font-size:0.4rem;}
+  .bit-pos{width:28px;font-size:0.4rem;}
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="top-bar">
+    <a href="../index.html">&larr; Back</a>
+    <h1>BIT FLIP</h1>
+    <span style="font-size:0.6rem;color:var(--text-muted);">CIDR MASK BUILDER</span>
+  </div>
+
+  <div class="mode-tabs">
+    <button class="mode-tab active" data-mode="practice">PRACTICE</button>
+    <button class="mode-tab" data-mode="speed">SPEED RUN</button>
+  </div>
+
+  <div class="stats">
+    <div>SCORE: <span class="sv" id="score">0</span></div>
+    <div>STREAK: <span class="sv" id="streak">0</span></div>
+    <div>BEST: <span class="sv" id="best">0</span></div>
+  </div>
+
+  <div class="timer-bar" id="timerBar" style="display:none;">
+    <div class="timer-label">TIME LEFT</div>
+    <div class="timer-val" id="timerVal">60</div>
+  </div>
+
+  <div class="challenge">
+    <div class="ch-label">BUILD THE MASK FOR</div>
+    <div class="ch-value" id="targetCidr">/24</div>
+    <div class="ch-hint" id="hintArea"></div>
+  </div>
+
+  <div class="bit-grid" id="bitGrid"></div>
+
+  <div class="result-display">
+    <div class="rd-label">CURRENT MASK</div>
+    <div class="rd-value" id="currentMask">0.0.0.0</div>
+    <div class="rd-binary" id="currentBinary">00000000.00000000.00000000.00000000</div>
+  </div>
+
+  <div class="feedback" id="feedback"></div>
+
+  <div class="controls">
+    <button class="btn btn-check" id="btnCheck">CHECK</button>
+    <button class="btn btn-hint" id="btnHint">HINT</button>
+    <button class="btn btn-reset" id="btnClear">CLEAR</button>
+    <button class="btn btn-next" id="btnNext">NEXT</button>
+  </div>
+
+  <div class="shortcut-help">
+    <strong>Shortcuts:</strong> Click an <strong>octet label</strong> (e.g., "OCTET 1") to fill/clear all 8 bits.
+    Click a <strong>bit position number</strong> (e.g., "128") to auto-fill from left to that position.
+  </div>
+</div>
+
+<script>
+let bits = new Array(32).fill(0);
+let targetPrefix = 24;
+let mode = 'practice';
+let sc = 0, streak = 0, best = 0;
+let timerInterval = null;
+let timeLeft = 60;
+
+const $ = s => document.querySelector(s);
+
+function cidrToMask(p){ return p===0?0:(0xffffffff<<(32-p))>>>0; }
+function intToIp(n){ return [n>>>24,(n>>>16)&0xff,(n>>>8)&0xff,n&0xff].join('.'); }
+function bitsToInt(){ let v=0; bits.forEach((b,i)=>{ if(b) v|=(1<<(31-i)); }); return v>>>0; }
+
+function renderBitGrid(){
+  const grid = $('#bitGrid');
+  let html = '<div class="bit-positions" style="margin-left:calc(60px + 0.5rem);">';
+  for(let i=0;i<4;i++){
+    if(i>0) html += '<span class="octet-sep" style="visibility:hidden;">.</span>';
+    for(let b=7;b>=0;b--){
+      const pos = i*8+(7-b);
+      const val = Math.pow(2,b);
+      html += `<div class="bit-pos" data-fillto="${pos}">${val}</div>`;
+    }
+  }
+  html += '</div>';
+
+  for(let oct=0;oct<4;oct++){
+    html += `<div class="octet-group">`;
+    html += `<div class="octet-label" data-octet="${oct}">OCTET ${oct+1}</div>`;
+    html += `<div class="bits-row">`;
+    for(let b=0;b<8;b++){
+      const idx = oct*8+b;
+      html += `<div class="bit-cell ${bits[idx]?'on':''}" data-idx="${idx}">${bits[idx]}</div>`;
+    }
+    html += `</div>`;
+    if(oct<3) html += `<span class="octet-sep">.</span>`;
+    html += `</div>`;
+  }
+
+  grid.innerHTML = html;
+
+  // Bit click
+  grid.querySelectorAll('.bit-cell').forEach(cell => {
+    cell.addEventListener('click', () => {
+      const idx = parseInt(cell.dataset.idx);
+      bits[idx] = bits[idx] ? 0 : 1;
+      updateDisplay();
+    });
+  });
+
+  // Octet label click — fill/clear all 8
+  grid.querySelectorAll('.octet-label').forEach(label => {
+    label.addEventListener('click', () => {
+      const oct = parseInt(label.dataset.octet);
+      const start = oct * 8;
+      const allOn = bits.slice(start, start+8).every(b => b===1);
+      for(let i=start;i<start+8;i++) bits[i] = allOn ? 0 : 1;
+      updateDisplay();
+    });
+  });
+
+  // Position click — fill from left to this position
+  grid.querySelectorAll('.bit-pos').forEach(pos => {
+    pos.addEventListener('click', () => {
+      const fillTo = parseInt(pos.dataset.fillto);
+      for(let i=0;i<32;i++) bits[i] = i<=fillTo ? 1 : 0;
+      updateDisplay();
+    });
+  });
+}
+
+function updateDisplay(){
+  renderBitGrid();
+  const maskInt = bitsToInt();
+  $('#currentMask').textContent = intToIp(maskInt);
+  const binStr = bits.map((b,i) => (i>0&&i%8===0?'.':'')+b).join('');
+  $('#currentBinary').textContent = binStr;
+  $('#feedback').textContent = '';
+  $('#feedback').className = 'feedback';
+}
+
+function newProblem(){
+  const prefixes = [8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30];
+  targetPrefix = prefixes[Math.floor(Math.random()*prefixes.length)];
+  $('#targetCidr').textContent = `/${targetPrefix}`;
+  bits = new Array(32).fill(0);
+  $('#hintArea').textContent = '';
+  updateDisplay();
+}
+
+function checkAnswer(){
+  const correctMask = cidrToMask(targetPrefix);
+  const userMask = bitsToInt();
+  const isCorrect = userMask === correctMask;
+
+  // Color individual bits
+  const correctBits = [];
+  for(let i=0;i<32;i++) correctBits.push(i < targetPrefix ? 1 : 0);
+
+  document.querySelectorAll('.bit-cell').forEach(cell => {
+    const idx = parseInt(cell.dataset.idx);
+    cell.classList.remove('on','correct-bit','wrong-bit');
+    if(bits[idx] === correctBits[idx]) cell.classList.add('correct-bit');
+    else cell.classList.add('wrong-bit');
+  });
+
+  const fb = $('#feedback');
+  if(isCorrect){
+    fb.textContent = 'CORRECT!';
+    fb.className = 'feedback correct';
+    sc++; streak++;
+    if(streak > best) best = streak;
+  } else {
+    fb.textContent = `WRONG — Answer: ${intToIp(correctMask)}`;
+    fb.className = 'feedback wrong';
+    streak = 0;
+  }
+  updateStats();
+}
+
+function showHint(){
+  const fullOctets = Math.floor(targetPrefix / 8);
+  const partialBits = targetPrefix % 8;
+  let hint = `/${targetPrefix} = ${fullOctets} full octets (255)`;
+  if(partialBits > 0){
+    const partialVal = 256 - Math.pow(2, 8 - partialBits);
+    hint += ` + ${partialBits} bits in octet ${fullOctets+1} (<span>${partialVal}</span>)`;
+  }
+  hint += ` + rest are 0`;
+  $('#hintArea').innerHTML = hint;
+}
+
+function updateStats(){
+  $('#score').textContent = sc;
+  $('#streak').textContent = streak;
+  $('#best').textContent = best;
+}
+
+// Speed mode
+function startSpeed(){
+  timeLeft = 60;
+  sc = 0; streak = 0;
+  updateStats();
+  $('#timerVal').textContent = timeLeft;
+  newProblem();
+  if(timerInterval) clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    timeLeft--;
+    $('#timerVal').textContent = timeLeft;
+    if(timeLeft <= 0){
+      clearInterval(timerInterval);
+      timerInterval = null;
+      $('#feedback').textContent = `TIME UP! Score: ${sc}`;
+      $('#feedback').className = 'feedback wrong';
+    }
+  }, 1000);
+}
+
+// Mode switching
+document.querySelectorAll('.mode-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    mode = tab.dataset.mode;
+    if(timerInterval){ clearInterval(timerInterval); timerInterval = null; }
+    if(mode === 'speed'){
+      $('#timerBar').style.display = '';
+      startSpeed();
+    } else {
+      $('#timerBar').style.display = 'none';
+      newProblem();
+    }
+  });
+});
+
+$('#btnCheck').addEventListener('click', () => {
+  checkAnswer();
+  if(mode === 'speed'){
+    setTimeout(() => {
+      if(timeLeft > 0) newProblem();
+    }, 600);
+  }
+});
+$('#btnHint').addEventListener('click', showHint);
+$('#btnClear').addEventListener('click', () => { bits = new Array(32).fill(0); updateDisplay(); });
+$('#btnNext').addEventListener('click', newProblem);
+
+newProblem();
+</script>
+</body>
+</html>

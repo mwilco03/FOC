@@ -9,10 +9,25 @@ Interactive study tools for **Networking Fundamentals** and scripting, built as 
 | Tool | Link | Description |
 |------|------|-------------|
 | **NetDrill** | [Open](https://mwilco03.github.io/FOC/Networking/subnetting.html) | Main interactive study platform |
+| **Subnet Invaders** | [Open](https://mwilco03.github.io/FOC/Networking/invaders.html) | Space Invaders quiz game — 8 waves of networking questions |
+| **Subnet Quest** | [Open](https://mwilco03.github.io/FOC/Networking/quest.html) | Turn-based RPG with boss-fight subnet tables |
+| **OSI Tower** | [Open](https://mwilco03.github.io/FOC/Networking/tower.html) | Progressive 3-stage OSI model builder |
+| **Bit Flip** | [Open](https://mwilco03.github.io/FOC/Networking/bitflip.html) | Toggle 32 bits to build CIDR subnet masks |
+| **Hex Trainer** | [Open](https://mwilco03.github.io/FOC/Networking/hex.html) | Guided long-division hex conversion trainer |
 | Python Cheat Sheet | [Open](https://mwilco03.github.io/FOC/Challenges1.html) | Python scripting quick reference |
 | PowerShell Cheat Sheet | [Open](https://mwilco03.github.io/FOC/Challenges2.html) | PowerShell commands and patterns |
 | Batch Cheat Sheet | [Open](https://mwilco03.github.io/FOC/Challenges3.html) | Windows command line reference |
 | Bash Cheat Sheet | [Open](https://mwilco03.github.io/FOC/Challenges4.html) | Linux shell scripting reference |
+
+## Interactive Games
+
+| Game | What It Drills |
+|------|---------------|
+| **Subnet Invaders** | Space Invaders with networking questions. 8 waves from binary basics through VLSM. Correct answer destroys an enemy, wrong answer adds a row. Pixel-art animated spaceships. |
+| **Subnet Quest** | Turn-based RPG across 6 zones (Binary Caverns → Final Fortress). Multiple-choice battles, fill-in-the-blank boss fights with full subnet tables. XP/leveling system. |
+| **OSI Tower** | 3 progressive stages: drag layer names, then addressing types, then PDUs. Green/red per-slot feedback. Each stage unlocks after passing the previous one. |
+| **Bit Flip** | 32 clickable bits in 4 octet groups. Given a CIDR prefix, toggle bits to build the correct subnet mask. Practice mode + 60-second speed run. Shortcuts for filling octets. |
+| **Hex Trainer** | Guided long-division for dec-to-hex. Reverse mode for hex-to-dec with place values. Speed drill with random direction. Hex 0–15 reference always visible. |
 
 ## NetDrill Modules
 
@@ -53,6 +68,11 @@ FOC/
 ├── .nojekyll                   # Bypass Jekyll processing
 ├── Networking/
 │   ├── subnetting.html         # NetDrill interactive tool
+│   ├── invaders.html           # Subnet Invaders game
+│   ├── quest.html              # Subnet Quest RPG
+│   ├── tower.html              # OSI Tower builder
+│   ├── bitflip.html            # Bit Flip CIDR trainer
+│   ├── hex.html                # Hex Trainer
 │   ├── FOC - Subnetting.md     # Subnetting reference notes
 │   └── PacketTracerFiles/      # Cisco Packet Tracer labs
 ├── CDA-B/                      # Cisco network admin modules
