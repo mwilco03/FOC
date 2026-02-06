@@ -159,6 +159,31 @@ body::before {
 .battle-opt.wrong { border-color: var(--accent-red); background: rgba(239,68,68,0.15); color: var(--accent-red); }
 .battle-opt.disabled { pointer-events: none; opacity: 0.5; }
 
+/* Bit-position reference for binary questions */
+.bit-ref {
+  display: inline-block;
+  font-family: 'JetBrains Mono', monospace;
+  margin: 0.4rem auto 0.2rem;
+  padding: 0.4rem 0.6rem;
+  background: rgba(6,182,212,0.08);
+  border: 1px solid rgba(6,182,212,0.2);
+  border-radius: 6px;
+}
+.bit-ref .bit-positions {
+  display: flex; justify-content: center; gap: 0;
+  font-size: 0.55rem; color: var(--accent-cyan); letter-spacing: 0;
+}
+.bit-ref .bit-digits {
+  display: flex; justify-content: center; gap: 0;
+  font-size: 0.75rem; color: var(--text-primary); margin-top: 2px;
+}
+.bit-ref .bit-positions span,
+.bit-ref .bit-digits span {
+  width: 2ch; text-align: center;
+}
+.bit-ref .bit-digits span.one { color: var(--accent-green); font-weight: 700; }
+.bit-ref .bit-digits span.zero { color: var(--text-muted); }
+
 /* Boss fight fill-in */
 .boss-fields {
   display: grid;grid-template-columns: 1fr 1fr;gap: 0.5rem;margin-top: 0.75rem;
@@ -587,13 +612,25 @@ function startEnemy() {
   }
 }
 
+function bitRefHTML(bin) {
+  const positions = [128,64,32,16,8,4,2,1];
+  const posHTML = positions.map(p => `<span>${p}</span>`).join('');
+  const digHTML = bin.split('').map(d =>
+    `<span class="${d==='1'?'one':'zero'}">${d}</span>`
+  ).join('');
+  return `<div class="bit-ref"><div class="bit-positions">${posHTML}</div><div class="bit-digits">${digHTML}</div></div>`;
+}
+
 function showQuestion() {
   if (questionPool.length === 0) questionPool = shuffle(currentZone.questions);
   const q = questionPool.pop();
 
+  const binMatch = q.q.match(/\b([01]{8})\b/);
+  const qHTML = binMatch ? q.q.replace(binMatch[1], '<br>' + bitRefHTML(binMatch[1])) : q.q;
+
   const container = document.getElementById('battleQuestion');
   container.innerHTML = `
-    <div class="bq-text">${q.q}</div>
+    <div class="bq-text">${qHTML}</div>
     <div class="battle-options">
       ${q.opts.map((o, i) => `<button class="battle-opt" data-idx="${i}">${o}</button>`).join('')}
     </div>
