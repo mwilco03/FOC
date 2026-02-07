@@ -15,10 +15,10 @@ Interactive study tools for **Networking Fundamentals** and scripting, built as 
 | **Bit Flip** | [Open](https://mwilco03.github.io/FOC/Networking/bitflip.html) | Toggle 32 bits to build CIDR subnet masks |
 | **Hex Trainer** | [Open](https://mwilco03.github.io/FOC/Networking/hex.html) | Guided long-division hex conversion trainer |
 | **Subnetting Sheet** | [Open](https://mwilco03.github.io/FOC/Networking/SubnettingSheet.html) | Interactive subnetting notes & homework with editable cells |
-| Python Cheat Sheet | [Open](https://mwilco03.github.io/FOC/Challenges1.html) | Python scripting quick reference |
-| PowerShell Cheat Sheet | [Open](https://mwilco03.github.io/FOC/Challenges2.html) | PowerShell commands and patterns |
-| Batch Cheat Sheet | [Open](https://mwilco03.github.io/FOC/Challenges3.html) | Windows command line reference |
-| Bash Cheat Sheet | [Open](https://mwilco03.github.io/FOC/Challenges4.html) | Linux shell scripting reference |
+| **Python Lab** | [Open](https://mwilco03.github.io/FOC/Challenges1.html) | Interactive reference, 20 challenge drills, 20-question quiz |
+| **PowerShell Lab** | [Open](https://mwilco03.github.io/FOC/Challenges2.html) | Cmdlet reference, 20 admin challenge drills, 20-question quiz |
+| **Batch Lab** | [Open](https://mwilco03.github.io/FOC/Challenges3.html) | Variable/loop/file reference, 15 fill-in-the-blank drills, 15-question quiz |
+| **Bash Lab** | [Open](https://mwilco03.github.io/FOC/Challenges4.html) | Text processing & scripting reference, 20 challenge drills, 20-question quiz |
 
 ## Interactive Games
 
@@ -77,7 +77,7 @@ FOC/
 │   ├── FOC - Subnetting.md     # Subnetting reference notes
 │   └── PacketTracerFiles/      # Cisco Packet Tracer labs
 ├── CDA-B/                      # Cisco network admin modules
-├── Challenges[1-4].html        # Scripting cheat sheets
+├── Challenges[1-4].html        # Interactive scripting labs (reference + drills + quiz)
 ├── Challenges[1-4].*           # Script source files
 └── README.md
 ```

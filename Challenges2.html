@@ -1,131 +1,423 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PowerShell Cheat Sheet</title>
-  <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background-color: #1e1e1e;
-      color: #e5e5e5;
-      margin: 2rem;
-    }
-    h1, h2 {
-      color: #61dafb;
-    }
-    section {
-      margin-bottom: 2rem;
-      padding: 1rem;
-      background-color: #2e2e2e;
-      border-left: 5px solid #61dafb;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.5);
-    }
-    code {
-      background-color: #333;
-      color: #c5c8c6;
-      padding: 2px 6px;
-      border-radius: 4px;
-      font-family: monospace;
-      font-size: 1.5em;
-    }
-    pre {
-      background-color: #333;
-      color: #c5c8c6;
-      padding: 1rem;
-      border-radius: 5px;
-      overflow-x: auto;
-      font-size: 1.5em;
-    }
-    ul {
-      padding-left: 1.2em;
-    }
-    ul ul {
-      padding-left: 1.5em;
-      list-style-type: circle;
-    }
-    footer {
-      margin-top: 4rem;
-      font-size: 0.9em;
-      color: #999;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PowerShell Lab - FOC</title>
+<style>
+:root{--bg:#0a0e17;--card:#141925;--border:#2a3650;--text:#e2e8f0;--muted:#64748b;--cyan:#06b6d4;--green:#10b981;--red:#ef4444;--blue:#3b82f6;--amber:#f59e0b}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+.container{max-width:820px;margin:0 auto;padding:1rem}
+.top-bar{display:flex;justify-content:space-between;align-items:center;padding:.5rem 0;border-bottom:1px solid var(--border);margin-bottom:1rem}
+.top-bar a{color:var(--muted);text-decoration:none;font-size:.8rem}
+.top-bar a:hover{color:var(--cyan)}
+.top-bar h1{font-family:'JetBrains Mono',monospace;font-size:1.1rem;color:var(--cyan)}
+.tabs{display:flex;gap:.5rem;margin-bottom:1rem;flex-wrap:wrap}
+.tab-btn{font-family:inherit;font-size:.82rem;padding:.5rem 1rem;background:var(--card);border:1px solid var(--border);border-radius:6px;color:var(--muted);cursor:pointer}
+.tab-btn.active{color:var(--cyan);border-color:var(--cyan);background:rgba(6,182,212,.08)}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+.stats{font-size:.75rem;color:var(--muted);margin-bottom:1rem;display:flex;gap:1.5rem}
+.stats .v{color:var(--cyan);font-weight:700}
+details{background:var(--card);border:1px solid var(--border);border-radius:8px;margin-bottom:.6rem;overflow:hidden}
+summary{padding:.75rem 1rem;cursor:pointer;font-weight:600;font-size:.88rem;list-style:none}
+summary::-webkit-details-marker{display:none}
+summary::before{content:'\25B6';display:inline-block;margin-right:.5rem;font-size:.65rem;transition:transform .2s}
+details[open]>summary::before{transform:rotate(90deg)}
+.ref-body{padding:0 1rem 1rem}
+.ref-body p{font-size:.82rem;color:var(--muted);line-height:1.6;margin-bottom:.5rem}
+pre{background:#0d1117;border:1px solid var(--border);border-radius:6px;padding:.75rem;font-family:'JetBrains Mono',monospace;font-size:.78rem;overflow-x:auto;line-height:1.5;color:#c9d1d9;margin:.5rem 0}
+code{font-family:'JetBrains Mono',monospace;font-size:.82rem;background:rgba(6,182,212,.1);padding:1px 5px;border-radius:3px;color:var(--cyan)}
+.drill-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.2rem;margin-bottom:1rem}
+.drill-card .prompt{font-size:.82rem;color:var(--muted);margin-bottom:.5rem;line-height:1.5}
+.drill-card .func-sig{font-family:'JetBrains Mono',monospace;font-size:.8rem;color:#c9d1d9;background:#0d1117;padding:.6rem;border-radius:6px;margin-bottom:.6rem;white-space:pre-wrap;line-height:1.5}
+.drill-card .func-sig .todo{color:var(--amber)}
+.drill-card .tests{font-family:'JetBrains Mono',monospace;font-size:.72rem;color:var(--muted);margin-bottom:.6rem;line-height:1.5}
+.input-row{display:flex;gap:.5rem}
+.input-row input{flex:1;font-family:'JetBrains Mono',monospace;font-size:.82rem;padding:.5rem;background:#0d1117;border:1px solid var(--border);border-radius:6px;color:var(--text);outline:none}
+.input-row input:focus{border-color:var(--blue)}
+.input-row input.correct{border-color:var(--green);background:rgba(16,185,129,.08)}
+.input-row input.wrong{border-color:var(--red);background:rgba(239,68,68,.08)}
+.btn{font-family:inherit;font-size:.78rem;padding:.45rem .9rem;border:none;border-radius:6px;cursor:pointer;color:#fff}
+.btn-check{background:var(--blue)}
+.btn-check:hover{background:#2563eb}
+.btn-next{background:var(--cyan);color:#000}
+.btn-next:hover{background:#0891b2}
+.feedback{font-size:.78rem;margin-top:.5rem;min-height:1.2em}
+.feedback.correct{color:var(--green)}
+.feedback.wrong{color:var(--red)}
+.quiz-q{font-size:.88rem;margin-bottom:.75rem;line-height:1.5}
+.quiz-opts{display:grid;grid-template-columns:1fr 1fr;gap:.5rem}
+.quiz-opt{font-size:.82rem;padding:.6rem;background:var(--card);border:2px solid var(--border);border-radius:6px;cursor:pointer;text-align:left;color:var(--text);font-family:inherit}
+.quiz-opt:hover:not(.disabled){border-color:var(--blue)}
+.quiz-opt.correct{border-color:var(--green);background:rgba(16,185,129,.1);color:var(--green)}
+.quiz-opt.wrong{border-color:var(--red);background:rgba(239,68,68,.1);color:var(--red)}
+.quiz-opt.disabled{pointer-events:none;opacity:.6}
+@media(max-width:600px){.quiz-opts{grid-template-columns:1fr}.input-row{flex-direction:column}}
+</style>
 </head>
 <body>
-  <h1>PowerShell Cheat Sheet</h1>
+<div class="container">
+<div class="top-bar"><a href="index.html">&larr; Home</a><h1>PowerShell Lab</h1><span style="font-size:.7rem;color:var(--muted)">FOC</span></div>
+<div class="tabs">
+<button class="tab-btn active" data-tab="ref">Reference</button>
+<button class="tab-btn" data-tab="drill">Challenge Drill</button>
+<button class="tab-btn" data-tab="quiz">Quick Quiz</button>
+</div>
 
-  <section>
-    <h2>🧰 Extended Cmdlets for Real Use Cases</h2>
-    <ul>
-      <li><code>ConvertFrom-Json</code> / <code>ConvertTo-Json</code>
-        <ul>
-          <li>Parse API responses or structure custom output</li>
-          <li>Used in scripts to serialize/deserialize config and logs</li>
-        </ul>
-      </li>
-      <li><code>ConvertFrom-Csv</code> / <code>Export-Csv</code>
-        <ul>
-          <li>Import/export data tables from files or APIs</li>
-          <li>Used for reporting, logging, and automation pipelines</li>
-        </ul>
-      </li>
-      <li><code>ConvertFrom-StringData</code>
-        <ul>
-          <li>Converts .ini-style config blocks to hash tables</li>
-        </ul>
-      </li>
-      <li><code>Invoke-WebRequest</code> / <code>Invoke-RestMethod</code>
-        <ul>
-          <li>Used to pull files, fetch APIs, or query REST services</li>
-          <li>Frequently combined with JSON and CSV converters</li>
-        </ul>
-      </li>
-      <li><code>New-Object System.Net.WebClient</code>
-        <ul>
-          <li>Legacy file downloading method (use Invoke-WebRequest for modern)</li>
-        </ul>
-      </li>
-      <li><code>Start-Process</code> / <code>Wait-Process</code>
-        <ul>
-          <li>Run programs and wait for them to complete</li>
-          <li>Automate GUI tools, e.g., wait for Notepad to close</li>
-        </ul>
-      </li>
-      <li><code>Out-GridView -PassThru</code>
-        <ul>
-          <li>Used for user-interactive filtering of pipeline objects</li>
-        </ul>
-      </li>
-      <li><code>Group-Object</code>
-        <ul>
-          <li>Used for frequency analysis and deduplication</li>
-        </ul>
-      </li>
-      <li><code>Select-Object</code> with calculated properties
-        <ul>
-          <li>Create on-the-fly custom columns like memory in MB or file age</li>
-        </ul>
-      </li>
-      <li><code>$PSBoundParameters</code>
-        <ul>
-          <li>Check what params were actually supplied to a function</li>
-        </ul>
-      </li>
-      <li><code>Read-Host -AsSecureString</code> + <code>[Runtime.InteropServices.Marshal]</code>
-        <ul>
-          <li>Used to collect passwords securely and (optionally) convert for testing</li>
-        </ul>
-      </li>
-      <li><code>New-Variable</code> / dynamic variable access
-        <ul>
-          <li>Create and access variable names programmatically</li>
-        </ul>
-      </li>
-    </ul>
-  </section>
+<!-- ======= REFERENCE ======= -->
+<div class="tab-panel active" id="tab-ref">
+<details open><summary>Basics &amp; Variables</summary><div class="ref-body">
+<p><code>Write-Output</code> prints to pipeline. <code>Read-Host</code> reads user input. <code>#</code> starts a comment. Variables start with <code>$</code>.</p>
+<pre>$name = Read-Host "Enter name"
+Write-Output "Hello, $name!"        # string interpolation
+$x = 42                              # int
+$pi = 3.14                           # double
+$flag = $true                        # boolean
+$arr = @(1, 2, 3)                    # array
+$ht = @{ key = "value" }             # hashtable</pre>
+</div></details>
 
-  <footer>
-    PowerShell Cheat Sheet — Extended command reference covering real script use cases, data formats, and automation patterns. ⚡
-  </footer>
+<details><summary>Control Flow</summary><div class="ref-body">
+<pre># if / elseif / else
+if ($x -gt 10) {
+    Write-Output "big"
+} elseif ($x -gt 0) {
+    Write-Output "small"
+} else {
+    Write-Output "zero or negative"
+}
+
+# for loop
+for ($i = 0; $i -lt 5; $i++) { Write-Output $i }
+
+# foreach
+foreach ($item in $arr) { Write-Output $item }
+
+# while
+while ($x -gt 0) { $x-- }
+
+# switch
+switch ($code) {
+    200 { "OK" }
+    404 { "Not Found" }
+    default { "Unknown" }
+}</pre>
+</div></details>
+
+<details><summary>Functions &amp; Parameters</summary><div class="ref-body">
+<pre>function Greet-User {
+    param([string]$Name)
+    return "Hello, $Name!"
+}
+Greet-User -Name "Alice"   # Hello, Alice!
+
+# Typed parameters
+function Add-Numbers {
+    param([int]$A, [int]$B)
+    return $A + $B
+}
+
+# Splatting
+$params = @{ Name = "notepad"; ErrorAction = "SilentlyContinue" }
+Get-Process @params</pre>
+</div></details>
+
+<details><summary>String &amp; Array Methods</summary><div class="ref-body">
+<pre># Strings
+$s = "Hello World"
+$s.ToUpper()              # HELLO WORLD
+$s.ToLower()              # hello world
+$s.Split(" ")             # @("Hello","World")
+$s.Contains("World")     # True
+$s.Replace("Hello","Hi") # Hi World
+$s.Substring(0, 5)       # Hello
+$s.Length                 # 11
+
+# Arrays
+$arr = @(3, 1, 2)
+$arr += 4                 # @(3,1,2,4)
+$arr | Sort-Object        # 1,2,3,4
+$arr | Where-Object { $_ -gt 2 }    # 3,4
+$arr | ForEach-Object { $_ * 2 }    # 6,2,4,8
+$arr -join ","            # "3,1,2,4"
+$arr.Count                # 4</pre>
+</div></details>
+
+<details><summary>Pipeline &amp; Filtering</summary><div class="ref-body">
+<pre># Pipeline passes objects between cmdlets
+Get-Process | Where-Object { $_.CPU -gt 10 }
+             | Sort-Object CPU -Descending
+             | Select-Object -First 5 Name, CPU
+
+# Measure-Object
+@(1,2,3) | Measure-Object -Sum -Average
+
+# Group-Object
+Get-ChildItem | Group-Object Extension
+
+# Select with calculated properties
+Get-Process | Select-Object Name,
+    @{N='MemMB';E={[math]::Round($_.WS/1MB,1)}}</pre>
+</div></details>
+
+<details><summary>File System</summary><div class="ref-body">
+<pre># Navigate
+Get-Location               # current directory
+Set-Location "C:\Temp"     # cd
+
+# List / Search
+Get-ChildItem -Recurse -Filter "*.ps1"
+Get-ChildItem | Where-Object { $_.Length -gt 1MB }
+
+# Read / Write
+Get-Content "file.txt"
+Set-Content "out.txt" -Value "hello"
+Add-Content "log.txt" -Value "new line"
+Select-String -Path "*.log" -Pattern "error"
+
+# File operations
+New-Item -Path "test.txt" -ItemType File
+Copy-Item "a.txt" "b.txt"
+Remove-Item "old.txt"
+Test-Path "file.txt"       # True/False</pre>
+</div></details>
+
+<details><summary>Services &amp; Processes</summary><div class="ref-body">
+<pre># Processes
+Get-Process                           # list all
+Get-Process -Name "notepad"           # by name
+Stop-Process -Name "notepad"          # kill
+Start-Process "notepad.exe"           # launch
+
+# Services
+Get-Service                           # list all
+Get-Service -Name "Spooler"           # specific
+Start-Service -Name "Spooler"
+Stop-Service -Name "Spooler"
+Restart-Service -Name "wuauserv"
+
+# Filter by startup type
+Get-CimInstance Win32_Service |
+    Where-Object StartMode -eq "Auto"</pre>
+</div></details>
+
+<details><summary>Networking</summary><div class="ref-body">
+<pre># IP info
+Get-NetIPAddress -AddressFamily IPv4
+ipconfig /all
+
+# Connectivity
+Test-Connection -ComputerName "8.8.8.8" -Count 2
+Test-NetConnection -ComputerName "google.com" -Port 443
+
+# TCP connections
+Get-NetTCPConnection -State Listen
+Get-NetTCPConnection | Where-Object LocalPort -eq 80
+
+# Web requests
+Invoke-WebRequest -Uri "https://example.com"
+Invoke-RestMethod -Uri "https://api.example.com/data"</pre>
+</div></details>
+
+<details><summary>Data Formats (JSON, CSV)</summary><div class="ref-body">
+<pre># JSON
+$obj = '{"name":"Alice"}' | ConvertFrom-Json
+$obj.name                          # Alice
+$obj | ConvertTo-Json -Depth 10    # back to JSON
+
+# CSV
+$data = Import-Csv "data.csv"
+$data | Export-Csv "out.csv" -NoTypeInformation
+"Name,Age`nAlice,30" | ConvertFrom-Csv
+
+# StringData (INI-style)
+$kv = "key1=val1`nkey2=val2" | ConvertFrom-StringData
+$kv.key1                           # val1</pre>
+</div></details>
+
+<details><summary>Registry &amp; Environment</summary><div class="ref-body">
+<pre># Environment variables
+$env:PATH                              # read
+$env:FOO = "bar"                       # set (session)
+Remove-Item Env:FOO                    # remove
+
+# Registry
+Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion" -Name "ProgramFilesDir"
+Set-ItemProperty "HKCU:\Software\MyKey" -Name "Mode" -Value "On"
+Remove-ItemProperty "HKCU:\Software\MyKey" -Name "Mode"
+
+# Output redirection
+Get-Date > date.txt                    # overwrite
+Get-Date >> log.txt                    # append</pre>
+</div></details>
+
+<details><summary>Jobs &amp; Remoting</summary><div class="ref-body">
+<pre># Background jobs
+Start-Job -ScriptBlock { Get-Process }
+Get-Job                               # list jobs
+Receive-Job -Id 1                     # get results
+Remove-Job -State Completed           # clean up
+
+# Remoting (WinRM)
+Test-WSMan -ComputerName "Server01"
+Enter-PSSession -ComputerName "Server01"
+Invoke-Command -ComputerName "Server01" -ScriptBlock { hostname }
+Copy-Item "file.txt" -ToSession $s -Destination "C:\dest"
+
+# Scheduled tasks
+Get-ScheduledTask
+Register-ScheduledTask -TaskName "Test" -Action $action -Trigger $trigger</pre>
+</div></details>
+</div>
+
+<!-- ======= CHALLENGE DRILL ======= -->
+<div class="tab-panel" id="tab-drill">
+<div class="stats">SCORE: <span class="v" id="d-score">0</span> &nbsp; STREAK: <span class="v" id="d-streak">0</span> &nbsp; <span id="d-num">1</span>/<span id="d-total">20</span></div>
+<div id="drill-area"></div>
+</div>
+
+<!-- ======= QUICK QUIZ ======= -->
+<div class="tab-panel" id="tab-quiz">
+<div class="stats">SCORE: <span class="v" id="q-score">0</span> &nbsp; STREAK: <span class="v" id="q-streak">0</span> &nbsp; <span id="q-num">1</span>/<span id="q-total">20</span></div>
+<div id="quiz-area"></div>
+</div>
+</div>
+
+<script>
+// Tabs
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-'+btn.dataset.tab).classList.add('active');
+  });
+});
+
+// ============ DRILL ============
+const DRILLS=[
+{sig:'function Greet-User {\n    param([string]$Name)\n    # TODO: Return "Hello, $Name!"',tests:'Greet-User -Name "Alice" -> Hello, Alice!',answers:['return "Hello, $Name!"',"return \"Hello, $Name!\""]},
+{sig:'function Add-Numbers {\n    param([int]$A, [int]$B)\n    # TODO: Return sum of $A and $B',tests:'Add-Numbers -A 5 -B 7 -> 12',answers:['return $A + $B','return ($A + $B)']},
+{sig:'function To-Upper {\n    param([string]$Text)\n    # TODO: Return $Text in uppercase',tests:'To-Upper "hello" -> HELLO',answers:['return $Text.ToUpper()']},
+{sig:'function Is-Even {\n    param([int]$Number)\n    # TODO: Return $true if $Number is even',tests:'Is-Even -Number 4 -> True  Is-Even -Number 3 -> False',answers:['return $Number % 2 -eq 0','return ($Number % 2 -eq 0)']},
+{sig:'function Reverse-String {\n    param([string]$Text)\n    # TODO: Return the reversed string',tests:'Reverse-String "abc" -> cba',answers:['return -join $Text[$Text.Length..0]','return ($Text[-1..-$Text.Length] -join "")','return -join ($Text.ToCharArray() | Sort-Object { -++$script:i })']},
+{sig:'function Get-Average {\n    param([int[]]$Numbers)\n    # TODO: Return average of the array',tests:'Get-Average @(2,3,5) -> 3.333',answers:['return ($Numbers | Measure-Object -Average).Average']},
+{sig:'function Format-Date {\n    param([datetime]$Date)\n    # TODO: Format as "yyyy-MM-dd"',tests:'Format-Date (Get-Date "2020-01-01") -> 2020-01-01',answers:['return $Date.ToString("yyyy-MM-dd")','return Get-Date $Date -Format "yyyy-MM-dd"']},
+{sig:'function Find-Maximum {\n    param([int]$X, [int]$Y)\n    # TODO: Return the larger number',tests:'Find-Maximum -X 3 -Y 10 -> 10',answers:['if ($X -gt $Y) { return $X } else { return $Y }','return [Math]::Max($X, $Y)']},
+{sig:'function Test-Substring {\n    param([string]$String, [string]$Substring)\n    # TODO: Return $true if $Substring is in $String',tests:'Test-Substring "PowerShell" "Shell" -> True',answers:['return $String.Contains($Substring)','return $String -like "*$Substring*"']},
+{sig:'function Get-StatusMessage {\n    param([int]$Code)\n    # TODO: Switch for 200->OK, 404->Not Found, 500->Server Error',tests:'Get-StatusMessage -Code 404 -> Not Found',answers:['switch ($Code) { 200 { "OK" } 404 { "Not Found" } 500 { "Server Error" } default { "Unknown" } }']},
+{sig:'function Generate-Range {\n    param([int]$N)\n    # TODO: Output numbers 1 through N',tests:'Generate-Range -N 3 -> 1 2 3',answers:['return 1..$N']},
+{sig:'function Get-FileContent {\n    param([string]$Path)\n    # TODO: Return file content',tests:'Get-FileContent "file.txt" -> file lines',answers:['return Get-Content $Path','return Get-Content -Path $Path']},
+{sig:'function Square {\n    param([int]$N)\n    # TODO: Return N squared',tests:'Square -N 4 -> 16',answers:['return $N * $N','return [Math]::Pow($N, 2)']},
+{sig:'function Get-WorkingDirectory {\n    # TODO: Return current directory path',tests:'Get-WorkingDirectory -> C:\\Users\\...',answers:['return (Get-Location).Path','return Get-Location']},
+{sig:'function Is-ProcessRunning {\n    param([string]$Name)\n    # TODO: Return $true if process exists',tests:'Is-ProcessRunning "explorer" -> True',answers:['return (Get-Process -Name $Name -ErrorAction SilentlyContinue) -ne $null','return [bool](Get-Process -Name $Name -ErrorAction SilentlyContinue)']},
+{sig:'function Countdown-Timer {\n    param([int]$Seconds)\n    # TODO: Count down from $Seconds to 0',tests:'Countdown-Timer 3 -> 3 2 1 0',answers:['while ($Seconds -ge 0) { $Seconds; $Seconds-- }','$Seconds..0']},
+{sig:'function Get-EnvVar {\n    param([string]$Name)\n    # TODO: Return environment variable value',tests:'Get-EnvVar "PATH" -> path value',answers:['return [Environment]::GetEnvironmentVariable($Name)','return (Get-Item "Env:$Name").Value']},
+{sig:'function Test-Connectivity {\n    param([string]$Host)\n    # TODO: Ping and return True/False',tests:'Test-Connectivity "8.8.8.8" -> True',answers:['return Test-Connection -ComputerName $Host -Count 1 -Quiet','return Test-Connection $Host -Quiet']},
+{sig:'function Encode-Base64 {\n    param([string]$Text)\n    # TODO: Return Base64 encoded string',tests:'Encode-Base64 "hello" -> aGVsbG8=',answers:['return [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($Text))']},
+{sig:'function Validate-JSON {\n    param([string]$Json)\n    # TODO: Return $true if valid JSON',tests:'Validate-JSON \'{"a":1}\' -> True',answers:['try { $Json | ConvertFrom-Json; return $true } catch { return $false }']},
+];
+
+let dIdx=0,dScore=0,dStreak=0;
+document.getElementById('d-total').textContent=DRILLS.length;
+
+function showDrill(){
+  const d=DRILLS[dIdx];
+  document.getElementById('d-num').textContent=dIdx+1;
+  const area=document.getElementById('drill-area');
+  area.innerHTML=`<div class="drill-card">
+    <div class="func-sig">${d.sig.replace(/# TODO/,'<span class="todo"># TODO</span>')}</div>
+    <div class="tests">${d.tests}</div>
+    <div class="prompt">Type the missing line(s):</div>
+    <div class="input-row"><input type="text" id="drill-input" placeholder="return ..."><button class="btn btn-check" onclick="checkDrill()">Check</button></div>
+    <div class="feedback" id="drill-fb"></div>
+    <div style="margin-top:.5rem;text-align:right"><button class="btn btn-next" onclick="nextDrill()" style="display:none" id="drill-next">Next</button></div>
+  </div>`;
+  document.getElementById('drill-input').addEventListener('keydown',e=>{if(e.key==='Enter')checkDrill()});
+  document.getElementById('drill-input').focus();
+}
+
+function checkDrill(){
+  const inp=document.getElementById('drill-input');
+  const fb=document.getElementById('drill-fb');
+  const val=inp.value.trim().replace(/\s+/g,' ');
+  const d=DRILLS[dIdx];
+  const ok=d.answers.some(a=>val===a.replace(/\s+/g,' ').trim());
+  if(ok){
+    inp.classList.add('correct');fb.textContent='Correct!';fb.className='feedback correct';
+    dScore+=10;dStreak++;
+  }else{
+    inp.classList.add('wrong');fb.innerHTML='Expected: <code>'+d.answers[0]+'</code>';fb.className='feedback wrong';
+    dStreak=0;
+  }
+  document.getElementById('d-score').textContent=dScore;
+  document.getElementById('d-streak').textContent=dStreak;
+  document.getElementById('drill-next').style.display='inline-block';
+  inp.disabled=true;
+}
+
+function nextDrill(){
+  dIdx=(dIdx+1)%DRILLS.length;
+  showDrill();
+}
+showDrill();
+
+// ============ QUIZ ============
+const QUIZ=[
+{q:'What prefix do PowerShell variables use?',opts:['$','%','@','&'],c:0},
+{q:'Which cmdlet lists files in a directory?',opts:['Get-ChildItem','List-Files','Dir-Contents','Show-Files'],c:0},
+{q:'What does the pipeline operator | do?',opts:['Passes objects to next cmdlet','Logical OR','String concat','Variable assignment'],c:0},
+{q:'Which cmdlet stops a running process?',opts:['Stop-Process','Kill-Task','End-Process','Remove-Process'],c:0},
+{q:'What does Test-Path return?',opts:['True/False if path exists','File contents','File size','Directory listing'],c:0},
+{q:'How do you define a function parameter?',opts:['param([type]$Name)','def($Name)','args($Name)','input($Name)'],c:0},
+{q:'Which operator tests "greater than"?',opts:['-gt','>','>>','gt()'],c:0},
+{q:'What does Get-Service show?',opts:['Windows services','Web services','REST APIs','DNS records'],c:0},
+{q:'How do you read a file in PowerShell?',opts:['Get-Content','Read-File','Open-File','Import-File'],c:0},
+{q:'What does ConvertFrom-Json do?',opts:['JSON string to PS object','PS object to JSON','Reads JSON file','Validates JSON'],c:0},
+{q:'Which cmdlet measures array statistics?',opts:['Measure-Object','Get-Stats','Calculate-Sum','Count-Items'],c:0},
+{q:'How do you start a background job?',opts:['Start-Job','Run-Background','Start-Task','Invoke-Async'],c:0},
+{q:'What does $_ represent in a pipeline?',opts:['Current object','Previous result','Last error','Script path'],c:0},
+{q:'Which cmdlet finds text in files?',opts:['Select-String','Find-Text','Search-Content','Get-Match'],c:0},
+{q:'What switch statement keyword handles unmatched cases?',opts:['default','else','otherwise','fallback'],c:0},
+{q:'How do you test network connectivity?',opts:['Test-Connection','Ping-Host','Check-Network','Test-Net'],c:0},
+{q:'What does -eq test?',opts:['Equality','Assignment','Existence','Type check'],c:0},
+{q:'Which cmdlet creates a new file?',opts:['New-Item','Create-File','Make-File','Add-File'],c:0},
+{q:'What does @() create?',opts:['An array','A hashtable','A string','A scriptblock'],c:0},
+{q:'How do you enter a remote PS session?',opts:['Enter-PSSession','Connect-Remote','Start-Remote','Open-Session'],c:0},
+];
+
+let qIdx=0,qScore=0,qStreak=0;
+document.getElementById('q-total').textContent=QUIZ.length;
+
+function showQuiz(){
+  const q=QUIZ[qIdx];
+  document.getElementById('q-num').textContent=qIdx+1;
+  const area=document.getElementById('quiz-area');
+  area.innerHTML=`<div class="drill-card"><div class="quiz-q">${q.q}</div><div class="quiz-opts">${
+    q.opts.map((o,i)=>`<button class="quiz-opt" data-i="${i}">${o}</button>`).join('')
+  }</div><div class="feedback" id="quiz-fb"></div>
+  <div style="margin-top:.5rem;text-align:right"><button class="btn btn-next" onclick="nextQuiz()" style="display:none" id="quiz-next">Next</button></div></div>`;
+  area.querySelectorAll('.quiz-opt').forEach(btn=>{
+    btn.addEventListener('click',()=>answerQuiz(parseInt(btn.dataset.i)));
+  });
+}
+
+function answerQuiz(i){
+  const q=QUIZ[qIdx];
+  const btns=document.querySelectorAll('.quiz-opt');
+  btns.forEach((b,j)=>{b.classList.add('disabled');if(j===q.c)b.classList.add('correct');if(j===i&&i!==q.c)b.classList.add('wrong')});
+  const fb=document.getElementById('quiz-fb');
+  if(i===q.c){qScore+=10;qStreak++;fb.textContent='Correct!';fb.className='feedback correct'}
+  else{qStreak=0;fb.textContent='Wrong!';fb.className='feedback wrong'}
+  document.getElementById('q-score').textContent=qScore;
+  document.getElementById('q-streak').textContent=qStreak;
+  document.getElementById('quiz-next').style.display='inline-block';
+}
+
+function nextQuiz(){qIdx=(qIdx+1)%QUIZ.length;showQuiz()}
+showQuiz();
+</script>
 </body>
 </html>

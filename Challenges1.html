@@ -1,207 +1,334 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Python Cheat Sheet</title>
-  <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background-color: #1e1e1e;
-      color: #e5e5e5;
-      margin: 2rem;
-    }
-    h1, h2 {
-      color: #61dafb;
-    }
-    section {
-      margin-bottom: 2rem;
-      padding: 1rem;
-      background-color: #2e2e2e;
-      border-left: 5px solid #61dafb;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.5);
-    }
-    code {
-      background-color: #333;
-      color: #c5c8c6;
-      padding: 2px 6px;
-      border-radius: 4px;
-      font-family: monospace;
-      font-size: 1.5em;
-    }
-    pre {
-      background-color: #333;
-      color: #c5c8c6;
-      padding: 1rem;
-      border-radius: 5px;
-      overflow-x: auto;
-      font-size: 1.5em;
-    }
-    ul {
-      padding-left: 1.2em;
-    }
-    ul ul {
-      padding-left: 1.5em;
-      list-style-type: circle;
-    }
-    footer {
-      margin-top: 4rem;
-      font-size: 0.9em;
-      color: #999;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Python Lab - FOC</title>
+<style>
+:root{--bg:#0a0e17;--card:#141925;--border:#2a3650;--text:#e2e8f0;--muted:#64748b;--cyan:#06b6d4;--green:#10b981;--red:#ef4444;--blue:#3b82f6;--amber:#f59e0b}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+.container{max-width:820px;margin:0 auto;padding:1rem}
+.top-bar{display:flex;justify-content:space-between;align-items:center;padding:.5rem 0;border-bottom:1px solid var(--border);margin-bottom:1rem}
+.top-bar a{color:var(--muted);text-decoration:none;font-size:.8rem}
+.top-bar a:hover{color:var(--cyan)}
+.top-bar h1{font-family:'JetBrains Mono',monospace;font-size:1.1rem;color:var(--cyan)}
+.tabs{display:flex;gap:.5rem;margin-bottom:1rem;flex-wrap:wrap}
+.tab-btn{font-family:inherit;font-size:.82rem;padding:.5rem 1rem;background:var(--card);border:1px solid var(--border);border-radius:6px;color:var(--muted);cursor:pointer}
+.tab-btn.active{color:var(--cyan);border-color:var(--cyan);background:rgba(6,182,212,.08)}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+.stats{font-size:.75rem;color:var(--muted);margin-bottom:1rem;display:flex;gap:1.5rem}
+.stats .v{color:var(--cyan);font-weight:700}
+details{background:var(--card);border:1px solid var(--border);border-radius:8px;margin-bottom:.6rem;overflow:hidden}
+summary{padding:.75rem 1rem;cursor:pointer;font-weight:600;font-size:.88rem;list-style:none}
+summary::-webkit-details-marker{display:none}
+summary::before{content:'\25B6';display:inline-block;margin-right:.5rem;font-size:.65rem;transition:transform .2s}
+details[open]>summary::before{transform:rotate(90deg)}
+.ref-body{padding:0 1rem 1rem}
+.ref-body p{font-size:.82rem;color:var(--muted);line-height:1.6;margin-bottom:.5rem}
+pre{background:#0d1117;border:1px solid var(--border);border-radius:6px;padding:.75rem;font-family:'JetBrains Mono',monospace;font-size:.78rem;overflow-x:auto;line-height:1.5;color:#c9d1d9;margin:.5rem 0}
+code{font-family:'JetBrains Mono',monospace;font-size:.82rem;background:rgba(6,182,212,.1);padding:1px 5px;border-radius:3px;color:var(--cyan)}
+.drill-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.2rem;margin-bottom:1rem}
+.drill-card .prompt{font-size:.82rem;color:var(--muted);margin-bottom:.5rem;line-height:1.5}
+.drill-card .func-sig{font-family:'JetBrains Mono',monospace;font-size:.8rem;color:#c9d1d9;background:#0d1117;padding:.6rem;border-radius:6px;margin-bottom:.6rem;white-space:pre-wrap;line-height:1.5}
+.drill-card .func-sig .todo{color:var(--amber)}
+.drill-card .tests{font-family:'JetBrains Mono',monospace;font-size:.72rem;color:var(--muted);margin-bottom:.6rem;line-height:1.5}
+.input-row{display:flex;gap:.5rem}
+.input-row input{flex:1;font-family:'JetBrains Mono',monospace;font-size:.82rem;padding:.5rem;background:#0d1117;border:1px solid var(--border);border-radius:6px;color:var(--text);outline:none}
+.input-row input:focus{border-color:var(--blue)}
+.input-row input.correct{border-color:var(--green);background:rgba(16,185,129,.08)}
+.input-row input.wrong{border-color:var(--red);background:rgba(239,68,68,.08)}
+.btn{font-family:inherit;font-size:.78rem;padding:.45rem .9rem;border:none;border-radius:6px;cursor:pointer;color:#fff}
+.btn-check{background:var(--blue)}
+.btn-check:hover{background:#2563eb}
+.btn-next{background:var(--cyan);color:#000}
+.btn-next:hover{background:#0891b2}
+.feedback{font-size:.78rem;margin-top:.5rem;min-height:1.2em}
+.feedback.correct{color:var(--green)}
+.feedback.wrong{color:var(--red)}
+.quiz-q{font-size:.88rem;margin-bottom:.75rem;line-height:1.5}
+.quiz-opts{display:grid;grid-template-columns:1fr 1fr;gap:.5rem}
+.quiz-opt{font-size:.82rem;padding:.6rem;background:var(--card);border:2px solid var(--border);border-radius:6px;cursor:pointer;text-align:left;color:var(--text);font-family:inherit}
+.quiz-opt:hover:not(.disabled){border-color:var(--blue)}
+.quiz-opt.correct{border-color:var(--green);background:rgba(16,185,129,.1);color:var(--green)}
+.quiz-opt.wrong{border-color:var(--red);background:rgba(239,68,68,.1);color:var(--red)}
+.quiz-opt.disabled{pointer-events:none;opacity:.6}
+@media(max-width:600px){.quiz-opts{grid-template-columns:1fr}.input-row{flex-direction:column}}
+</style>
 </head>
 <body>
-  <h1>Python Cheat Sheet</h1>
+<div class="container">
+<div class="top-bar"><a href="index.html">&larr; Home</a><h1>Python Lab</h1><span style="font-size:.7rem;color:var(--muted)">FOC</span></div>
+<div class="tabs">
+<button class="tab-btn active" data-tab="ref">Reference</button>
+<button class="tab-btn" data-tab="drill">Challenge Drill</button>
+<button class="tab-btn" data-tab="quiz">Quick Quiz</button>
+</div>
 
-  <section>
-    <h2>🔤 Basics</h2>
-    <ul>
-      <li><code>print("Hello, World!")</code>
-        <ul>
-          <li>Prints output to console</li>
-        </ul>
-      </li>
-      <li><code>input("Enter your name: ")</code>
-        <ul>
-          <li>Prompts for user input</li>
-        </ul>
-      </li>
-      <li><code># Comments</code>
-        <ul>
-          <li>Used for documentation and code clarity</li>
-        </ul>
-      </li>
-    </ul>
-  </section>
+<!-- ======= REFERENCE ======= -->
+<div class="tab-panel active" id="tab-ref">
+<details open><summary>Basics</summary><div class="ref-body">
+<p><code>print()</code> outputs to console. <code>input()</code> reads from keyboard. <code>#</code> starts a comment.</p>
+<pre>name = input("Name: ")
+print(f"Hello, {name}!")  # f-string interpolation
+x = 42          # int
+pi = 3.14       # float
+flag = True     # bool</pre>
+</div></details>
 
-  <section>
-    <h2>🔁 Control Flow</h2>
-    <ul>
-      <li><code>if x == 10:</code>
-        <ul>
-          <li>Conditional execution</li>
-        </ul>
-      </li>
-      <li><code>for i in range(5):</code>
-        <ul>
-          <li>Loop over a range of numbers</li>
-        </ul>
-      </li>
-      <li><code>while x &lt; 5:</code>
-        <ul>
-          <li>Loop while condition is true</li>
-        </ul>
-      </li>
-      <li><code>def greet(name):</code>
-        <ul>
-          <li>Function definition</li>
-        </ul>
-      </li>
-    </ul>
-  </section>
+<details><summary>Control Flow</summary><div class="ref-body">
+<pre># if / elif / else
+if x > 10:
+    print("big")
+elif x > 0:
+    print("small")
+else:
+    print("zero or negative")
 
-  <section>
-    <h2>🧮 Data Types</h2>
-    <ul>
-      <li><code>int, float, str, bool</code>
-        <ul>
-          <li>Basic scalar data types</li>
-        </ul>
-      </li>
-      <li><code>list = [1, 2, 3]</code>
-        <ul>
-          <li>Mutable sequence of elements</li>
-        </ul>
-      </li>
-      <li><code>tuple = (1, 2)</code>
-        <ul>
-          <li>Immutable sequence</li>
-        </ul>
-      </li>
-      <li><code>dict = {"key": "value"}</code>
-        <ul>
-          <li>Key-value mapping</li>
-        </ul>
-      </li>
-      <li><code>set = {1, 2, 3}</code>
-        <ul>
-          <li>Unordered collection of unique values</li>
-        </ul>
-      </li>
-    </ul>
-  </section>
+# for loop
+for i in range(5):      # 0,1,2,3,4
+    print(i)
 
-  <section>
-    <h2>📦 Modules & Libraries</h2>
-    <ul>
-      <li><code>import math</code>
-        <ul>
-          <li>Access mathematical functions</li>
-        </ul>
-      </li>
-      <li><code>import os</code>
-        <ul>
-          <li>Interface with the operating system</li>
-        </ul>
-      </li>
-      <li><code>import sys</code>
-        <ul>
-          <li>System-specific parameters and functions</li>
-        </ul>
-      </li>
-      <li><code>import requests</code>
-        <ul>
-          <li>Make HTTP requests (requires install)</li>
-        </ul>
-      </li>
-    </ul>
-  </section>
+# while loop
+while x > 0:
+    x -= 1
 
-  <section>
-    <h2>📂 File I/O</h2>
-    <ul>
-      <li><code>open('file.txt', 'r')</code>
-        <ul>
-          <li>Read a file</li>
-        </ul>
-      </li>
-      <li><code>with open(...) as f:</code>
-        <ul>
-          <li>Safely open/close files</li>
-        </ul>
-      </li>
-      <li><code>f.read(), f.write()</code>
-        <ul>
-          <li>Read/write file contents</li>
-        </ul>
-      </li>
-    </ul>
-  </section>
+# function
+def add(a, b):
+    return a + b</pre>
+</div></details>
 
-  <section>
-    <h2>🧪 Data Handling</h2>
-    <ul>
-      <li><code>import json</code>
-        <ul>
-          <li>Parse and generate JSON</li>
-        </ul>
-      </li>
-      <li><code>import csv</code>
-        <ul>
-          <li>Read and write CSV files</li>
-        </ul>
-      </li>
-      <li><code>import pandas as pd</code>
-        <ul>
-          <li>Powerful data analysis (requires install)</li>
-        </ul>
-      </li>
-    </ul>
-  </section>
+<details><summary>Data Types</summary><div class="ref-body">
+<pre># list (mutable, ordered)
+nums = [1, 2, 3]
+nums.append(4)         # [1,2,3,4]
+nums[0]                # 1
+nums[-1]               # 4
 
-  <footer>
-    Python Cheat Sheet — Quick reference for scripting, data wrangling, and automation. 🐍
-  </footer>
+# tuple (immutable)
+point = (10, 20)
+
+# dict (key-value)
+d = {"name": "Alice", "age": 25}
+d["name"]              # "Alice"
+d.keys()               # dict_keys(["name","age"])
+
+# set (unique values)
+s = {1, 2, 2, 3}      # {1, 2, 3}</pre>
+</div></details>
+
+<details><summary>String Methods</summary><div class="ref-body">
+<pre>s = "hello world"
+s.upper()              # "HELLO WORLD"
+s.lower()              # "hello world"
+s.split()              # ["hello", "world"]
+",".join(["a","b"])    # "a,b"
+s.replace("hello","hi")# "hi world"
+s.strip()              # remove whitespace
+s.find("world")        # 6
+s[::-1]                # "dlrow olleh" (reverse)
+len(s)                 # 11</pre>
+</div></details>
+
+<details><summary>List Operations</summary><div class="ref-body">
+<pre>lst = [3, 1, 2]
+lst.append(4)          # [3,1,2,4]
+lst.pop()              # removes 4
+lst.sort()             # [1,2,3]
+lst.reverse()          # [3,2,1]
+lst[1:3]               # [2,1] (slice)
+
+# list comprehension
+evens = [x for x in range(10) if x % 2 == 0]
+# [0, 2, 4, 6, 8]
+
+sorted([5,2,8], reverse=True)  # [8,5,2]</pre>
+</div></details>
+
+<details><summary>File I/O</summary><div class="ref-body">
+<pre># read
+with open("file.txt", "r") as f:
+    content = f.read()
+
+# write
+with open("out.txt", "w") as f:
+    f.write("hello")
+
+# append
+with open("log.txt", "a") as f:
+    f.write("new line\n")
+
+# read lines
+with open("data.txt") as f:
+    for line in f:
+        print(line.strip())</pre>
+</div></details>
+
+<details><summary>Modules &amp; Data</summary><div class="ref-body">
+<pre>import json
+data = json.loads('{"a": 1}')    # parse JSON string
+text = json.dumps({"a": 1})      # to JSON string
+
+import csv
+# csv.reader, csv.writer
+
+import os
+os.getcwd()         # current directory
+os.listdir(".")     # list files
+os.path.exists("f") # check file
+
+import sys
+sys.argv             # command line args</pre>
+</div></details>
+</div>
+
+<!-- ======= CHALLENGE DRILL ======= -->
+<div class="tab-panel" id="tab-drill">
+<div class="stats">SCORE: <span class="v" id="d-score">0</span> &nbsp; STREAK: <span class="v" id="d-streak">0</span> &nbsp; <span id="d-num">1</span>/<span id="d-total">20</span></div>
+<div id="drill-area"></div>
+</div>
+
+<!-- ======= QUICK QUIZ ======= -->
+<div class="tab-panel" id="tab-quiz">
+<div class="stats">SCORE: <span class="v" id="q-score">0</span> &nbsp; STREAK: <span class="v" id="q-streak">0</span> &nbsp; <span id="q-num">1</span>/<span id="q-total">20</span></div>
+<div id="quiz-area"></div>
+</div>
+</div>
+
+<script>
+// Tabs
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-'+btn.dataset.tab).classList.add('active');
+  });
+});
+
+// ============ DRILL ============
+const DRILLS=[
+{sig:'def add(a, b):\n    # TODO: Return the sum of a and b',tests:'add(2,3)=5  add(-1,1)=0  add(100,250)=350',answers:['return a + b','return a+b']},
+{sig:'def celsius_to_fahrenheit(c):\n    # TODO: F = C * 9/5 + 32',tests:'celsius_to_fahrenheit(0)=32  celsius_to_fahrenheit(100)=212',answers:['return c * 9/5 + 32','return c*9/5+32','return c * 9 / 5 + 32']},
+{sig:'def count_evens(numbers):\n    # TODO: Count even numbers in list',tests:'count_evens([1,2,3,4])=2  count_evens([1,3,5])=0',answers:['return sum(1 for n in numbers if n % 2 == 0)','return len([n for n in numbers if n % 2 == 0])','return sum(1 for x in numbers if x%2==0)']},
+{sig:'def reverse_string(s):\n    # TODO: Reverse the string',tests:'reverse_string("hello")="olleh"  reverse_string("a")="a"',answers:['return s[::-1]','return s[:: -1]']},
+{sig:'def is_palindrome(s):\n    # TODO: Check if string equals its reverse',tests:'is_palindrome("radar")=True  is_palindrome("hello")=False',answers:['return s == s[::-1]','return s==s[::-1]']},
+{sig:'def count_vowels(s):\n    # TODO: Count vowels (a,e,i,o,u) case-insensitive',tests:'count_vowels("hello")=2  count_vowels("aeiou")=5',answers:['return sum(1 for c in s.lower() if c in "aeiou")','return sum(1 for c in s if c.lower() in "aeiou")']},
+{sig:'def multiply_all(numbers):\n    # TODO: Multiply all elements, return product',tests:'multiply_all([1,2,3,4])=24  multiply_all([2,0,5])=0',answers:['result = 1\n    for n in numbers:\n        result *= n\n    return result']},
+{sig:'def max_of_three(a, b, c):\n    # TODO: Return the largest number',tests:'max_of_three(1,2,3)=3  max_of_three(-1,0,-5)=0',answers:['return max(a, b, c)','return max(a,b,c)']},
+{sig:'def sum_digits(n):\n    # TODO: Sum of all digits in n',tests:'sum_digits(123)=6  sum_digits(999)=27',answers:['return sum(int(d) for d in str(n))','return sum(int(c) for c in str(n))']},
+{sig:'def average(lst):\n    # TODO: Return average (0.0 for empty)',tests:'average([2,4,6])=4.0  average([])=0.0',answers:['return sum(lst)/len(lst) if lst else 0.0','return sum(lst) / len(lst) if lst else 0.0','return 0.0 if not lst else sum(lst)/len(lst)']},
+{sig:'def sort_numbers(lst):\n    # TODO: Return sorted list ascending',tests:'sort_numbers([3,1,2])=[1,2,3]',answers:['return sorted(lst)']},
+{sig:'def word_count(text):\n    # TODO: Count frequency of each word',tests:'word_count("hello world hello")={"hello":2,"world":1}',answers:['d = {}\n    for w in text.split():\n        d[w] = d.get(w, 0) + 1\n    return d']},
+{sig:'def json_to_dict(json_string):\n    # TODO: Parse JSON string to dict',tests:'json_to_dict(\'{"a":1}\')={"a":1}',answers:['return json.loads(json_string)','import json\n    return json.loads(json_string)']},
+{sig:'def filter_evens(lst):\n    # TODO: Return only even numbers',tests:'filter_evens([1,2,3,4])=[2,4]',answers:['return [x for x in lst if x % 2 == 0]','return [n for n in lst if n%2==0]']},
+{sig:'def flatten(matrix):\n    # TODO: Flatten 2D list to 1D',tests:'flatten([[1,2],[3,4]])=[1,2,3,4]',answers:['return [x for row in matrix for x in row]','return [item for row in matrix for item in row]']},
+{sig:'def common_elements(a, b):\n    # TODO: Items in both lists',tests:'common_elements([1,2,3],[2,3,4])=[2,3]',answers:['return sorted(set(a) & set(b))','return list(set(a) & set(b))','return [x for x in a if x in b]']},
+{sig:'def get_keys(d):\n    # TODO: Return list of dict keys',tests:'get_keys({"a":1,"b":2})=["a","b"]',answers:['return list(d.keys())','return list(d)']},
+{sig:'def invert_dict(d):\n    # TODO: Swap keys and values',tests:'invert_dict({"a":1})={1:"a"}',answers:['return {v: k for k, v in d.items()}','return {v:k for k,v in d.items()}']},
+{sig:'def capitalize_words(sentence):\n    # TODO: Capitalize first letter of each word',tests:'capitalize_words("hello world")="Hello World"',answers:['return sentence.title()','return " ".join(w.capitalize() for w in sentence.split())']},
+{sig:'def square_dict(nums):\n    # TODO: {n: n*n for each n}',tests:'square_dict([1,2,3])={1:1,2:4,3:9}',answers:['return {n: n**2 for n in nums}','return {n: n*n for n in nums}','return {x: x**2 for x in nums}']},
+];
+
+let dIdx=0,dScore=0,dStreak=0;
+document.getElementById('d-total').textContent=DRILLS.length;
+
+function showDrill(){
+  const d=DRILLS[dIdx];
+  document.getElementById('d-num').textContent=dIdx+1;
+  const area=document.getElementById('drill-area');
+  area.innerHTML=`<div class="drill-card">
+    <div class="func-sig">${d.sig.replace(/# TODO/,'<span class="todo"># TODO</span>')}</div>
+    <div class="tests">${d.tests}</div>
+    <div class="prompt">Type the missing line(s):</div>
+    <div class="input-row"><input type="text" id="drill-input" placeholder="return ..."><button class="btn btn-check" onclick="checkDrill()">Check</button></div>
+    <div class="feedback" id="drill-fb"></div>
+    <div style="margin-top:.5rem;text-align:right"><button class="btn btn-next" onclick="nextDrill()" style="display:none" id="drill-next">Next</button></div>
+  </div>`;
+  document.getElementById('drill-input').addEventListener('keydown',e=>{if(e.key==='Enter')checkDrill()});
+  document.getElementById('drill-input').focus();
+}
+
+function checkDrill(){
+  const inp=document.getElementById('drill-input');
+  const fb=document.getElementById('drill-fb');
+  const val=inp.value.trim().replace(/\s+/g,' ');
+  const d=DRILLS[dIdx];
+  const ok=d.answers.some(a=>val===a.replace(/\s+/g,' ').trim());
+  if(ok){
+    inp.classList.add('correct');fb.textContent='Correct!';fb.className='feedback correct';
+    dScore+=10;dStreak++;
+  }else{
+    inp.classList.add('wrong');fb.innerHTML='Expected: <code>'+d.answers[0]+'</code>';fb.className='feedback wrong';
+    dStreak=0;
+  }
+  document.getElementById('d-score').textContent=dScore;
+  document.getElementById('d-streak').textContent=dStreak;
+  document.getElementById('drill-next').style.display='inline-block';
+  inp.disabled=true;
+}
+
+function nextDrill(){
+  dIdx=(dIdx+1)%DRILLS.length;
+  showDrill();
+}
+showDrill();
+
+// ============ QUIZ ============
+const QUIZ=[
+{q:'What does list.append(x) do?',opts:['Adds x to end','Inserts x at start','Removes x','Sorts the list'],c:0},
+{q:'Which data type is immutable?',opts:['list','dict','tuple','set'],c:2},
+{q:'What does len([1,2,3]) return?',opts:['2','3','4','1'],c:1},
+{q:'What does "hello"[::-1] produce?',opts:['"olleh"','"hello"','"h"','Error'],c:0},
+{q:'How do you start a comment in Python?',opts:['//','#','--','/*'],c:1},
+{q:'What does import json allow?',opts:['Parse/generate JSON','Read images','Connect to databases','Run shell commands'],c:0},
+{q:'What is the output of 10 % 3?',opts:['3','1','0','10'],c:1},
+{q:'Which keyword defines a function?',opts:['function','func','def','fn'],c:2},
+{q:'What does str.split() do by default?',opts:['Split on whitespace','Split on commas','Split on newlines','Returns characters'],c:0},
+{q:'What does range(3) produce?',opts:['[1,2,3]','[0,1,2]','[0,1,2,3]','[3]'],c:1},
+{q:'How do you read a file safely?',opts:['with open() as f','open() then close()','read()','file.get()'],c:0},
+{q:'What does dict.get("key", 0) do?',opts:['Returns value or 0 if missing','Always returns 0','Raises error if missing','Deletes the key'],c:0},
+{q:'What is a list comprehension?',opts:['[expr for x in iter]','list(x)','for x in list: append','def list(x):'],c:0},
+{q:'Which operator checks equality?',opts:['=','==','===','!='],c:1},
+{q:'What does sorted() return?',opts:['A new sorted list','None (sorts in place)','A tuple','A set'],c:0},
+{q:'bool("") evaluates to?',opts:['True','False','None','Error'],c:1},
+{q:'What does os.getcwd() return?',opts:['Current directory','Home directory','Root directory','Temp directory'],c:0},
+{q:'Which method removes trailing whitespace?',opts:['.strip()','.trim()','.clean()','.cut()'],c:0},
+{q:'What does json.dumps(obj) do?',opts:['Dict to JSON string','JSON string to dict','Write to file','Delete JSON'],c:0},
+{q:'How do you handle errors?',opts:['try/except','catch/throw','if/error','handle/when'],c:0},
+];
+
+let qIdx=0,qScore=0,qStreak=0;
+document.getElementById('q-total').textContent=QUIZ.length;
+
+function showQuiz(){
+  const q=QUIZ[qIdx];
+  document.getElementById('q-num').textContent=qIdx+1;
+  const area=document.getElementById('quiz-area');
+  area.innerHTML=`<div class="drill-card"><div class="quiz-q">${q.q}</div><div class="quiz-opts">${
+    q.opts.map((o,i)=>`<button class="quiz-opt" data-i="${i}">${o}</button>`).join('')
+  }</div><div class="feedback" id="quiz-fb"></div>
+  <div style="margin-top:.5rem;text-align:right"><button class="btn btn-next" onclick="nextQuiz()" style="display:none" id="quiz-next">Next</button></div></div>`;
+  area.querySelectorAll('.quiz-opt').forEach(btn=>{
+    btn.addEventListener('click',()=>answerQuiz(parseInt(btn.dataset.i)));
+  });
+}
+
+function answerQuiz(i){
+  const q=QUIZ[qIdx];
+  const btns=document.querySelectorAll('.quiz-opt');
+  btns.forEach((b,j)=>{b.classList.add('disabled');if(j===q.c)b.classList.add('correct');if(j===i&&i!==q.c)b.classList.add('wrong')});
+  const fb=document.getElementById('quiz-fb');
+  if(i===q.c){qScore+=10;qStreak++;fb.textContent='Correct!';fb.className='feedback correct'}
+  else{qStreak=0;fb.textContent='Wrong!';fb.className='feedback wrong'}
+  document.getElementById('q-score').textContent=qScore;
+  document.getElementById('q-streak').textContent=qStreak;
+  document.getElementById('quiz-next').style.display='inline-block';
+}
+
+function nextQuiz(){qIdx=(qIdx+1)%QUIZ.length;showQuiz()}
+showQuiz();
+</script>
 </body>
 </html>
