@@ -4,6 +4,17 @@
 
 set -e
 
+# Run preflight checks first
+if [ -f ./preflight.sh ]; then
+    ./preflight.sh
+    if [ $? -ne 0 ]; then
+        echo "Preflight checks failed. Aborting startup."
+        exit 1
+    fi
+else
+    echo "Warning: preflight.sh not found. Skipping system checks."
+fi
+
 echo "═══════════════════════════════════════════════════════"
 echo "  Pivot Lab v5.0 - Startup"
 echo "═══════════════════════════════════════════════════════"
