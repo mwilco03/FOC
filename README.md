@@ -18,10 +18,27 @@ Pivot Lab is a containerized cybersecurity training environment that teaches pen
 
 ## Quick Start
 
+### One-Line Install (Recommended)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/mwilco03/Piv0t.L4ND/main/install.sh | bash
+```
+
+This will:
+- Check for Docker and Docker Compose
+- Clone the repository to `~/Piv0t.L4ND`
+- Make all scripts executable
+- Provide next steps
+
+### Manual Installation
+
 ```bash
 # Clone the repository
-git clone <repo-url>
+git clone https://github.com/mwilco03/Piv0t.L4ND.git
 cd Piv0t.L4ND
+
+# Run preflight checks
+./preflight.sh
 
 # Start the lab
 ./start.sh
