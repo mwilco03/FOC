@@ -1,0 +1,222 @@
+version: '3.8'
+
+services:
+  # Init container - generates randomized flags
+  init:
+    build: ./init
+    volumes:
+      - flags:/flags
+    restart: "no"
+
+  # LAUNCHPAD - Player's attack platform with web terminal
+  launchpad:
+    build: ./launchpad
+    hostname: launchpad
+    networks:
+      net-launchpad:
+        ipv4_address: 172.20.0.11
+      net-entry:
+    ports:
+      - "4200:4200"
+    volumes:
+      - flags:/flags:ro
+      - ./tools:/tools:ro
+    depends_on:
+      - init
+
+  # SCOREBOARD - Progress tracking and hint system
+  scoreboard:
+    build: ./scoreboard
+    hostname: scoreboard
+    networks:
+      net-launchpad:
+        ipv4_address: 172.20.0.10
+    ports:
+      - "8080:8080"
+    volumes:
+      - flags:/flags:ro
+      - scoreboard-state:/var/lib/scoreboard
+    depends_on:
+      - init
+
+  # Hop 1: GATE
+  gate:
+    build: ./containers/gate
+    hostname: gate
+    networks:
+      net-entry:
+        ipv4_address: ${GATE_IP:-172.20.1.100}
+      net-alpha:
+    volumes:
+      - flags:/flags:ro
+      - ./tools:/tools:ro
+    depends_on:
+      - init
+
+  # Hop 2: TUNNEL
+  tunnel:
+    build: ./containers/tunnel
+    hostname: tunnel
+    networks:
+      net-alpha:
+        ipv4_address: ${TUNNEL_IP:-172.20.2.100}
+      net-bravo:
+    volumes:
+      - flags:/flags:ro
+    depends_on:
+      - init
+
+  # Hop 3: FILESERV
+  fileserv:
+    build: ./containers/fileserv
+    hostname: fileserv
+    networks:
+      net-bravo:
+        ipv4_address: ${FILESERV_IP:-172.20.3.100}
+      net-charlie:
+    volumes:
+      - flags:/flags:ro
+    depends_on:
+      - init
+
+  # Hop 4: WEBSHELL
+  webshell:
+    build: ./containers/webshell
+    hostname: webshell
+    networks:
+      net-charlie:
+        ipv4_address: ${WEBSHELL_IP:-172.20.4.100}
+      net-delta:
+    volumes:
+      - flags:/flags:ro
+    depends_on:
+      - init
+
+  # Hop 5: DROPZONE
+  dropzone:
+    build: ./containers/dropzone
+    hostname: dropzone
+    networks:
+      net-delta:
+        ipv4_address: ${DROPZONE_IP:-172.20.5.100}
+      net-echo:
+    volumes:
+      - flags:/flags:ro
+    depends_on:
+      - init
+
+  # Hop 6: DEPOT
+  depot:
+    build: ./containers/depot
+    hostname: depot
+    networks:
+      net-echo:
+        ipv4_address: ${DEPOT_IP:-172.20.6.100}
+      net-foxtrot:
+    volumes:
+      - flags:/flags:ro
+    depends_on:
+      - init
+
+  # Hop 7: RESOLVER
+  resolver:
+    build: ./containers/resolver
+    hostname: resolver
+    networks:
+      net-foxtrot:
+        ipv4_address: ${RESOLVER_IP:-172.20.7.100}
+      net-golf:
+    volumes:
+      - flags:/flags:ro
+    depends_on:
+      - init
+
+  # Hop 8: CACHE
+  cache:
+    build: ./containers/cache
+    hostname: cache
+    networks:
+      net-golf:
+        ipv4_address: ${CACHE_IP:-172.20.8.100}
+      net-hotel:
+    volumes:
+      - flags:/flags:ro
+    depends_on:
+      - init
+
+  # Hop 9: VAULT
+  vault:
+    build: ./containers/vault
+    hostname: vault
+    networks:
+      net-hotel:
+        ipv4_address: ${VAULT_IP:-172.20.9.100}
+    volumes:
+      - flags:/flags:ro
+    depends_on:
+      - init
+
+networks:
+  net-launchpad:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/24
+
+  net-entry:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.1.0/24
+
+  net-alpha:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.2.0/24
+
+  net-bravo:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.3.0/24
+
+  net-charlie:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.4.0/24
+
+  net-delta:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.5.0/24
+
+  net-echo:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.6.0/24
+
+  net-foxtrot:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.7.0/24
+
+  net-golf:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.8.0/24
+
+  net-hotel:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.9.0/24
+
+volumes:
+  flags:
+  scoreboard-state:

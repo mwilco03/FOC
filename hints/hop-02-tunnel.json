@@ -1,0 +1,21 @@
+{
+  "hop": 2,
+  "container": "TUNNEL",
+  "hints": [
+    {
+      "tier": "nudge",
+      "cost_percent": 10,
+      "text": "Check the credentials.bak file you found on GATE. The flag is in the operator user's home directory."
+    },
+    {
+      "tier": "guide",
+      "cost_percent": 25,
+      "text": "SSH into TUNNEL using: ssh operator@<tunnel_ip> with the password from GATE's credentials.bak. The flag is at /home/operator/flag-02.txt. Check network-map.txt and .bash_history for clues about the next hop."
+    },
+    {
+      "tier": "walkthrough",
+      "cost_percent": 50,
+      "text": "1. From LAUNCHPAD or GATE: ssh operator@<tunnel_ip>\n2. Password: SecureOp2024! (from GATE credentials.bak)\n3. cat /home/operator/flag-02.txt\n4. Run 'ip addr' to see two network interfaces\n5. Build tunnels for next segment:\n   ssh -L 2121:<fileserv_ip>:21 operator@<tunnel_ip>\n   ssh -D 1080 operator@<tunnel_ip>\n6. Check network-map.txt for hints about FILESERV"
+    }
+  ]
+}

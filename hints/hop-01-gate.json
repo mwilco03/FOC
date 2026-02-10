@@ -1,0 +1,21 @@
+{
+  "hop": 1,
+  "container": "GATE",
+  "hints": [
+    {
+      "tier": "nudge",
+      "cost_percent": 10,
+      "text": "Look for the flag in the ctf user's home directory. Also, read PERSISTENCE.txt to learn about SSH key authentication."
+    },
+    {
+      "tier": "guide",
+      "cost_percent": 25,
+      "text": "The flag is at /home/ctf/flag-01.txt. To establish persistence, generate an SSH key on LAUNCHPAD (ssh-keygen -t ed25519 -f ~/.ssh/pivot_key -N \"\"), then add your public key to ~/.ssh/authorized_keys on GATE."
+    },
+    {
+      "tier": "walkthrough",
+      "cost_percent": 50,
+      "text": "1. From LAUNCHPAD: ncat <gate_ip> 9999\n2. You get a shell as ctf\n3. cat /home/ctf/flag-01.txt\n4. On LAUNCHPAD: ssh-keygen -t ed25519 -f ~/.ssh/pivot_key -N \"\"\n5. Copy the public key content from ~/.ssh/pivot_key.pub\n6. On GATE: mkdir -p ~/.ssh && echo '<your_pubkey>' >> ~/.ssh/authorized_keys\n7. chmod 700 ~/.ssh && chmod 600 ~/.ssh/authorized_keys\n8. Test: ssh -i ~/.ssh/pivot_key ctf@<gate_ip>"
+    }
+  ]
+}
