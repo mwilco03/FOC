@@ -1,0 +1,26 @@
+$TTL 86400
+@       IN      SOA     ns1.lab.pivot.local. admin.lab.pivot.local. (
+                        2024010101      ; Serial
+                        3600            ; Refresh
+                        1800            ; Retry
+                        604800          ; Expire
+                        86400 )         ; Minimum TTL
+
+; Name servers
+@               IN      NS      ns1.lab.pivot.local.
+
+; A records
+ns1             IN      A       172.20.7.100
+cache           IN      A       172.20.8.100
+vault           IN      A       172.20.9.100
+admin           IN      A       172.20.7.100
+
+; CNAME records
+redis           IN      CNAME   cache.lab.pivot.local.
+
+; TXT records (FLAG HERE)
+flag            IN      TXT     "PIVOT{resolver_PLACEHOLDER}"
+secret          IN      TXT     "redis default port, no auth required"
+
+; Red herring
+smtp            IN      A       10.99.99.99

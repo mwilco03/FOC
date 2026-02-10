@@ -1,0 +1,59 @@
+═══════════════════════════════════════════════════════════════════════════════
+                            PIVOT LAB - BRIEFING
+         Multi-Protocol Network Traversal Training Environment v5.0
+═══════════════════════════════════════════════════════════════════════════════
+
+MISSION OBJECTIVE:
+You are a penetration tester tasked with compromising a segmented network.
+Your goal is to move laterally through isolated network segments, exploiting
+services and chaining tunnels to collect flags from each compromised system.
+
+STARTING POINT:
+You have landed on the LAUNCHPAD - your attack platform. This is a web-based
+terminal that provides you with basic tools. From here, you must discover and
+pivot through 9 additional containers across isolated network segments.
+
+SCOREBOARD:
+  http://localhost:8080
+
+  Submit flags to track your progress and unlock hints. Flags are auto-detected,
+  no hop number required. Format: PIVOT{<container>_<random_hex>}
+
+RULES:
+  1. Every container runs Alpine Linux (pinned alpine:3.19)
+  2. Flags are randomized per session
+  3. IPs are partially randomized (last octet: .50-.200)
+  4. Hints for Hop N unlock after Hop N-1 flag is submitted
+  5. Root is earned once (Hop 4), then used for subsequent operations
+  6. Live off the land on targets - minimal tools available
+  7. LAUNCHPAD has baseline tools because it's your workstation
+
+AVAILABLE TOOLS ON LAUNCHPAD:
+  ✓ bash, ssh/scp/ssh-keygen, curl, openssl, ncat
+  ✓ linpeas.sh (privilege escalation scanner in your home directory)
+
+  NOT INSTALLED (you must improvise):
+  ✗ nmap, dig, smbclient, redis-cli, ftp, mount, showmount
+
+PERSISTENCE IS KEY:
+  Your first real task is SSH key generation and authorized_keys creation.
+  This pattern will recur throughout the lab. Master it early.
+
+NETWORK TOPOLOGY:
+  You are currently on net-launchpad (172.20.0.0/24)
+  GATE container is on net-entry (172.20.1.0/24)
+  Each container bridges two networks, forming a chain
+
+  Check /etc/hosts to discover the next hop
+  Use "ip addr" and "ip route" to explore network topology
+
+GETTING STARTED:
+  1. Read this briefing and LOTL-REFERENCE.txt
+  2. Run: ip addr (to see your network interfaces)
+  3. Run: cat /etc/hosts (to discover GATE IP)
+  4. Connect to GATE (Hop 1) using ncat
+  5. Visit the scoreboard to track progress
+
+═══════════════════════════════════════════════════════════════════════════════
+                              GOOD HUNTING!
+═══════════════════════════════════════════════════════════════════════════════
