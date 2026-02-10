@@ -55,6 +55,11 @@ def init_db():
                   hints_used INTEGER DEFAULT 0,
                   points_deducted INTEGER DEFAULT 0)''')
 
+    # Bonus hint table (one-time free recovery hint after Hop 6)
+    c.execute('''CREATE TABLE IF NOT EXISTS bonus_hint
+                 (used INTEGER DEFAULT 0,
+                  timestamp TEXT)''')
+
     # Flags table
     c.execute('''CREATE TABLE IF NOT EXISTS flags
                  (hop INTEGER PRIMARY KEY,
@@ -230,10 +235,17 @@ def get_hints_status(hop):
     c = conn.cursor()
     c.execute('SELECT hints_used, points_deducted FROM hints WHERE hop = ?', (hop,))
     row = c.fetchone()
-    conn.close()
-
     hints_used = row[0] if row else 0
     points_deducted = row[1] if row else 0
+
+    # Check bonus hint availability (after Hop 6)
+    c.execute('SELECT completed FROM progress WHERE hop = 6 AND completed = 1')
+    hop6_completed = c.fetchone() is not None
+    c.execute('SELECT used FROM bonus_hint')
+    bonus_row = c.fetchone()
+    bonus_used = bonus_row[0] if bonus_row else 0
+
+    conn.close()
 
     next_hint_cost = 0
     if hints_used < len(HINT_TIERS):
@@ -245,7 +257,9 @@ def get_hints_status(hop):
         "hints_used": hints_used,
         "hints_total": len(HINT_TIERS),
         "points_deducted": points_deducted,
-        "next_hint_cost": next_hint_cost
+        "next_hint_cost": next_hint_cost,
+        "bonus_hint_available": hop6_completed and not bonus_used,
+        "bonus_hint_used": bool(bonus_used)
     })
 
 
@@ -300,6 +314,49 @@ def request_hint():
         "tier": tier["name"],
         "cost": cost,
         "hints_remaining": len(HINT_TIERS) - new_hints_used
+    })
+
+
+@app.route('/api/bonus-hint', methods=['POST'])
+def request_bonus_hint():
+    """Request the one-time FREE bonus hint (available after Hop 6)"""
+    data = request.get_json()
+    hop = data.get('hop')
+
+    if hop not in HOPS:
+        return jsonify({"error": "Invalid hop"}), 404
+
+    conn = get_db()
+    c = conn.cursor()
+
+    # Check if Hop 6 is completed
+    c.execute('SELECT completed FROM progress WHERE hop = 6 AND completed = 1')
+    if not c.fetchone():
+        conn.close()
+        return jsonify({"error": "Complete Hop 6 to unlock BONUS HINT"}), 403
+
+    # Check if bonus hint already used
+    c.execute('SELECT used FROM bonus_hint')
+    row = c.fetchone()
+    if row and row[0] == 1:
+        conn.close()
+        return jsonify({"error": "BONUS HINT already used"}), 400
+
+    # Mark bonus hint as used
+    import datetime
+    timestamp = datetime.datetime.utcnow().isoformat()
+    c.execute('INSERT OR REPLACE INTO bonus_hint (used, timestamp) VALUES (1, ?)', (timestamp,))
+    conn.commit()
+    conn.close()
+
+    # Return bonus hint (first tier hint, but FREE)
+    bonus_text = f"🎁 BONUS HINT (FREE) for Hop {hop}: This is a free recovery hint to help you progress. Check the hints JSON file for Hop {hop} tier 1 (nudge) content."
+
+    return jsonify({
+        "hint": bonus_text,
+        "tier": "bonus",
+        "cost": 0,
+        "message": "BONUS HINT activated! No points deducted. This was your one-time free hint."
     })
 
 

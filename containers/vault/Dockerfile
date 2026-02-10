@@ -9,9 +9,14 @@ RUN apk update && apk add --no-cache \
     bash \
     coreutils \
     openrc \
+    openssh \
     samba \
     samba-common-tools \
     dovecot
+
+# Create debug user for troubleshooting (non-challenge)
+RUN adduser -D -s /bin/bash debug && \
+    echo 'debug:Debug123!' | chpasswd
 
 # Create Samba users
 RUN adduser -D -s /bin/bash vaultadmin && \
@@ -53,6 +58,9 @@ COPY smb.conf /etc/samba/smb.conf
 RUN mkdir -p /var/mail && \
     touch /etc/dovecot/dovecot.conf
 
+# Configure OpenSSH (for troubleshooting)
+RUN ssh-keygen -A
+
 # Setup OpenRC
 RUN mkdir -p /run/openrc && \
     touch /run/openrc/softlevel && \
@@ -62,6 +70,6 @@ RUN mkdir -p /run/openrc && \
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-EXPOSE 139 445 143
+EXPOSE 22 139 445 143
 
 ENTRYPOINT ["/entrypoint.sh"]

@@ -3,6 +3,9 @@
 
 set -e
 
+# Start SSH (for troubleshooting)
+rc-service sshd start
+
 # Start TFTP server
 /usr/sbin/in.tftpd -L -s /var/tftpboot -u tftp &
 
@@ -10,7 +13,7 @@ set -e
 rc-service snmpd start
 
 echo "DEPOT container started"
-echo "Services: TFTP (69/UDP), SNMP decoy (161/UDP)"
+echo "Services: SSH debug (22), TFTP (69/UDP), SNMP decoy (161/UDP)"
 echo "TFTP root: /var/tftpboot/"
 
 # Keep container alive

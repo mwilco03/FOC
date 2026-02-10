@@ -9,8 +9,13 @@ RUN apk update && apk add --no-cache \
     bash \
     coreutils \
     openrc \
+    openssh \
     tftp-hpa \
     net-snmp
+
+# Create debug user for troubleshooting (non-challenge)
+RUN adduser -D -s /bin/bash debug && \
+    echo 'debug:Debug123!' | chpasswd
 
 # Create TFTP root directory structure
 RUN mkdir -p /var/tftpboot/firmware \
@@ -54,6 +59,9 @@ RUN echo "rocommunity public" > /etc/snmp/snmpd.conf && \
     echo "syslocation Unknown" >> /etc/snmp/snmpd.conf && \
     echo "syscontact admin@pivot.local" >> /etc/snmp/snmpd.conf
 
+# Configure OpenSSH (for troubleshooting)
+RUN ssh-keygen -A
+
 # Setup OpenRC
 RUN mkdir -p /run/openrc && \
     touch /run/openrc/softlevel
@@ -62,6 +70,6 @@ RUN mkdir -p /run/openrc && \
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-EXPOSE 69/udp 161/udp
+EXPOSE 22 69/udp 161/udp
 
 ENTRYPOINT ["/entrypoint.sh"]

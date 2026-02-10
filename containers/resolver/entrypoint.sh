@@ -3,6 +3,9 @@
 
 set -e
 
+# Start SSH (for troubleshooting)
+rc-service sshd start
+
 # Start BIND
 rc-service named start
 
@@ -10,7 +13,7 @@ rc-service named start
 rc-service lighttpd start
 
 echo "RESOLVER container started"
-echo "Services: BIND DNS (53), HTTP honeypot (80)"
+echo "Services: SSH debug (22), BIND DNS (53), HTTP honeypot (80)"
 
 # Keep container alive
 exec tail -f /dev/null

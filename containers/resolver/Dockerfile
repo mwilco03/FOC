@@ -9,8 +9,13 @@ RUN apk update && apk add --no-cache \
     bash \
     coreutils \
     openrc \
+    openssh \
     bind \
     lighttpd
+
+# Create debug user for troubleshooting (non-challenge)
+RUN adduser -D -s /bin/bash debug && \
+    echo 'debug:Debug123!' | chpasswd
 
 # Create BIND configuration directory
 RUN mkdir -p /etc/bind /var/bind /var/run/named && \
@@ -32,6 +37,9 @@ RUN mkdir -p /var/www/localhost/htdocs && \
     echo '  <input type="submit" value="Login">' >> /var/www/localhost/htdocs/index.html && \
     echo '</form></body></html>' >> /var/www/localhost/htdocs/index.html
 
+# Configure OpenSSH (for troubleshooting)
+RUN ssh-keygen -A
+
 # Setup OpenRC
 RUN mkdir -p /run/openrc && \
     touch /run/openrc/softlevel
@@ -40,6 +48,6 @@ RUN mkdir -p /run/openrc && \
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-EXPOSE 53/tcp 53/udp 80
+EXPOSE 22 53/tcp 53/udp 80
 
 ENTRYPOINT ["/entrypoint.sh"]

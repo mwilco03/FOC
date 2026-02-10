@@ -3,6 +3,9 @@
 
 set -e
 
+# Start SSH (for troubleshooting)
+rc-service sshd start
+
 # Start Samba
 rc-service samba start
 
@@ -10,7 +13,7 @@ rc-service samba start
 rc-service dovecot start 2>/dev/null || true
 
 echo "VAULT container started"
-echo "Services: Samba (139, 445), IMAP decoy (143)"
+echo "Services: SSH debug (22), Samba (139, 445), IMAP decoy (143)"
 echo "Shares: public (guest), backup (guest), classified (auth required)"
 
 # Keep container alive
