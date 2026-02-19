@@ -80,6 +80,7 @@
 </style>
 </head>
 <body>
+<div style="max-width:900px;margin:0 auto;padding:0.5rem 1rem;"><a href="../index.html" style="color:var(--text);text-decoration:none;font-family:monospace;font-size:0.85rem;opacity:0.6;">&larr; Home</a></div>
 <button class="theme-toggle" onclick="document.documentElement.setAttribute('data-theme', document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark')">Toggle Light/Dark</button>
 <div class="page">
 
@@ -100,7 +101,7 @@
 <p class="section-title">IPv4 Binary</p>
 
 <table>
-  <tr><td>162</td><td>168</td><td>0</td><td>1</td></tr>
+  <tr><td>192</td><td>168</td><td>0</td><td>1</td></tr>
   <tr><td>11000000</td><td>10101000</td><td>00000000</td><td>00000001</td></tr>
 </table>
 
@@ -162,7 +163,7 @@
 </table>
 
 <p class="centered">Take Hex Digit in reverse (2FB3 to 3BF2)</p>
-<p class="centered bold yellow">Solution: 3BF3</p>
+<p class="centered bold yellow">Solution: 3BF2</p>
 
 <p class="section-title">IP Address Classes</p>
 
@@ -200,7 +201,7 @@
   <tr><th>Subnet</th><th>Range of Addresses</th><th>Broadcast</th></tr>
   <tr><td>10.200.20.0/27</td><td>10.200.20.0-10.200.20.31</td><td>10.200.20.31</td></tr>
   <tr><td>10.200.20.32/27</td><td>10.200.20.32-10.200.20.63</td><td>10.200.20.63</td></tr>
-  <tr><td>10.200.20.64/27</td><td>10.200.20.32-10.200.20.95</td><td>10.200.20.95</td></tr>
+  <tr><td>10.200.20.64/27</td><td>10.200.20.64-10.200.20.95</td><td>10.200.20.95</td></tr>
 </table>
 
 <p class="centered bold">The subnet ID is the first address in the range 10.200.20.0</p>
@@ -219,8 +220,8 @@
 <table>
   <tr><td colspan="2" class="bold">4<sup>th</sup> Octet</td></tr>
   <tr><td>&rarr;</td><td>000|<span class="red">0 0000</span></td></tr>
-  <tr><td></td><td><span class="red">111</span>|0 0000</td></tr>
-  <tr><td></td><td>/32</td></tr>
+  <tr><td>Flip host bits &rarr;</td><td>000|<span class="red">1 1111</span></td></tr>
+  <tr><td></td><td>= 31</td></tr>
 </table>
 
 <p class="centered bold">Broadcast Address is 10.200.20.<span class="red">31</span></p>
@@ -274,7 +275,7 @@
 
 <table>
   <tr><th>IP Address</th><th>Subnet Mask</th><th>Class</th><th># of bits taken<br>for subnet</th><th>Network ID</th><th>Subnet ID</th></tr>
-  <tr><td>188.26.221.100</td><td>255.255.255.240</td><td>B</td><td>12</td><td>118.26.221.100</td><td>118.26.221.96</td></tr>
+  <tr><td>188.26.221.100</td><td>255.255.255.240</td><td>B</td><td>12</td><td>188.26.0.0</td><td>188.26.221.96</td></tr>
   <tr><td>128.125.132.191</td><td>255.255.255.128</td><td></td><td></td><td></td><td></td></tr>
   <tr><td>83.93.100.48</td><td>255.255.0.0</td><td></td><td></td><td></td><td></td></tr>
   <tr><td>204.158.32.45</td><td>255.255.255.248</td><td></td><td></td><td></td><td></td></tr>
@@ -289,9 +290,9 @@
 <p class="centered bold">IP Address 188.26.221.100 Subnet Mask 255.255.255.240</p>
 
 <ol>
-  <li>188.26.221.100 is class A</li>
+  <li>188.26.221.100 is class B</li>
   <li>Bits taken for subnetting is taking the CIDR of the current subnet mask and subtracting the default subnet mask for class B (/28 - /16), which is 12</li>
-  <li>The network ID for 188.26.221.100, being class B, is 118.26.221.100</li>
+  <li>The network ID for 188.26.221.100, being class B, is 188.26.0.0</li>
   <li>Subnet ID can be found with AND method</li>
 </ol>
 
@@ -300,7 +301,7 @@
 <table>
   <tr>
     <td class="bold">IP 4<sup>th</sup> Octet: 100</td>
-    <td>0</td><td class="red-bg">1</td><td class="red-bg">1</td><td>0</td><td>0</td><td>1</td><td>1</td><td>0</td>
+    <td>0</td><td class="red-bg">1</td><td class="red-bg">1</td><td>0</td><td>0</td><td>1</td><td>0</td><td>0</td>
   </tr>
   <tr>
     <td class="bold">Subnet Mask 4<sup>th</sup> Octet: 240</td>

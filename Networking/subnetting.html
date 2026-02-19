@@ -1110,6 +1110,7 @@ body::before {
 
 <div class="app">
   <header class="header">
+    <a href="../index.html" style="display:inline-block;margin-bottom:0.5rem;color:var(--text-muted);text-decoration:none;font-family:'JetBrains Mono',monospace;font-size:0.78rem;transition:color 0.2s;" onmouseover="this.style.color='var(--accent-cyan)'" onmouseout="this.style.color='var(--text-muted)'">&larr; Home</a>
     <div class="course-name">Networking Fundamentals</div>
     <h1>&gt; NetDrill_</h1>
     <p>Interactive networking practice &amp; memorization tools</p>
@@ -1534,12 +1535,12 @@ const QUIZ_GENERATORS = [
   },
   {
     id: 'tcp-or-udp',
-    filter: (p) => ['TCP', 'UDP'].includes(p.transport),
+    filter: (p) => ['TCP', 'UDP', 'TCP/UDP'].includes(p.transport),
     make: (proto) => ({
       prompt: `Does ${proto.name} use TCP or UDP?`,
       hint: `Port ${proto.port}`,
       options: ['TCP', 'UDP', 'Both'],
-      correctIdx: ['TCP', 'UDP', 'Both'].indexOf(proto.transport),
+      correctIdx: ['TCP', 'UDP', 'Both'].indexOf(proto.transport === 'TCP/UDP' ? 'Both' : proto.transport),
       explanation: `${proto.name} (port ${proto.port}) uses ${proto.transport}. ${proto.desc}.`,
     }),
   },
@@ -1939,6 +1940,7 @@ function newNumDrill() {
   }
 
   numDrillAnswer = { fromBase, displayValue, targets: targetBases };
+  numDrillChecked = false;
   $('#numDrillBase').textContent = `Convert from ${fromBase}`;
   $('#numDrillValue').textContent = displayValue;
 
@@ -1959,7 +1961,10 @@ function newNumDrill() {
   if (inputs[0]) inputs[0].focus();
 }
 
+let numDrillChecked = false;
 function checkNumDrill() {
+  if (numDrillChecked) return;
+  numDrillChecked = true;
   let allCorrect = true;
   numDrillAnswer.targets.forEach((t, i) => {
     const inp = $(`#numDrillIn${i}`);
@@ -2004,6 +2009,7 @@ function newCidrDrill() {
   const prefix = Math.floor(Math.random() * 25) + 8; // /8 to /32
   const mask = intToIp(cidrToMask(prefix));
 
+  cidrDrillChecked = false;
   if (direction === 'toMask') {
     cidrDrillData = { question: `What is the subnet mask for /${prefix}?`, answer: mask, direction };
     $('#cidrProblem').innerHTML = `
@@ -2028,7 +2034,10 @@ function newCidrDrill() {
   $('#cidrAnswer').focus();
 }
 
+let cidrDrillChecked = false;
 function checkCidrDrill() {
+  if (cidrDrillChecked) return;
+  cidrDrillChecked = true;
   const inp = $('#cidrAnswer');
   const fb = $('#cidrFeedback');
   let userVal = inp.value.trim();
@@ -2072,6 +2081,7 @@ function newHostDrill() {
   const blockSize = totalAddresses;
 
   hostDrillData = { prefix, usableHosts, blockSize };
+  hostDrillChecked = false;
 
   $('#hostProblem').innerHTML = `
     <div class="mp-question">For <strong style="color:var(--accent-cyan)">/${prefix}</strong> — how many <strong>usable hosts</strong> and what is the <strong>block size</strong>?</div>
@@ -2088,7 +2098,10 @@ function newHostDrill() {
   $('#hostAnswerHosts').focus();
 }
 
+let hostDrillChecked = false;
 function checkHostDrill() {
+  if (hostDrillChecked) return;
+  hostDrillChecked = true;
   const hostsInp = $('#hostAnswerHosts');
   const blockInp = $('#hostAnswerBlock');
   const fb = $('#hostFeedback');
@@ -2126,6 +2139,7 @@ let wcDrillData = {};
 let wcHistory = [];
 
 function newWcDrill() {
+  wcDrillChecked = false;
   const prefix = Math.floor(Math.random() * 25) + 8;
   const mask = cidrToMask(prefix);
   const wildcard = (~mask >>> 0);
@@ -2151,7 +2165,10 @@ function newWcDrill() {
   $('#wcAnswer').focus();
 }
 
+let wcDrillChecked = false;
 function checkWcDrill() {
+  if (wcDrillChecked) return;
+  wcDrillChecked = true;
   const inp = $('#wcAnswer');
   const fb = $('#wcFeedback');
   const isCorrect = inp.value.trim() === wcDrillData.answer;
@@ -2185,6 +2202,7 @@ function newAndDrill() {
   const network = intToIp((ipToInt(ip) & cidrToMask(prefix)) >>> 0);
 
   andDrillData = { ip, prefix, mask, answer: network };
+  andDrillChecked = false;
 
   $('#andProblem').innerHTML = `
     <div class="mp-question">
@@ -2198,7 +2216,10 @@ function newAndDrill() {
   $('#andAnswer').focus();
 }
 
+let andDrillChecked = false;
 function checkAndDrill() {
+  if (andDrillChecked) return;
+  andDrillChecked = true;
   const inp = $('#andAnswer');
   const fb = $('#andFeedback');
   const isCorrect = inp.value.trim() === andDrillData.answer;
@@ -2235,7 +2256,7 @@ $('#andVizCalc').addEventListener('click', () => {
     maskInt = ipToInt(maskInput);
   }
 
-  if (!/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(ipStr)) return;
+  if (!/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(ipStr) || ipStr.split('.').some(o => parseInt(o) > 255)) return;
 
   const ipInt = ipToInt(ipStr);
   const netInt = (ipInt & maskInt) >>> 0;
@@ -2272,7 +2293,7 @@ $('#subnetCalc').addEventListener('click', () => {
   const ipStr = $('#subnetIp').value.trim();
   const prefix = parseInt($('#subnetCidr').value, 10);
 
-  if (!/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(ipStr)) return;
+  if (!/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(ipStr) || ipStr.split('.').some(o => parseInt(o) > 255)) return;
   if (isNaN(prefix) || prefix < 0 || prefix > 32) return;
 
   const r = calcSubnet(ipStr, prefix);

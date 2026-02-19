@@ -776,9 +776,14 @@ function showBossQuestion() {
 function endBattle(victory) {
   battleActive = false;
   if (victory) {
+    const alreadyCleared = zonesCleared.has(currentZone.id);
     zonesCleared.add(currentZone.id);
-    gainXp(50 + currentZone.id * 20);
-    document.getElementById('battleLog').textContent = `Zone cleared! ${currentZone.name} conquered!`;
+    if (!alreadyCleared) {
+      gainXp(50 + currentZone.id * 20);
+    }
+    document.getElementById('battleLog').textContent = alreadyCleared
+      ? `${currentZone.name} re-cleared! (No XP for repeated zones)`
+      : `Zone cleared! ${currentZone.name} conquered!`;
     document.getElementById('battleQuestion').innerHTML = `
       <div style="text-align:center;">
         <div class="bq-text" style="color:var(--accent-green);">VICTORY!</div>
@@ -800,7 +805,34 @@ function endBattle(victory) {
     currentZone = null;
     renderWorldMap();
     updatePlayerStats();
+    // Check for overall game completion
+    if (zonesCleared.size === ZONES.length) {
+      setTimeout(() => showFinalVictory(), 500);
+    }
   });
+}
+
+function showFinalVictory() {
+  const map = document.getElementById('worldMap');
+  map.innerHTML = `
+    <div style="text-align:center;padding:3rem 1rem;">
+      <div style="font-family:'Press Start 2P',monospace;font-size:1.2rem;color:var(--accent-green);margin-bottom:1rem;">QUEST COMPLETE!</div>
+      <div style="font-size:3rem;margin-bottom:1rem;">&#127942;</div>
+      <div style="color:var(--text-secondary);margin-bottom:0.5rem;">All 6 zones conquered!</div>
+      <div style="color:var(--text-muted);font-size:0.8rem;margin-bottom:1.5rem;">
+        Final Level: ${player.level} &nbsp; | &nbsp; Max HP: ${player.maxHp}
+      </div>
+      <button class="btn-action green" onclick="resetGame()">PLAY AGAIN</button>
+    </div>
+  `;
+}
+
+function resetGame() {
+  player = { level: 1, xp: 0, xpNext: 100, hp: 100, maxHp: 100 };
+  zonesCleared = new Set();
+  currentZone = null;
+  renderWorldMap();
+  updatePlayerStats();
 }
 
 function gainXp(amount) {

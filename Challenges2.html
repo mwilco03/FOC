@@ -341,15 +341,18 @@ function showDrill(){
 
 function checkDrill(){
   const inp=document.getElementById('drill-input');
+  if(inp.disabled) return;
   const fb=document.getElementById('drill-fb');
   const val=inp.value.trim().replace(/\s+/g,' ');
   const d=DRILLS[dIdx];
-  const ok=d.answers.some(a=>val===a.replace(/\s+/g,' ').trim());
+  const ok=d.answers.some(a=>val.toLowerCase()===a.toLowerCase().replace(/\s+/g,' ').trim());
   if(ok){
     inp.classList.add('correct');fb.textContent='Correct!';fb.className='feedback correct';
     dScore+=10;dStreak++;
   }else{
-    inp.classList.add('wrong');fb.innerHTML='Expected: <code>'+d.answers[0]+'</code>';fb.className='feedback wrong';
+    inp.classList.add('wrong');
+    fb.innerHTML='Expected: <code>'+d.answers[0].replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</code>';
+    fb.className='feedback wrong';
     dStreak=0;
   }
   document.getElementById('d-score').textContent=dScore;
@@ -359,7 +362,12 @@ function checkDrill(){
 }
 
 function nextDrill(){
-  dIdx=(dIdx+1)%DRILLS.length;
+  dIdx++;
+  if(dIdx>=DRILLS.length){
+    const area=document.getElementById('drill-area');
+    area.innerHTML=`<div class="drill-card" style="text-align:center;"><div class="quiz-q" style="color:var(--green);">All Drills Complete!</div><p style="margin:.75rem 0;color:var(--muted);">Final Score: ${dScore} / ${DRILLS.length*10}</p><button class="btn btn-check" onclick="dIdx=0;dScore=0;dStreak=0;document.getElementById('d-score').textContent=0;document.getElementById('d-streak').textContent=0;showDrill()">Restart Drills</button></div>`;
+    return;
+  }
   showDrill();
 }
 showDrill();
@@ -388,15 +396,24 @@ const QUIZ=[
 {q:'How do you enter a remote PS session?',opts:['Enter-PSSession','Connect-Remote','Start-Remote','Open-Session'],c:0},
 ];
 
-let qIdx=0,qScore=0,qStreak=0;
+let qIdx=0,qScore=0,qStreak=0,qCorrectIdx=0;
 document.getElementById('q-total').textContent=QUIZ.length;
+
+function shuffleQuizOpts(q){
+  const correctOpt=q.opts[q.c];
+  const shuffled=[...q.opts];
+  for(let i=shuffled.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[shuffled[i],shuffled[j]]=[shuffled[j],shuffled[i]];}
+  return {opts:shuffled,c:shuffled.indexOf(correctOpt)};
+}
 
 function showQuiz(){
   const q=QUIZ[qIdx];
+  const shuffled=shuffleQuizOpts(q);
+  qCorrectIdx=shuffled.c;
   document.getElementById('q-num').textContent=qIdx+1;
   const area=document.getElementById('quiz-area');
   area.innerHTML=`<div class="drill-card"><div class="quiz-q">${q.q}</div><div class="quiz-opts">${
-    q.opts.map((o,i)=>`<button class="quiz-opt" data-i="${i}">${o}</button>`).join('')
+    shuffled.opts.map((o,i)=>`<button class="quiz-opt" data-i="${i}">${o}</button>`).join('')
   }</div><div class="feedback" id="quiz-fb"></div>
   <div style="margin-top:.5rem;text-align:right"><button class="btn btn-next" onclick="nextQuiz()" style="display:none" id="quiz-next">Next</button></div></div>`;
   area.querySelectorAll('.quiz-opt').forEach(btn=>{
@@ -405,18 +422,25 @@ function showQuiz(){
 }
 
 function answerQuiz(i){
-  const q=QUIZ[qIdx];
   const btns=document.querySelectorAll('.quiz-opt');
-  btns.forEach((b,j)=>{b.classList.add('disabled');if(j===q.c)b.classList.add('correct');if(j===i&&i!==q.c)b.classList.add('wrong')});
+  btns.forEach((b,j)=>{b.classList.add('disabled');if(j===qCorrectIdx)b.classList.add('correct');if(j===i&&i!==qCorrectIdx)b.classList.add('wrong')});
   const fb=document.getElementById('quiz-fb');
-  if(i===q.c){qScore+=10;qStreak++;fb.textContent='Correct!';fb.className='feedback correct'}
+  if(i===qCorrectIdx){qScore+=10;qStreak++;fb.textContent='Correct!';fb.className='feedback correct'}
   else{qStreak=0;fb.textContent='Wrong!';fb.className='feedback wrong'}
   document.getElementById('q-score').textContent=qScore;
   document.getElementById('q-streak').textContent=qStreak;
   document.getElementById('quiz-next').style.display='inline-block';
 }
 
-function nextQuiz(){qIdx=(qIdx+1)%QUIZ.length;showQuiz()}
+function nextQuiz(){
+  qIdx++;
+  if(qIdx>=QUIZ.length){
+    const area=document.getElementById('quiz-area');
+    area.innerHTML=`<div class="drill-card" style="text-align:center;"><div class="quiz-q" style="color:var(--accent-green);">Quiz Complete!</div><p style="margin:.75rem 0;color:var(--text-secondary);">Final Score: ${qScore} / ${QUIZ.length*10}</p><button class="btn btn-check" onclick="qIdx=0;qScore=0;qStreak=0;document.getElementById('q-score').textContent=0;document.getElementById('q-streak').textContent=0;showQuiz()">Restart Quiz</button></div>`;
+    return;
+  }
+  showQuiz();
+}
 showQuiz();
 </script>
 </body>

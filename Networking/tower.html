@@ -127,9 +127,9 @@ body::before{content:'';position:fixed;inset:0;background:linear-gradient(rgba(5
 
 <script>
 const LAYERS = [
-  {num:7,name:'Application',color:'var(--layer-7)',addr:'Data',pdu:'Messages'},
-  {num:6,name:'Presentation',color:'var(--layer-6)',addr:'Data',pdu:'Encoding'},
-  {num:5,name:'Session',color:'var(--layer-5)',addr:'Data',pdu:'Sessions'},
+  {num:7,name:'Application',color:'var(--layer-7)',addr:'URLs / Hostnames',pdu:'Data'},
+  {num:6,name:'Presentation',color:'var(--layer-6)',addr:'Format / Encoding',pdu:'Data'},
+  {num:5,name:'Session',color:'var(--layer-5)',addr:'Session IDs',pdu:'Data'},
   {num:4,name:'Transport',color:'var(--layer-4)',addr:'Port Numbers',pdu:'Segments'},
   {num:3,name:'Network',color:'var(--layer-3)',addr:'IP Address',pdu:'Packets'},
   {num:2,name:'Data Link',color:'var(--layer-2)',addr:'MAC Address',pdu:'Frames'},
@@ -150,10 +150,11 @@ let totalAttempts = 0;
 function shuffle(arr){const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
 const $=s=>document.querySelector(s);
 
+let chipIdCounter = 0;
+
 function getPoolItems(){
   const key = STAGES[currentStage].key;
-  const items = [...new Set(LAYERS.map(l => l[key]))];
-  return shuffle(LAYERS.map(l => l[key]));
+  return shuffle(LAYERS.map(l => ({ val: l[key], chipId: chipIdCounter++ })));
 }
 
 function renderStage(){
@@ -189,22 +190,29 @@ function renderStage(){
     </div>`;
   }).join('');
 
-  // Pool
+  // Pool — each chip gets a unique ID so duplicates are tracked independently
   const items = getPoolItems();
-  $('#poolItems').innerHTML = items.map(v =>
-    `<div class="pool-chip" draggable="true" data-val="${v}" ondragstart="event.dataTransfer.setData('text','${v}')">${v}</div>`
+  $('#poolItems').innerHTML = items.map(item =>
+    `<div class="pool-chip" draggable="true" data-chip-id="${item.chipId}" data-val="${item.val}"
+      ondragstart="event.dataTransfer.setData('text','${item.chipId}|${item.val}')">${item.val}</div>`
   ).join('');
+
+  // Touch drag-and-drop support
+  addTouchDragSupport();
 }
 
 window.handleDrop = function(e, slotNum){
   e.preventDefault();
   const slot = e.currentTarget;
   slot.classList.remove('drag-over');
-  const val = e.dataTransfer.getData('text');
+  const raw = e.dataTransfer.getData('text');
+  const pipeIdx = raw.indexOf('|');
+  const chipId = raw.substring(0, pipeIdx);
+  const val = raw.substring(pipeIdx + 1);
 
-  // Remove from previous slot
-  Object.entries(placed).forEach(([num, v]) => {
-    if(v === val){
+  // Remove this chip from any previous slot
+  Object.entries(placed).forEach(([num, info]) => {
+    if(info.chipId === chipId){
       delete placed[num];
       const prev = document.querySelector(`.tower-row[data-layer="${num}"]`);
       const pi = prev.querySelector('.row-placed');
@@ -214,15 +222,15 @@ window.handleDrop = function(e, slotNum){
     }
   });
 
-  // Remove existing in this slot
+  // Remove existing item in this slot (put its chip back)
   if(placed[slotNum]){
     const old = placed[slotNum];
     slot.querySelector('.row-placed')?.remove();
-    const oldChip = document.querySelector(`.pool-chip[data-val="${old}"]`);
+    const oldChip = document.querySelector(`.pool-chip[data-chip-id="${old.chipId}"]`);
     if(oldChip) oldChip.classList.remove('placed');
   }
 
-  placed[slotNum] = val;
+  placed[slotNum] = { val, chipId };
   const ph = slot.querySelector('.row-placeholder');
   if(ph) ph.style.display = 'none';
 
@@ -232,7 +240,7 @@ window.handleDrop = function(e, slotNum){
   el.addEventListener('click', () => removePlaced(slotNum));
   slot.insertBefore(el, slot.querySelector('.row-hint'));
 
-  const chip = document.querySelector(`.pool-chip[data-val="${val}"]`);
+  const chip = document.querySelector(`.pool-chip[data-chip-id="${chipId}"]`);
   if(chip) chip.classList.add('placed');
 
   slot.classList.remove('correct','incorrect');
@@ -241,14 +249,68 @@ window.handleDrop = function(e, slotNum){
 function removePlaced(slotNum){
   const slot = document.querySelector(`.tower-row[data-layer="${slotNum}"]`);
   if(!placed[slotNum]) return;
-  const val = placed[slotNum];
+  const info = placed[slotNum];
   delete placed[slotNum];
   slot.querySelector('.row-placed')?.remove();
   const ph = slot.querySelector('.row-placeholder');
   if(ph) ph.style.display = '';
   slot.classList.remove('correct','incorrect');
-  const chip = document.querySelector(`.pool-chip[data-val="${val}"]`);
+  const chip = document.querySelector(`.pool-chip[data-chip-id="${info.chipId}"]`);
   if(chip) chip.classList.remove('placed');
+}
+
+// Touch drag-and-drop polyfill
+function addTouchDragSupport(){
+  let dragChip = null;
+  let dragGhost = null;
+
+  document.querySelectorAll('.pool-chip').forEach(chip => {
+    chip.addEventListener('touchstart', (e) => {
+      if(chip.classList.contains('placed')) return;
+      dragChip = chip;
+      dragGhost = chip.cloneNode(true);
+      dragGhost.style.cssText = 'position:fixed;pointer-events:none;opacity:0.8;z-index:1000;';
+      document.body.appendChild(dragGhost);
+      const t = e.touches[0];
+      dragGhost.style.left = t.clientX - 30 + 'px';
+      dragGhost.style.top = t.clientY - 15 + 'px';
+    }, {passive:true});
+  });
+
+  document.addEventListener('touchmove', (e) => {
+    if(!dragGhost) return;
+    const t = e.touches[0];
+    dragGhost.style.left = t.clientX - 30 + 'px';
+    dragGhost.style.top = t.clientY - 15 + 'px';
+    // Highlight drop target
+    document.querySelectorAll('.tower-row').forEach(r => r.classList.remove('drag-over'));
+    const el = document.elementFromPoint(t.clientX, t.clientY);
+    const row = el?.closest('.tower-row');
+    if(row) row.classList.add('drag-over');
+  }, {passive:true});
+
+  document.addEventListener('touchend', (e) => {
+    if(!dragChip || !dragGhost) return;
+    const t = e.changedTouches[0];
+    const el = document.elementFromPoint(t.clientX, t.clientY);
+    const row = el?.closest('.tower-row');
+    if(row){
+      const slotNum = parseInt(row.dataset.layer);
+      const chipId = dragChip.dataset.chipId;
+      const val = dragChip.dataset.val;
+      // Simulate drop
+      const fakeEvent = {
+        preventDefault(){},
+        currentTarget: row,
+        dataTransfer: { getData(){ return chipId + '|' + val; } }
+      };
+      handleDrop(fakeEvent, slotNum);
+    }
+    document.querySelectorAll('.tower-row').forEach(r => r.classList.remove('drag-over'));
+    dragGhost.remove();
+    dragChip = null;
+    dragGhost = null;
+  });
 }
 
 $('#btnCheck').addEventListener('click', () => {
@@ -259,10 +321,11 @@ $('#btnCheck').addEventListener('click', () => {
   LAYERS.forEach(l => {
     const slot = document.querySelector(`.tower-row[data-layer="${l.num}"]`);
     slot.classList.remove('correct','incorrect');
-    if(placed[l.num] === l[key]){
+    const p = placed[l.num];
+    if(p && p.val === l[key]){
       slot.classList.add('correct');
       correct++;
-    } else if(placed[l.num]){
+    } else if(p){
       slot.classList.add('incorrect');
     }
   });
