@@ -287,7 +287,7 @@ function startSpeed(){
     if(timeLeft <= 0){
       clearInterval(timerInterval);
       timerInterval = null;
-      $('#feedback').textContent = `TIME UP! Score: ${sc}`;
+      $('#feedback').innerHTML = `TIME UP! Score: ${sc} &nbsp; <button class="btn btn-check" style="font-size:0.5rem;padding:0.4rem 0.8rem;" onclick="startSpeed()">PLAY AGAIN</button>`;
       $('#feedback').className = 'feedback wrong';
     }
   }, 1000);
@@ -311,11 +311,12 @@ document.querySelectorAll('.mode-tab').forEach(tab => {
 });
 
 $('#btnCheck').addEventListener('click', () => {
+  if(mode === 'speed' && timeLeft <= 0) return;
   checkAnswer();
   if(mode === 'speed'){
     setTimeout(() => {
       if(timeLeft > 0) newProblem();
-    }, 600);
+    }, 1200);
   }
 });
 $('#btnHint').addEventListener('click', showHint);

@@ -124,6 +124,7 @@ let guidedNum = 0;
 let guidedSteps = [];
 
 function newGuided(){
+  skippedGuided = false;
   guidedNum = randInt(100, 65535);
   guidedSteps = [];
   let n = guidedNum;
@@ -186,6 +187,7 @@ function newGuided(){
 }
 
 function checkGuided(){
+  if(skippedGuided) return; // Steps replaced by skip input
   let allCorrect = true;
   guidedSteps.forEach((s,i) => {
     const qInp = $(`#gq-${i}`), rInp = $(`#gr-${i}`), hInp = $(`#gh-${i}`);
@@ -218,32 +220,38 @@ function checkGuided(){
   updateStats();
 }
 
+let skippedGuided = false;
+
 function skipGuided(){
+  skippedGuided = true;
   const correctHex = guidedNum.toString(16).toUpperCase();
   // Show quick input
   const fb = $('#guidedFb');
   const area = $('#stepsArea');
-  area.innerHTML = `<div style="text-align:center;"><input type="text" id="skipInput" placeholder="Type hex answer" style="width:180px;padding:0.5rem;font-family:'JetBrains Mono',monospace;font-size:1rem;background:var(--bg-secondary);border:2px solid var(--border);border-radius:8px;color:var(--text-primary);outline:none;text-align:center;"></div>`;
+  area.innerHTML = `<div style="text-align:center;"><input type="text" id="skipInput" placeholder="Type hex answer" style="width:180px;padding:0.5rem;font-family:'JetBrains Mono',monospace;font-size:1rem;background:var(--bg-secondary);border:2px solid var(--border);border-radius:8px;color:var(--text-primary);outline:none;text-align:center;">
+  <div style="margin-top:0.5rem;"><button class="btn btn-check" id="skipCheck">CHECK</button></div></div>`;
   const skipInp = $('#skipInput');
   skipInp.focus();
-  skipInp.addEventListener('keydown', e => {
-    if(e.key==='Enter'){
-      const val = skipInp.value.trim().toUpperCase().replace(/^0X/,'');
-      skipInp.classList.remove('correct','wrong');
-      if(val === correctHex){
-        skipInp.classList.add('correct');
-        fb.textContent='CORRECT!';fb.className='feedback correct';
-        sc++;streak++;
-      } else {
-        skipInp.classList.add('wrong');
-        fb.textContent=`Answer: 0x${correctHex}`;fb.className='feedback wrong';
-        streak=0;
-      }
-      $('#guidedAnswer').style.display='';
-      $('#guidedResult').textContent = `0x${correctHex}`;
-      updateStats();
+
+  function checkSkip(){
+    const val = skipInp.value.trim().toUpperCase().replace(/^0X/,'');
+    skipInp.classList.remove('correct','wrong');
+    if(val === correctHex){
+      skipInp.classList.add('correct');
+      fb.textContent='CORRECT!';fb.className='feedback correct';
+      sc++;streak++;
+    } else {
+      skipInp.classList.add('wrong');
+      fb.textContent=`Answer: 0x${correctHex}`;fb.className='feedback wrong';
+      streak=0;
     }
-  });
+    $('#guidedAnswer').style.display='';
+    $('#guidedResult').textContent = `0x${correctHex}`;
+    updateStats();
+  }
+
+  skipInp.addEventListener('keydown', e => { if(e.key==='Enter') checkSkip(); });
+  $('#skipCheck').addEventListener('click', checkSkip);
 }
 
 // =====================================================================
@@ -398,6 +406,7 @@ function checkSpeed(){
     fb.textContent=`Answer: ${speedDirection==='toHex'?'0x':''}${speedAnswer}`;
     fb.className='feedback wrong';streak=0;
     updateStats();
+    setTimeout(newSpeed, 1500);
   }
 }
 

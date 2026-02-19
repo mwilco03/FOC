@@ -632,6 +632,8 @@ function handleAnswer(idx) {
     const maxY = enemies.reduce((max, e) => e.alive ? Math.max(max, e.y + enemyBaseY + e.size) : max, 0);
     if (maxY > canvas.height - 20) {
       lives--;
+      // Reset enemy position back up to prevent cascade on next wrong answer
+      enemyBaseY = Math.max(0, enemyBaseY - 60);
       if (lives <= 0) {
         gameState = 'gameover';
         showGameOver(false);
