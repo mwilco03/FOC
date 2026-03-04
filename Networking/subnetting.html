@@ -1124,6 +1124,7 @@ body::before {
     <button class="tab-btn" data-tab="subnet-calc">Subnet Calc</button>
     <button class="tab-btn" data-tab="subnet-practice">Subnet Practice</button>
     <button class="tab-btn" data-tab="reference">Reference</button>
+    <button class="tab-btn" data-tab="ipv6-basics">IPv6 Basics</button>
   </nav>
 
   <main class="content">
@@ -1450,6 +1451,74 @@ body::before {
       </div>
     </section>
 
+    <!-- ============ IPv6 BASICS ============ -->
+    <section id="ipv6-basics" class="section">
+      <div class="section-header">
+        <h2>IPv6 Basics</h2>
+        <p>Key differences from IPv4 and core addressing concepts</p>
+      </div>
+      <div class="subnet-panel">
+        <h3 style="color:var(--accent-cyan);margin-bottom:0.75rem;font-size:0.9rem;">IPv6 at a Glance</h3>
+        <table class="ref-table">
+          <thead><tr><th>Feature</th><th>IPv4</th><th>IPv6</th></tr></thead>
+          <tbody>
+            <tr><td>Address size</td><td>32 bits</td><td>128 bits</td></tr>
+            <tr><td>Format</td><td>Dotted decimal (192.168.1.1)</td><td>Colon hex (2001:0db8::1)</td></tr>
+            <tr><td>Address space</td><td>~4.3 billion</td><td>~3.4 &times; 10<sup>38</sup></td></tr>
+            <tr><td>Header size</td><td>Variable (20-60 bytes)</td><td>Fixed (40 bytes)</td></tr>
+            <tr><td>Broadcast</td><td>Yes</td><td>No (uses multicast)</td></tr>
+            <tr><td>Auto-config</td><td>DHCP</td><td>SLAAC + DHCPv6</td></tr>
+            <tr><td>IPsec</td><td>Optional</td><td>Built-in</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="subnet-panel" style="margin-top:1rem;">
+        <h3 style="color:var(--accent-amber);margin-bottom:0.75rem;font-size:0.9rem;">Address Format</h3>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.85rem;background:var(--bg-secondary);padding:0.75rem;border-radius:6px;overflow-x:auto;">
+          <div style="color:var(--accent-cyan);">2001:0db8:85a3:0000:0000:8a2e:0370:7334</div>
+          <div style="color:var(--text-muted);margin-top:0.5rem;">8 groups of 4 hex digits separated by colons</div>
+        </div>
+        <div style="margin-top:1rem;">
+          <strong style="color:var(--text-primary);font-size:0.82rem;">Shortening Rules:</strong>
+          <ul style="margin-top:0.4rem;padding-left:1.2rem;font-size:0.8rem;color:var(--text-secondary);line-height:1.8;">
+            <li>Drop leading zeros in each group: <code style="color:var(--accent-green);">0db8</code> &rarr; <code style="color:var(--accent-green);">db8</code></li>
+            <li>Replace one consecutive run of all-zero groups with <code style="color:var(--accent-green)">::</code> (only once)</li>
+            <li>Full: <code>2001:0db8:0000:0000:0000:0000:0000:0001</code></li>
+            <li>Short: <code style="color:var(--accent-green);">2001:db8::1</code></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="subnet-panel" style="margin-top:1rem;">
+        <h3 style="color:var(--accent-purple);margin-bottom:0.75rem;font-size:0.9rem;">Common Prefix Lengths</h3>
+        <table class="ref-table">
+          <thead><tr><th>Prefix</th><th>Use</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td>/128</td><td>Single host</td><td>Equivalent to IPv4 /32</td></tr>
+            <tr><td>/64</td><td>Standard subnet</td><td>Most common; required for SLAAC</td></tr>
+            <tr><td>/48</td><td>Site allocation</td><td>Typical enterprise assignment</td></tr>
+            <tr><td>/32</td><td>ISP allocation</td><td>Standard ISP prefix from RIR</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="subnet-panel" style="margin-top:1rem;">
+        <h3 style="color:var(--accent-green);margin-bottom:0.75rem;font-size:0.9rem;">Key Address Types</h3>
+        <table class="ref-table">
+          <thead><tr><th>Address</th><th>Type</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><code>::1</code></td><td>Loopback</td><td>Same as 127.0.0.1 in IPv4</td></tr>
+            <tr><td><code>::</code></td><td>Unspecified</td><td>Same as 0.0.0.0 in IPv4</td></tr>
+            <tr><td><code>fe80::/10</code></td><td>Link-local</td><td>Auto-assigned, non-routable (like 169.254.x.x)</td></tr>
+            <tr><td><code>fc00::/7</code></td><td>Unique local</td><td>Private addresses (like 10.x.x.x / 192.168.x.x)</td></tr>
+            <tr><td><code>2000::/3</code></td><td>Global unicast</td><td>Public routable addresses</td></tr>
+            <tr><td><code>ff00::/8</code></td><td>Multicast</td><td>Replaces IPv4 broadcast</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
   </main>
 </div>
 
@@ -1496,7 +1565,7 @@ const PROTOCOLS = [
   { name: 'ICMP',    port: '--',     layer: 3, transport: '--', desc: 'Internet Control Message Protocol' },
   { name: 'ARP',     port: '--',     layer: 3, transport: '--', desc: 'Address Resolution Protocol' },
   { name: 'OSPF',    port: '--',     layer: 3, transport: '--', desc: 'Open Shortest Path First' },
-  { name: 'BGP',     port: '179',    layer: 3, transport: 'TCP', desc: 'Border Gateway Protocol' },
+  { name: 'BGP',     port: '179',    layer: 7, transport: 'TCP', desc: 'Border Gateway Protocol' },
   { name: 'Ethernet',port: '--',     layer: 2, transport: '--', desc: 'LAN frame protocol' },
   { name: 'Wi-Fi',   port: '--',     layer: 2, transport: '--', desc: '802.11 wireless LAN' },
   { name: 'PPP',     port: '--',     layer: 2, transport: '--', desc: 'Point-to-Point Protocol' },

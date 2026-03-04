@@ -326,20 +326,20 @@ showDrill();
 // ============ QUIZ ============
 const QUIZ=[
 {q:'What does @echo off do in a batch file?',opts:['Hides command echo','Turns off the computer','Stops all output','Clears the screen'],c:0},
-{q:'Which command reads user input into a variable?',opts:['set /p var=prompt','read var','input var','get var'],c:0},
-{q:'How do you reference a variable in batch?',opts:['%varname%','$varname','${varname}','varname'],c:0},
-{q:'What does set /a do?',opts:['Arithmetic evaluation','Array creation','Append to variable','Absolute path'],c:0},
+{q:'Which command reads user input into a variable?',opts:['read var','set /p var=prompt','input var','get var'],c:1},
+{q:'How do you reference a variable in batch?',opts:['$varname','${varname}','%varname%','varname'],c:2},
+{q:'What does set /a do?',opts:['Array creation','Append to variable','Absolute path','Arithmetic evaluation'],c:3},
 {q:'Which command checks if a file exists?',opts:['if exist "file"','test -f file','file.exists()','check file'],c:0},
-{q:'What does pause do?',opts:['Waits for a keypress','Pauses for 5 seconds','Stops the script','Saves current state'],c:0},
-{q:'How do you write text to a file (overwrite)?',opts:['echo text > file.txt','echo text >> file.txt','write text file.txt','set text > file.txt'],c:0},
-{q:'What is the loop variable prefix in batch scripts?',opts:['%%','$','@','#'],c:0},
+{q:'What does pause do?',opts:['Pauses for 5 seconds','Waits for a keypress','Stops the script','Saves current state'],c:1},
+{q:'How do you write text to a file (overwrite)?',opts:['echo text >> file.txt','write text file.txt','echo text > file.txt','set text > file.txt'],c:2},
+{q:'What is the loop variable prefix in batch scripts?',opts:['$','@','#','%%'],c:3},
 {q:'Which for /l syntax counts 1 to 5?',opts:['(1,1,5)','(1..5)','(1:5)','(1-5)'],c:0},
-{q:'What does goto do?',opts:['Jumps to a label','Goes to a directory','Returns to start','Exits the script'],c:0},
-{q:'What does %~dp0 expand to?',opts:['Script drive and path','Current date','Desktop path','DOS prompt'],c:0},
-{q:'How do you append text to a file?',opts:['echo text >> file.txt','echo text > file.txt','add text file.txt','append text file.txt'],c:0},
+{q:'What does goto do?',opts:['Goes to a directory','Jumps to a label','Returns to start','Exits the script'],c:1},
+{q:'What does %~dp0 expand to?',opts:['Current date','Desktop path','Script drive and path','DOS prompt'],c:2},
+{q:'How do you append text to a file?',opts:['echo text > file.txt','add text file.txt','append text file.txt','echo text >> file.txt'],c:3},
 {q:'What does rem do?',opts:['Starts a comment','Removes a file','Renames a variable','Restarts a service'],c:0},
-{q:'Which operator means "not equal" in batch?',opts:['NEQ','!=','<>','NOT'],c:0},
-{q:'What enables delayed variable expansion?',opts:['setlocal enabledelayedexpansion','set delayed=on','enable !vars!','setlocal expand'],c:0},
+{q:'Which operator means "not equal" in batch?',opts:['!=','NEQ','<>','NOT'],c:1},
+{q:'What enables delayed variable expansion?',opts:['set delayed=on','enable !vars!','setlocal enabledelayedexpansion','setlocal expand'],c:2},
 ];
 
 let qIdx=0,qScore=0,qStreak=0,qCorrectIdx=0;
@@ -388,6 +388,16 @@ function nextQuiz(){
   showQuiz();
 }
 showQuiz();
+
+// Progress persistence
+(function(){
+  const KEY='foc-batch-progress';
+  function save(){try{localStorage.setItem(KEY,JSON.stringify({dIdx,dScore,qIdx,qScore}));}catch(e){}}
+  function load(){try{const d=JSON.parse(localStorage.getItem(KEY));if(d){dIdx=d.dIdx||0;dScore=d.dScore||0;qIdx=d.qIdx||0;qScore=d.qScore||0;}}catch(e){}}
+  const _cd=checkDrill;checkDrill=function(){_cd();save()};
+  const _aq=answerQuiz;answerQuiz=function(i){_aq(i);save()};
+  load();if(dIdx>0)showDrill();if(qIdx>0)showQuiz();
+})();
 </script>
 </body>
 </html>

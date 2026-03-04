@@ -353,6 +353,16 @@ function nextQuiz(){
   showQuiz();
 }
 showQuiz();
+
+// Progress persistence
+(function(){
+  const KEY='foc-python-progress';
+  function save(){try{localStorage.setItem(KEY,JSON.stringify({dIdx,dScore,qIdx,qScore}));}catch(e){}}
+  function load(){try{const d=JSON.parse(localStorage.getItem(KEY));if(d){dIdx=d.dIdx||0;dScore=d.dScore||0;qIdx=d.qIdx||0;qScore=d.qScore||0;}}catch(e){}}
+  const _cd=checkDrill;checkDrill=function(){_cd();save()};
+  const _aq=answerQuiz;answerQuiz=function(i){_aq(i);save()};
+  load();if(dIdx>0)showDrill();if(qIdx>0)showQuiz();
+})();
 </script>
 </body>
 </html>
