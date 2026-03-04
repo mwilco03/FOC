@@ -375,25 +375,25 @@ showDrill();
 // ============ QUIZ ============
 const QUIZ=[
 {q:'What prefix do PowerShell variables use?',opts:['$','%','@','&'],c:0},
-{q:'Which cmdlet lists files in a directory?',opts:['Get-ChildItem','List-Files','Dir-Contents','Show-Files'],c:0},
-{q:'What does the pipeline operator | do?',opts:['Passes objects to next cmdlet','Logical OR','String concat','Variable assignment'],c:0},
-{q:'Which cmdlet stops a running process?',opts:['Stop-Process','Kill-Task','End-Process','Remove-Process'],c:0},
+{q:'Which cmdlet lists files in a directory?',opts:['List-Files','Get-ChildItem','Dir-Contents','Show-Files'],c:1},
+{q:'What does the pipeline operator | do?',opts:['Logical OR','String concat','Passes objects to next cmdlet','Variable assignment'],c:2},
+{q:'Which cmdlet stops a running process?',opts:['Kill-Task','End-Process','Remove-Process','Stop-Process'],c:3},
 {q:'What does Test-Path return?',opts:['True/False if path exists','File contents','File size','Directory listing'],c:0},
-{q:'How do you define a function parameter?',opts:['param([type]$Name)','def($Name)','args($Name)','input($Name)'],c:0},
-{q:'Which operator tests "greater than"?',opts:['-gt','>','>>','gt()'],c:0},
-{q:'What does Get-Service show?',opts:['Windows services','Web services','REST APIs','DNS records'],c:0},
+{q:'How do you define a function parameter?',opts:['def($Name)','param([type]$Name)','args($Name)','input($Name)'],c:1},
+{q:'Which operator tests "greater than"?',opts:['>','>>','-gt','gt()'],c:2},
+{q:'What does Get-Service show?',opts:['Web services','REST APIs','DNS records','Windows services'],c:3},
 {q:'How do you read a file in PowerShell?',opts:['Get-Content','Read-File','Open-File','Import-File'],c:0},
-{q:'What does ConvertFrom-Json do?',opts:['JSON string to PS object','PS object to JSON','Reads JSON file','Validates JSON'],c:0},
-{q:'Which cmdlet measures array statistics?',opts:['Measure-Object','Get-Stats','Calculate-Sum','Count-Items'],c:0},
-{q:'How do you start a background job?',opts:['Start-Job','Run-Background','Start-Task','Invoke-Async'],c:0},
+{q:'What does ConvertFrom-Json do?',opts:['PS object to JSON','JSON string to PS object','Reads JSON file','Validates JSON'],c:1},
+{q:'Which cmdlet measures array statistics?',opts:['Get-Stats','Calculate-Sum','Measure-Object','Count-Items'],c:2},
+{q:'How do you start a background job?',opts:['Run-Background','Start-Task','Invoke-Async','Start-Job'],c:3},
 {q:'What does $_ represent in a pipeline?',opts:['Current object','Previous result','Last error','Script path'],c:0},
-{q:'Which cmdlet finds text in files?',opts:['Select-String','Find-Text','Search-Content','Get-Match'],c:0},
-{q:'What switch statement keyword handles unmatched cases?',opts:['default','else','otherwise','fallback'],c:0},
-{q:'How do you test network connectivity?',opts:['Test-Connection','Ping-Host','Check-Network','Test-Net'],c:0},
+{q:'Which cmdlet finds text in files?',opts:['Find-Text','Select-String','Search-Content','Get-Match'],c:1},
+{q:'What switch statement keyword handles unmatched cases?',opts:['else','otherwise','default','fallback'],c:2},
+{q:'How do you test network connectivity?',opts:['Ping-Host','Check-Network','Test-Net','Test-Connection'],c:3},
 {q:'What does -eq test?',opts:['Equality','Assignment','Existence','Type check'],c:0},
-{q:'Which cmdlet creates a new file?',opts:['New-Item','Create-File','Make-File','Add-File'],c:0},
-{q:'What does @() create?',opts:['An array','A hashtable','A string','A scriptblock'],c:0},
-{q:'How do you enter a remote PS session?',opts:['Enter-PSSession','Connect-Remote','Start-Remote','Open-Session'],c:0},
+{q:'Which cmdlet creates a new file?',opts:['Create-File','New-Item','Make-File','Add-File'],c:1},
+{q:'What does @() create?',opts:['A hashtable','A string','An array','A scriptblock'],c:2},
+{q:'How do you enter a remote PS session?',opts:['Connect-Remote','Start-Remote','Open-Session','Enter-PSSession'],c:3},
 ];
 
 let qIdx=0,qScore=0,qStreak=0,qCorrectIdx=0;
@@ -442,6 +442,16 @@ function nextQuiz(){
   showQuiz();
 }
 showQuiz();
+
+// Progress persistence
+(function(){
+  const KEY='foc-powershell-progress';
+  function save(){try{localStorage.setItem(KEY,JSON.stringify({dIdx,dScore,qIdx,qScore}));}catch(e){}}
+  function load(){try{const d=JSON.parse(localStorage.getItem(KEY));if(d){dIdx=d.dIdx||0;dScore=d.dScore||0;qIdx=d.qIdx||0;qScore=d.qScore||0;}}catch(e){}}
+  const _cd=checkDrill;checkDrill=function(){_cd();save()};
+  const _aq=answerQuiz;answerQuiz=function(i){_aq(i);save()};
+  load();if(dIdx>0)showDrill();if(qIdx>0)showQuiz();
+})();
 </script>
 </body>
 </html>

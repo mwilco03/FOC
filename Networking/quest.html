@@ -847,8 +847,38 @@ function gainXp(amount) {
 }
 
 // =====================================================================
+// SAVE / LOAD PROGRESS
+// =====================================================================
+function saveProgress() {
+  try {
+    localStorage.setItem('subnetquest-save', JSON.stringify({
+      player, zonesCleared: [...zonesCleared]
+    }));
+  } catch(e) {}
+}
+
+function loadProgress() {
+  try {
+    const raw = localStorage.getItem('subnetquest-save');
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    if (data.player) Object.assign(player, data.player);
+    if (data.zonesCleared) zonesCleared = new Set(data.zonesCleared);
+  } catch(e) {}
+}
+
+// Patch gainXp to auto-save
+const _origGainXp = gainXp;
+gainXp = function(amount) { _origGainXp(amount); saveProgress(); };
+
+// Patch endBattle to auto-save
+const _origEndBattle = endBattle;
+endBattle = function(victory) { _origEndBattle(victory); saveProgress(); };
+
+// =====================================================================
 // INIT
 // =====================================================================
+loadProgress();
 renderWorldMap();
 updatePlayerStats();
 drawPixelArt(document.getElementById('heroCanvas'), HERO_PATTERN, HERO_PALETTE);

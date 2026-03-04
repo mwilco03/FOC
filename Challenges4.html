@@ -360,25 +360,25 @@ showDrill();
 // ============ QUIZ ============
 const QUIZ=[
 {q:'What character starts a comment in Bash?',opts:['#','//','--','rem'],c:0},
-{q:'How do you assign a variable in Bash?',opts:['name=value','set name=value','$name=value','let name value'],c:0},
-{q:'What does $? contain?',opts:['Exit status of last command','Current PID','Argument count','Script name'],c:0},
-{q:'Which command reverses a string?',opts:['rev','reverse','flip','invert'],c:0},
+{q:'How do you assign a variable in Bash?',opts:['set name=value','name=value','$name=value','let name value'],c:1},
+{q:'What does $? contain?',opts:['Current PID','Argument count','Exit status of last command','Script name'],c:2},
+{q:'Which command reverses a string?',opts:['reverse','flip','invert','rev'],c:3},
 {q:'What does set -e do in a script?',opts:['Exit on any error','Echo all commands','Enable extensions','Export variables'],c:0},
-{q:'How do you reference all script arguments?',opts:['$@','$*','$#','$0'],c:0},
-{q:'Which tool replaces text in a stream?',opts:['sed','tr','cut','awk'],c:0},
-{q:'What does awk \'{print $2}\' do?',opts:['Prints second field','Prints second line','Prints 2 copies','Removes field 2'],c:0},
+{q:'How do you reference all script arguments?',opts:['$*','$@','$#','$0'],c:1},
+{q:'Which tool replaces text in a stream?',opts:['tr','cut','sed','awk'],c:2},
+{q:'What does awk \'{print $2}\' do?',opts:['Prints second line','Prints 2 copies','Removes field 2','Prints second field'],c:3},
 {q:'How do you make a script executable?',opts:['chmod +x script.sh','exec script.sh','run script.sh','start script.sh'],c:0},
-{q:'What does | (pipe) do?',opts:['Passes stdout to next command','Logical OR','Background process','String concat'],c:0},
-{q:'Which test checks if a file exists?',opts:['-f','-e','-d','-s'],c:0},
-{q:'What does tr \'a-z\' \'A-Z\' do?',opts:['Converts to uppercase','Translates to hex','Removes lowercase','Trims whitespace'],c:0},
+{q:'What does | (pipe) do?',opts:['Logical OR','Passes stdout to next command','Background process','String concat'],c:1},
+{q:'Which test checks if a file exists?',opts:['-e','-d','-f','-s'],c:2},
+{q:'What does tr \'a-z\' \'A-Z\' do?',opts:['Translates to hex','Removes lowercase','Trims whitespace','Converts to uppercase'],c:3},
 {q:'How do you declare an associative array?',opts:['declare -A','declare -a','array -A','local -A'],c:0},
-{q:'What does grep -c do?',opts:['Counts matching lines','Case-insensitive','Colorizes output','Counts files'],c:0},
-{q:'Which command generates a number sequence?',opts:['seq','range','series','gen'],c:0},
-{q:'What does trap do?',opts:['Runs code on signal/exit','Catches errors','Creates a loop','Traps input'],c:0},
+{q:'What does grep -c do?',opts:['Case-insensitive','Counts matching lines','Colorizes output','Counts files'],c:1},
+{q:'Which command generates a number sequence?',opts:['range','series','seq','gen'],c:2},
+{q:'What does trap do?',opts:['Catches errors','Creates a loop','Traps input','Runs code on signal/exit'],c:3},
 {q:'How do you get the length of a string?',opts:['${#var}','len($var)','$var.length','strlen $var'],c:0},
-{q:'What does command -v check?',opts:['If a command exists','Command version','Verbose mode','Variable value'],c:0},
-{q:'Which redirects stderr to a file?',opts:['2> file','&> file','> file','1> file'],c:0},
-{q:'What does #!/bin/bash do?',opts:['Sets the script interpreter','Starts a comment','Imports bash library','Enables bash mode'],c:0},
+{q:'What does command -v check?',opts:['Command version','If a command exists','Verbose mode','Variable value'],c:1},
+{q:'Which redirects stderr to a file?',opts:['&> file','> file','2> file','1> file'],c:2},
+{q:'What does #!/bin/bash do?',opts:['Starts a comment','Imports bash library','Enables bash mode','Sets the script interpreter'],c:3},
 ];
 
 let qIdx=0,qScore=0,qStreak=0,qCorrectIdx=0;
@@ -427,6 +427,16 @@ function nextQuiz(){
   showQuiz();
 }
 showQuiz();
+
+// Progress persistence
+(function(){
+  const KEY='foc-bash-progress';
+  function save(){try{localStorage.setItem(KEY,JSON.stringify({dIdx,dScore,qIdx,qScore}));}catch(e){}}
+  function load(){try{const d=JSON.parse(localStorage.getItem(KEY));if(d){dIdx=d.dIdx||0;dScore=d.dScore||0;qIdx=d.qIdx||0;qScore=d.qScore||0;}}catch(e){}}
+  const _cd=checkDrill;checkDrill=function(){_cd();save()};
+  const _aq=answerQuiz;answerQuiz=function(i){_aq(i);save()};
+  load();if(dIdx>0)showDrill();if(qIdx>0)showQuiz();
+})();
 </script>
 </body>
 </html>
