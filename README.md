@@ -1,4 +1,4 @@
-# FOC - Foundations of Computing
+# FOC - Future Operators Course
 
 Interactive study tools for **Networking Fundamentals** and scripting, built as a GitHub Pages site.
 
