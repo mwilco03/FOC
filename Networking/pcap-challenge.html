@@ -136,7 +136,6 @@ body::before{content:'';position:fixed;inset:0;background:linear-gradient(rgba(5
       <input type="text" id="filterInput" placeholder="Filter: ip.src, tcp.port, http, dns, etc.">
       <button id="filterBtn">Apply</button>
       <button id="clearFilter">Clear</button>
-      <button id="followStream" style="display:none;">Follow TCP Stream</button>
       <span class="filter-count" id="filterCount"></span>
     </div>
     <div class="pcap-header">
@@ -182,7 +181,7 @@ const SCENARIOS = [
     {id:'syn-scan', label:'Find the SYN scan source IP', keywords:['10.0.0.50','10.0.0.050'], hint:'Which IP is sending many SYN packets to sequential ports without completing handshakes?', points:15},
     {id:'ssh-version', label:'Identify the SSH server version', keywords:['openssh 8.9','openssh_8.9','ssh-2.0-openssh_8.9p1'], hint:'Look at the SSH banner in the Server Version field of the SSH packet.', points:15},
     {id:'http-server', label:'Identify the web server software', keywords:['python','python/3.10','simplehttpserver','http.server','python 3.10'], hint:'Check the HTTP response Server header. It reveals what software is running.', points:15},
-    {id:'open-ports', label:'List 3 open ports found by scanner', keywords:['22,80,443','22 80 443','80,22,443','443,80,22'], hint:'Which destination ports have SYN-ACK responses? Those ports are open.', points:20},
+    {id:'open-ports', label:'List 3 open ports found by scanner', keywords:['22,80,443','22 80 443','80,22,443','443,80,22','22, 80, 443','80, 22, 443','443, 80, 22','22,443,80','443,22,80','80,443,22'], hint:'Which destination ports have SYN-ACK responses? Those ports are open.', points:20, matchAll:['22','80','443']},
     {id:'dns-recon', label:'Find the domain being resolved', keywords:['internal.corp.local','corp.local'], hint:'Check DNS query packets. What domain name is being looked up?', points:15},
   ],
   packets: [
@@ -434,7 +433,8 @@ function applyFilter() {
       return p.dst === filter.replace(/ip\.dst\s*==\s*/, '').trim();
     if (filter.startsWith('tcp.port==') || filter.startsWith('tcp.port ==')) {
       const port = filter.replace(/tcp\.port\s*==\s*/, '').trim();
-      return p.info.includes('→ ' + port) || p.info.includes(port + ' →');
+      const re = new RegExp('(^|\\D)' + port.replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + '(\\D|$)');
+      return p.info.includes('→') && (p.info.match(/(\d+)\s*→\s*(\d+)/) || []).slice(1).includes(port);
     }
     if (filter === 'http') return p.proto === 'HTTP';
     if (filter === 'dns') return p.proto === 'DNS';
@@ -468,7 +468,9 @@ function submitAnswer() {
 
   for (const f of s.findings) {
     if (foundItems[f.id]) continue;
-    if (f.keywords.some(k => input.includes(k.toLowerCase()))) {
+    const keywordMatch = f.keywords.some(k => input.includes(k.toLowerCase()));
+    const matchAllMatch = f.matchAll && f.matchAll.every(k => input.includes(k.toLowerCase()));
+    if (keywordMatch || matchAllMatch) {
       foundItems[f.id] = true;
       score += f.points;
       matched = true;
