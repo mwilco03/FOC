@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Syntax Notation Drill - Future Operators Course</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+:root{--bg-primary:#0a0e17;--bg-secondary:#111827;--bg-card:#1a2235;--border:#2a3650;--text-primary:#e2e8f0;--text-secondary:#94a3b8;--text-muted:#64748b;--accent-blue:#3b82f6;--accent-cyan:#06b6d4;--accent-green:#10b981;--accent-amber:#f59e0b;--accent-red:#ef4444;--accent-purple:#8b5cf6;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'JetBrains Mono',monospace;background:var(--bg-primary);color:var(--text-primary);min-height:100vh;}
+body::before{content:'';position:fixed;inset:0;background:linear-gradient(rgba(59,130,246,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,0.03) 1px,transparent 1px);background-size:60px 60px;pointer-events:none;}
+.container{position:relative;z-index:1;max-width:960px;margin:0 auto;padding:1rem;}
+.top-bar{display:flex;justify-content:space-between;align-items:center;padding:0.5rem 0;border-bottom:1px solid var(--border);margin-bottom:1rem;}
+.top-bar a{color:var(--text-muted);text-decoration:none;font-size:0.75rem;}
+.top-bar a:hover{color:var(--accent-cyan);}
+.top-bar h1{font-family:'Press Start 2P',monospace;font-size:0.75rem;color:var(--accent-cyan);}
+
+.mode-bar{display:flex;gap:0.5rem;margin-bottom:1rem;flex-wrap:wrap;}
+.mode-btn{font-family:'Press Start 2P',monospace;font-size:0.5rem;padding:0.5rem 1rem;border:1px solid var(--border);border-radius:999px;background:var(--bg-secondary);color:var(--text-muted);cursor:pointer;transition:all 0.2s;}
+.mode-btn:hover{border-color:var(--accent-blue);color:var(--text-primary);}
+.mode-btn.active{background:var(--accent-cyan);border-color:var(--accent-cyan);color:#000;}
+
+.score-bar{background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:0.75rem 1rem;margin-bottom:1rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.5rem;}
+.score-bar .stats{display:flex;gap:1.5rem;font-family:'Press Start 2P',monospace;font-size:0.5rem;}
+.score-bar .stats .val{color:var(--accent-green);}
+.score-bar .stats .streak-val{color:var(--accent-amber);}
+.score-bar .progress-wrap{flex:1;min-width:120px;max-width:250px;height:6px;background:var(--bg-primary);border-radius:3px;overflow:hidden;}
+.score-bar .progress-fill{height:100%;background:linear-gradient(90deg,var(--accent-cyan),var(--accent-green));border-radius:3px;transition:width 0.4s ease;}
+
+/* Reference card */
+.ref-card{background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:1rem;margin-bottom:1rem;display:none;}
+.ref-card.visible{display:block;}
+.ref-card h3{font-family:'Press Start 2P',monospace;font-size:0.55rem;color:var(--accent-amber);margin-bottom:0.75rem;}
+.ref-table{width:100%;font-size:0.72rem;border-collapse:collapse;}
+.ref-table th{text-align:left;color:var(--accent-cyan);padding:0.3rem 0.5rem;border-bottom:1px solid var(--border);font-size:0.65rem;}
+.ref-table td{padding:0.3rem 0.5rem;color:var(--text-secondary);border-bottom:1px solid rgba(42,54,80,0.3);}
+.ref-table code{background:var(--bg-primary);padding:1px 5px;border-radius:3px;color:var(--accent-amber);font-size:0.72rem;}
+
+/* Question area */
+.question-card{background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:1.5rem;margin-bottom:1rem;min-height:180px;}
+.question-label{font-family:'Press Start 2P',monospace;font-size:0.5rem;color:var(--accent-purple);margin-bottom:0.5rem;text-transform:uppercase;}
+.synopsis{background:#0d1117;border:1px solid var(--border);border-radius:6px;padding:0.8rem 1rem;margin:0.75rem 0;font-size:0.85rem;line-height:1.8;letter-spacing:0.3px;overflow-x:auto;}
+.synopsis .lit{color:var(--accent-green);font-weight:700;}
+.synopsis .opt{color:var(--accent-amber);}
+.synopsis .req{color:var(--accent-red);}
+.synopsis .rep{color:var(--accent-purple);}
+.synopsis .choice{color:var(--accent-cyan);}
+.question-text{font-size:0.82rem;color:var(--text-primary);margin:0.75rem 0;line-height:1.6;}
+
+/* Answer options */
+.options{display:grid;gap:0.5rem;margin-top:1rem;}
+.opt-btn{font-family:'JetBrains Mono',monospace;font-size:0.78rem;padding:0.7rem 1rem;border:1px solid var(--border);border-radius:6px;background:var(--bg-secondary);color:var(--text-primary);cursor:pointer;text-align:left;transition:all 0.15s;line-height:1.4;}
+.opt-btn:hover:not(.locked){border-color:var(--accent-blue);background:rgba(59,130,246,0.08);}
+.opt-btn.correct{border-color:var(--accent-green);background:rgba(16,185,129,0.12);color:var(--accent-green);}
+.opt-btn.wrong{border-color:var(--accent-red);background:rgba(239,68,68,0.08);color:var(--accent-red);opacity:0.7;}
+.opt-btn.locked{cursor:default;}
+
+/* Text input answer */
+.text-input-area{margin-top:1rem;display:flex;gap:0.5rem;}
+.text-input-area input{flex:1;font-family:'JetBrains Mono',monospace;font-size:0.8rem;padding:0.6rem 0.8rem;background:#0d1117;border:1px solid var(--border);border-radius:6px;color:var(--text-primary);outline:none;}
+.text-input-area input:focus{border-color:var(--accent-blue);}
+.text-input-area button{font-family:'Press Start 2P',monospace;font-size:0.5rem;padding:0.6rem 1rem;border-radius:6px;border:none;cursor:pointer;background:var(--accent-blue);color:#fff;}
+.text-input-area button:hover{background:#2563eb;}
+
+/* Feedback */
+.feedback{margin-top:0.75rem;padding:0.6rem 0.8rem;border-radius:6px;font-size:0.75rem;line-height:1.5;min-height:2.5em;display:none;}
+.feedback.visible{display:block;}
+.feedback.correct{background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);color:var(--accent-green);}
+.feedback.wrong{background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:var(--accent-red);}
+
+.next-btn{font-family:'Press Start 2P',monospace;font-size:0.5rem;padding:0.6rem 1.5rem;border-radius:6px;border:none;cursor:pointer;background:var(--accent-cyan);color:#000;margin-top:0.75rem;display:none;}
+.next-btn.visible{display:inline-block;}
+
+/* Victory */
+.victory{text-align:center;padding:2rem;display:none;}
+.victory.visible{display:block;}
+.victory h2{font-family:'Press Start 2P',monospace;font-size:1rem;color:var(--accent-green);margin-bottom:1rem;}
+.victory p{font-size:0.78rem;color:var(--text-secondary);margin-bottom:0.5rem;}
+
+/* Build mode */
+.build-area{display:none;}
+.build-area.visible{display:block;}
+.build-synopsis{background:#0d1117;border:1px solid var(--border);border-radius:6px;padding:0.8rem 1rem;margin:0.5rem 0;font-size:0.85rem;min-height:2.5em;line-height:1.8;}
+.build-parts{display:flex;flex-wrap:wrap;gap:0.4rem;margin:0.75rem 0;}
+.build-chip{font-family:'JetBrains Mono',monospace;font-size:0.75rem;padding:0.4rem 0.8rem;border:1px solid var(--border);border-radius:999px;cursor:pointer;transition:all 0.15s;user-select:none;}
+.build-chip:hover{border-color:var(--accent-blue);transform:translateY(-1px);}
+.build-chip.used{opacity:0.3;pointer-events:none;}
+.build-chip.lit{background:rgba(16,185,129,0.1);border-color:var(--accent-green);color:var(--accent-green);}
+.build-chip.opt{background:rgba(245,158,11,0.1);border-color:var(--accent-amber);color:var(--accent-amber);}
+.build-chip.meta{background:rgba(239,68,68,0.1);border-color:var(--accent-red);color:var(--accent-red);}
+.build-chip.sym{background:rgba(139,92,246,0.1);border-color:var(--accent-purple);color:var(--accent-purple);}
+.build-controls{display:flex;gap:0.5rem;margin-top:0.5rem;}
+.build-controls button{font-family:'JetBrains Mono',monospace;font-size:0.7rem;padding:0.4rem 0.8rem;border:1px solid var(--border);border-radius:4px;background:var(--bg-secondary);color:var(--text-primary);cursor:pointer;}
+.build-controls button:hover{border-color:var(--accent-blue);}
+.build-controls .check-btn{background:var(--accent-blue);border-color:var(--accent-blue);color:#fff;}
+
+@media(max-width:700px){
+  .score-bar{flex-direction:column;align-items:flex-start;}
+  .score-bar .progress-wrap{max-width:100%;width:100%;}
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="top-bar">
+    <a href="../index.html">&larr; Back</a>
+    <h1>SYNTAX NOTATION</h1>
+    <span style="font-size:0.6rem;color:var(--text-muted);">DRILL</span>
+  </div>
+
+  <div class="mode-bar" id="modeBar">
+    <button class="mode-btn active" data-mode="identify">1: Identify</button>
+    <button class="mode-btn" data-mode="valid">2: Valid / Invalid</button>
+    <button class="mode-btn" data-mode="build">3: Build Synopsis</button>
+    <button class="mode-btn" data-mode="parse">4: Parse It</button>
+    <button id="refToggle" class="mode-btn" style="margin-left:auto;background:rgba(245,158,11,0.1);border-color:var(--accent-amber);color:var(--accent-amber);">? Reference</button>
+  </div>
+
+  <div class="ref-card" id="refCard">
+    <h3>QUICK REFERENCE</h3>
+    <table class="ref-table">
+      <tr><th>Symbol</th><th>Name</th><th>Meaning</th><th>Example</th></tr>
+      <tr><td><code>[ ]</code></td><td>Square brackets</td><td>Optional</td><td><code>ls [-l] [FILE]</code></td></tr>
+      <tr><td><code>&lt; &gt;</code></td><td>Angle brackets</td><td>Required placeholder</td><td><code>ssh &lt;user&gt;@&lt;host&gt;</code></td></tr>
+      <tr><td><code>UPPER</code></td><td>Metavariable</td><td>Replace with real value</td><td><code>cp SOURCE DEST</code></td></tr>
+      <tr><td><code>...</code></td><td>Ellipsis</td><td>Repeatable</td><td><code>FILE...</code></td></tr>
+      <tr><td><code>{ | }</code></td><td>Braces + pipe</td><td>Choose exactly one</td><td><code>{start|stop}</code></td></tr>
+      <tr><td><code>( )</code></td><td>Parentheses</td><td>Grouping</td><td><code>(-c|-x|-t)</code></td></tr>
+      <tr><td><code>--</code></td><td>Double dash</td><td>End of options</td><td><code>rm -- -file</code></td></tr>
+    </table>
+  </div>
+
+  <div class="score-bar">
+    <div class="stats">
+      <div>SCORE: <span class="val" id="scoreVal">0</span></div>
+      <div>STREAK: <span class="streak-val" id="streakVal">0</span></div>
+      <div>Q: <span class="val" id="qNum">0</span>/<span id="qTotal">0</span></div>
+    </div>
+    <div class="progress-wrap"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+  </div>
+
+  <div class="question-card" id="questionCard">
+    <div class="question-label" id="qLabel">LOADING...</div>
+    <div class="synopsis" id="synopsisDisplay"></div>
+    <div class="question-text" id="qText"></div>
+    <div class="options" id="optionsArea"></div>
+    <div class="text-input-area" id="textInputArea" style="display:none;">
+      <input type="text" id="textAnswer" placeholder="Type your answer...">
+      <button id="textSubmit">CHECK</button>
+    </div>
+    <div class="build-area" id="buildArea">
+      <div class="build-synopsis" id="buildResult"></div>
+      <div class="build-parts" id="buildParts"></div>
+      <div class="build-controls">
+        <button onclick="buildUndo()">Undo</button>
+        <button onclick="buildClear()">Clear</button>
+        <button class="check-btn" onclick="buildCheck()">Check</button>
+      </div>
+    </div>
+    <div class="feedback" id="feedback"></div>
+    <button class="next-btn" id="nextBtn">NEXT &rarr;</button>
+  </div>
+
+  <div class="victory" id="victory">
+    <h2>DRILL COMPLETE!</h2>
+    <p id="victoryStats"></p>
+    <button class="mode-btn" style="margin-top:1rem;font-size:0.55rem;" onclick="restartMode()">PLAY AGAIN</button>
+  </div>
+</div>
+
+<script>
+// =====================================================================
+// QUESTION BANKS
+// =====================================================================
+
+const IDENTIFY_QUESTIONS = [
+  {synopsis:'ls <span class="opt">[OPTION]</span><span class="rep">...</span> <span class="opt">[FILE]</span><span class="rep">...</span>',
+   q:'What does <code>[OPTION]...</code> mean?',
+   opts:['Zero or more optional flags','Exactly one required flag','The literal text "OPTION"','A mandatory repeating argument'],correct:0,
+   explain:'Square brackets = optional. Ellipsis = repeatable. So zero or more optional flags.'},
+  {synopsis:'<span class="lit">ssh</span> <span class="req">&lt;user&gt;</span>@<span class="req">&lt;host&gt;</span>',
+   q:'What do the angle brackets around <code>&lt;user&gt;</code> indicate?',
+   opts:['It is optional','It is a required placeholder you replace','Type the angle brackets literally','It means "user" is a flag'],correct:1,
+   explain:'Angle brackets mark a required placeholder. Replace &lt;user&gt; with an actual username like "admin".'},
+  {synopsis:'<span class="lit">cp</span> <span class="opt">[OPTION]</span><span class="rep">...</span> <span class="req">SOURCE</span><span class="rep">...</span> <span class="req">DIRECTORY</span>',
+   q:'What does <code>SOURCE...</code> mean?',
+   opts:['Exactly one source file','The word SOURCE literally','One or more source files','Source is optional'],correct:2,
+   explain:'UPPER CASE = placeholder (required). Ellipsis = repeatable. So one or more source files.'},
+  {synopsis:'<span class="lit">ip</span> <span class="opt">[OPTIONS]</span> <span class="req">OBJECT</span> <span class="choice">{ COMMAND | help }</span>',
+   q:'What does <code>{ COMMAND | help }</code> mean?',
+   opts:['Run COMMAND then help','COMMAND and help are both optional','Choose either a COMMAND or the word help','Type the braces and pipe literally'],correct:2,
+   explain:'Curly braces with pipe = mutually exclusive choice. Pick COMMAND or help, not both.'},
+  {synopsis:'<span class="lit">tar</span> <span class="choice">(-c|-x|-t)</span> <span class="opt">[-v]</span> <span class="opt">[-f FILE]</span>',
+   q:'How many of <code>-c</code>, <code>-x</code>, <code>-t</code> can you use at once?',
+   opts:['All three','At least two','Exactly one','None — they are optional'],correct:2,
+   explain:'Parentheses with pipes = choose exactly one. -c (create), -x (extract), or -t (list).'},
+  {synopsis:'<span class="lit">grep</span> <span class="opt">[OPTION]</span><span class="rep">...</span> <span class="req">PATTERN</span> <span class="opt">[FILE]</span><span class="rep">...</span>',
+   q:'Which argument is required?',
+   opts:['OPTION','FILE','Both OPTION and FILE','PATTERN'],correct:3,
+   explain:'PATTERN has no square brackets — it is required. OPTION and FILE are both in brackets (optional).'},
+  {synopsis:'<span class="lit">rm</span> <span class="opt">[OPTION]</span><span class="rep">...</span> <span class="lit">--</span> <span class="req">FILE</span><span class="rep">...</span>',
+   q:'What does <code>--</code> do in this synopsis?',
+   opts:['It is a comment','It separates two commands','It signals end of options — everything after is a filename','It means "optional"'],correct:2,
+   explain:'Double dash (--) tells the shell: stop parsing flags. Everything after is treated as a file argument, even if it starts with -.'},
+  {synopsis:'<span class="lit">find</span> <span class="opt">[PATH]</span><span class="rep">...</span> <span class="opt">[EXPRESSION]</span>',
+   q:'Is the PATH argument required?',
+   opts:['Yes — it is in UPPER CASE','No — it is in square brackets','Yes — the ellipsis makes it mandatory','Only if EXPRESSION is provided'],correct:1,
+   explain:'Square brackets override the upper case convention. [PATH] is optional — find defaults to the current directory.'},
+  {synopsis:'<span class="lit">ping</span> <span class="opt">[-c COUNT]</span> <span class="opt">[-i INTERVAL]</span> <span class="req">DESTINATION</span>',
+   q:'Which is the only argument you MUST provide?',
+   opts:['-c COUNT','-i INTERVAL','DESTINATION','All three are required'],correct:2,
+   explain:'DESTINATION has no square brackets — it is the only required argument. -c and -i are optional (in brackets).'},
+  {synopsis:'Get-ChildItem <span class="opt">[[-Path] &lt;String[]&gt;]</span> <span class="opt">[-Filter &lt;String&gt;]</span> <span class="opt">[-Recurse]</span>',
+   q:'What does <code>&lt;String[]&gt;</code> mean in PowerShell syntax?',
+   opts:['A single string','An array — accepts one or more strings','The literal text "String[]"','A boolean flag'],correct:1,
+   explain:'In PowerShell, [] after a type means array. &lt;String[]&gt; accepts one or more string values.'},
+];
+
+const VALID_QUESTIONS = [
+  {synopsis:'<span class="lit">cp</span> <span class="opt">[OPTION]</span><span class="rep">...</span> <span class="req">SOURCE</span> <span class="req">DEST</span>',
+   synopsisPlain:'cp [OPTION]... SOURCE DEST',
+   commands:[
+     {cmd:'cp file.txt backup.txt', valid:true, why:'SOURCE=file.txt, DEST=backup.txt — both required args provided'},
+     {cmd:'cp -r /home/admin /backup', valid:true, why:'OPTION=-r, SOURCE=/home/admin, DEST=/backup'},
+     {cmd:'cp file.txt', valid:false, why:'Missing DEST — cp requires both SOURCE and DEST'},
+     {cmd:'cp', valid:false, why:'Missing both SOURCE and DEST — both are required (no brackets)'},
+   ]},
+  {synopsis:'<span class="lit">ssh</span> <span class="opt">[-p PORT]</span> <span class="req">&lt;user&gt;</span>@<span class="req">&lt;host&gt;</span>',
+   synopsisPlain:'ssh [-p PORT] <user>@<host>',
+   commands:[
+     {cmd:'ssh admin@10.0.0.1', valid:true, why:'user=admin, host=10.0.0.1 — both required placeholders filled'},
+     {cmd:'ssh -p 2222 root@server', valid:true, why:'-p PORT is optional and provided, user and host are filled'},
+     {cmd:'ssh 10.0.0.1', valid:false, why:'Missing <user>@ — the synopsis requires user@host format'},
+     {cmd:'ssh -p 22', valid:false, why:'Missing required <user>@<host> — only the optional flag was given'},
+   ]},
+  {synopsis:'<span class="lit">grep</span> <span class="opt">[OPTION]</span><span class="rep">...</span> <span class="req">PATTERN</span> <span class="opt">[FILE]</span><span class="rep">...</span>',
+   synopsisPlain:'grep [OPTION]... PATTERN [FILE]...',
+   commands:[
+     {cmd:'grep "error" /var/log/syslog', valid:true, why:'PATTERN="error", FILE=/var/log/syslog'},
+     {cmd:'grep -i "warning" *.log', valid:true, why:'OPTION=-i, PATTERN="warning", FILE=*.log (multiple via glob)'},
+     {cmd:'grep -r "TODO"', valid:true, why:'OPTION=-r, PATTERN="TODO", FILE omitted (optional — reads stdin)'},
+     {cmd:'grep', valid:false, why:'Missing PATTERN — it is required (no brackets)'},
+   ]},
+  {synopsis:'<span class="lit">ip</span> <span class="choice">{addr|link|route}</span> <span class="lit">show</span>',
+   synopsisPlain:'ip {addr|link|route} show',
+   commands:[
+     {cmd:'ip addr show', valid:true, why:'addr is one of the valid choices in {addr|link|route}'},
+     {cmd:'ip route show', valid:true, why:'route is one of the valid choices'},
+     {cmd:'ip show', valid:false, why:'Missing required choice — must pick addr, link, or route'},
+     {cmd:'ip addr link show', valid:false, why:'Braces with pipe = choose ONE, not multiple'},
+   ]},
+  {synopsis:'<span class="lit">tar</span> <span class="choice">(-c|-x|-t)</span> <span class="opt">[-v]</span> <span class="opt">[-f FILE]</span>',
+   synopsisPlain:'tar (-c|-x|-t) [-v] [-f FILE]',
+   commands:[
+     {cmd:'tar -xf archive.tar', valid:true, why:'-x (choice), -f FILE (optional, provided) — valid'},
+     {cmd:'tar -cvf backup.tar /data', valid:true, why:'-c (choice), -v (optional), -f FILE (optional) — valid'},
+     {cmd:'tar -f backup.tar', valid:false, why:'Missing required choice (-c, -x, or -t) — must pick one'},
+     {cmd:'tar -cxf backup.tar', valid:false, why:'-c and -x are mutually exclusive — pick only one'},
+   ]},
+  {synopsis:'<span class="lit">ping</span> <span class="opt">[-c COUNT]</span> <span class="req">DESTINATION</span>',
+   synopsisPlain:'ping [-c COUNT] DESTINATION',
+   commands:[
+     {cmd:'ping 10.0.0.1', valid:true, why:'DESTINATION=10.0.0.1 — required arg provided'},
+     {cmd:'ping -c 4 google.com', valid:true, why:'-c COUNT optional and provided, DESTINATION=google.com'},
+     {cmd:'ping -c 4', valid:false, why:'Missing DESTINATION — it is required (no brackets)'},
+     {cmd:'ping', valid:false, why:'Missing DESTINATION — the only required argument'},
+   ]},
+  {synopsis:'<span class="lit">chmod</span> <span class="opt">[OPTION]</span><span class="rep">...</span> <span class="req">MODE</span> <span class="req">FILE</span><span class="rep">...</span>',
+   synopsisPlain:'chmod [OPTION]... MODE FILE...',
+   commands:[
+     {cmd:'chmod 755 script.sh', valid:true, why:'MODE=755, FILE=script.sh — both required args provided'},
+     {cmd:'chmod -R 644 /var/www/*.html', valid:true, why:'OPTION=-R, MODE=644, FILE=glob (repeatable)'},
+     {cmd:'chmod 755', valid:false, why:'Missing FILE — both MODE and FILE are required'},
+     {cmd:'chmod script.sh', valid:false, why:'Ambiguous — but technically missing MODE before FILE'},
+   ]},
+  {synopsis:'<span class="lit">docker</span> <span class="choice">{run|stop|rm}</span> <span class="opt">[OPTIONS]</span> <span class="req">CONTAINER</span>',
+   synopsisPlain:'docker {run|stop|rm} [OPTIONS] CONTAINER',
+   commands:[
+     {cmd:'docker run nginx', valid:true, why:'{run} chosen, CONTAINER=nginx — valid'},
+     {cmd:'docker stop -t 10 myapp', valid:true, why:'{stop} chosen, OPTIONS=-t 10, CONTAINER=myapp'},
+     {cmd:'docker nginx', valid:false, why:'Missing required choice from {run|stop|rm}'},
+     {cmd:'docker run', valid:false, why:'Missing required CONTAINER argument'},
+   ]},
+];
+
+const BUILD_QUESTIONS = [
+  {desc:'A command called <code>backup</code> that requires a SOURCE and DEST, with an optional -v flag.',
+   answer:['backup','[-v]','SOURCE','DEST'],
+   chips:['backup','SOURCE','DEST','[-v]','[SOURCE]','{-v}','...','DEST...'],
+   answerStr:'backup [-v] SOURCE DEST'},
+  {desc:'A command called <code>scan</code> that requires a TARGET, with optional PORT, and the target is repeatable.',
+   answer:['scan','[-p PORT]','TARGET','...'],
+   chips:['scan','TARGET','...','[-p PORT]','[TARGET]','{PORT}','PORT','<scan>'],
+   answerStr:'scan [-p PORT] TARGET ...'},
+  {desc:'A command called <code>deploy</code> where you must choose either <code>--prod</code> or <code>--staging</code>, followed by a required APP name.',
+   answer:['deploy','{--prod|--staging}','APP'],
+   chips:['deploy','APP','{--prod|--staging}','[--prod]','[--staging]','--prod','...','[APP]'],
+   answerStr:'deploy {--prod|--staging} APP'},
+  {desc:'A command called <code>log</code> with optional repeatable OPTIONS, a required LEVEL, and optional FILE.',
+   answer:['log','[OPTION]','...','LEVEL','[FILE]'],
+   chips:['log','LEVEL','[OPTION]','...','[FILE]','OPTION','FILE','[LEVEL]','{OPTION}'],
+   answerStr:'log [OPTION] ... LEVEL [FILE]'},
+  {desc:'A command called <code>connect</code> that requires user@host format, with optional -p PORT flag.',
+   answer:['connect','[-p PORT]','<user>','@','<host>'],
+   chips:['connect','<user>','@','<host>','[-p PORT]','[user]','host','...','PORT'],
+   answerStr:'connect [-p PORT] <user> @ <host>'},
+];
+
+const PARSE_QUESTIONS = [
+  {synopsis:'<span class="lit">nmap</span> <span class="opt">[-sS|-sT|-sU]</span> <span class="opt">[-p PORTS]</span> <span class="req">TARGET</span><span class="rep">...</span>',
+   synopsisPlain:'nmap [-sS|-sT|-sU] [-p PORTS] TARGET...',
+   q:'How many targets can you scan with one command?',
+   opts:['Exactly one','Zero or more','One or more','Exactly three'],correct:2,
+   explain:'TARGET has no brackets (required = at least one) and has ... (repeatable). So: one or more.'},
+  {synopsis:'<span class="lit">useradd</span> <span class="opt">[-m]</span> <span class="opt">[-d HOME_DIR]</span> <span class="opt">[-s SHELL]</span> <span class="req">LOGIN</span>',
+   synopsisPlain:'useradd [-m] [-d HOME_DIR] [-s SHELL] LOGIN',
+   q:'What is the minimum valid invocation?',
+   opts:['useradd','useradd -m newuser','useradd newuser','useradd -m -d /home/u -s /bin/bash u'],correct:2,
+   explain:'Only LOGIN is required (no brackets). All flags are optional. Minimum: useradd newuser'},
+  {synopsis:'<span class="lit">iptables</span> <span class="choice">{-A|-D|-I}</span> <span class="req">CHAIN</span> <span class="opt">[rule-specification]</span>',
+   synopsisPlain:'iptables {-A|-D|-I} CHAIN [rule-specification]',
+   q:'Is <code>iptables -A INPUT</code> valid?',
+   opts:['No — missing rule-specification','Yes — rule-specification is optional','No — missing the chain','No — you need all three flags'],correct:1,
+   explain:'{-A|-D|-I} = pick one (got -A), CHAIN = required (got INPUT), [rule-specification] = optional. Valid!'},
+  {synopsis:'<span class="lit">git</span> <span class="lit">commit</span> <span class="opt">[-m MSG]</span> <span class="opt">[-a]</span> <span class="opt">[--amend]</span> <span class="opt">[FILE]</span><span class="rep">...</span>',
+   synopsisPlain:'git commit [-m MSG] [-a] [--amend] [FILE]...',
+   q:'Which of these is NOT valid?',
+   opts:['git commit','git commit -m "fix" -a','git commit -m','git commit file1.txt file2.txt'],correct:2,
+   explain:'git commit -m requires a MSG value after it. Just -m alone is incomplete — MSG is part of the optional group.'},
+  {synopsis:'<span class="lit">curl</span> <span class="opt">[-X METHOD]</span> <span class="opt">[-H HEADER]</span><span class="rep">...</span> <span class="opt">[-d DATA]</span> <span class="req">URL</span>',
+   synopsisPlain:'curl [-X METHOD] [-H HEADER]... [-d DATA] URL',
+   q:'Can you pass multiple <code>-H</code> headers?',
+   opts:['No — only one is allowed','Yes — the ellipsis means it is repeatable','Only if -X is also used','Only two maximum'],correct:1,
+   explain:'[-H HEADER]... — the ellipsis after the brackets means this optional flag can be repeated multiple times.'},
+  {synopsis:'<span class="lit">systemctl</span> <span class="choice">{start|stop|restart|status}</span> <span class="req">UNIT</span>',
+   synopsisPlain:'systemctl {start|stop|restart|status} UNIT',
+   q:'What happens if you run <code>systemctl sshd</code>?',
+   opts:['It shows the status of sshd','It starts sshd','Error — missing required choice from {start|stop|restart|status}','It restarts sshd'],correct:2,
+   explain:'The {start|stop|restart|status} group is required — you must choose one action before the UNIT name.'},
+];
+
+// =====================================================================
+// GAME STATE
+// =====================================================================
+let mode = 'identify';
+let questions = [];
+let currentQ = 0;
+let score = 0;
+let streak = 0;
+let maxStreak = 0;
+let answered = false;
+let buildPieces = [];
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// =====================================================================
+// INIT
+// =====================================================================
+function init() {
+  document.querySelectorAll('.mode-btn[data-mode]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      mode = btn.dataset.mode;
+      document.querySelectorAll('.mode-btn[data-mode]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      startMode();
+    });
+  });
+  document.getElementById('refToggle').addEventListener('click', () => {
+    document.getElementById('refCard').classList.toggle('visible');
+  });
+  document.getElementById('nextBtn').addEventListener('click', nextQuestion);
+  document.getElementById('textSubmit').addEventListener('click', checkTextAnswer);
+  document.getElementById('textAnswer').addEventListener('keydown', e => {
+    if (e.key === 'Enter') checkTextAnswer();
+  });
+  startMode();
+}
+
+function startMode() {
+  currentQ = 0;
+  score = 0;
+  streak = 0;
+  maxStreak = 0;
+  answered = false;
+  document.getElementById('victory').classList.remove('visible');
+  document.getElementById('questionCard').style.display = '';
+
+  if (mode === 'identify') questions = shuffle(IDENTIFY_QUESTIONS).slice(0, 8);
+  else if (mode === 'valid') questions = shuffle(VALID_QUESTIONS).slice(0, 6);
+  else if (mode === 'build') questions = shuffle(BUILD_QUESTIONS);
+  else if (mode === 'parse') questions = shuffle(PARSE_QUESTIONS).slice(0, 6);
+
+  updateScore();
+  showQuestion();
+}
+
+function restartMode() {
+  startMode();
+}
+
+function updateScore() {
+  document.getElementById('scoreVal').textContent = score;
+  document.getElementById('streakVal').textContent = streak;
+  document.getElementById('qNum').textContent = currentQ + 1;
+  document.getElementById('qTotal').textContent = questions.length;
+  const pct = questions.length ? ((currentQ) / questions.length * 100) : 0;
+  document.getElementById('progressFill').style.width = pct + '%';
+}
+
+// =====================================================================
+// SHOW QUESTION
+// =====================================================================
+function showQuestion() {
+  answered = false;
+  const fb = document.getElementById('feedback');
+  fb.classList.remove('visible', 'correct', 'wrong');
+  document.getElementById('nextBtn').classList.remove('visible');
+  document.getElementById('textInputArea').style.display = 'none';
+  document.getElementById('buildArea').classList.remove('visible');
+  document.getElementById('optionsArea').innerHTML = '';
+
+  if (currentQ >= questions.length) {
+    showVictory();
+    return;
+  }
+
+  const q = questions[currentQ];
+
+  if (mode === 'identify') showIdentify(q);
+  else if (mode === 'valid') showValid(q);
+  else if (mode === 'build') showBuild(q);
+  else if (mode === 'parse') showParse(q);
+
+  updateScore();
+}
+
+// =====================================================================
+// MODE: IDENTIFY — What does this symbol mean?
+// =====================================================================
+function showIdentify(q) {
+  document.getElementById('qLabel').textContent = 'IDENTIFY THE NOTATION';
+  document.getElementById('synopsisDisplay').innerHTML = q.synopsis;
+  document.getElementById('qText').innerHTML = q.q;
+
+  const area = document.getElementById('optionsArea');
+  area.style.display = 'grid';
+  const shuffled = q.opts.map((o, i) => ({text: o, idx: i}));
+  // shuffle options
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+
+  area.innerHTML = shuffled.map(o =>
+    `<button class="opt-btn" data-idx="${o.idx}">${esc(o.text)}</button>`
+  ).join('');
+
+  area.querySelectorAll('.opt-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (answered) return;
+      answered = true;
+      const picked = parseInt(btn.dataset.idx);
+      const isCorrect = picked === q.correct;
+      btn.classList.add(isCorrect ? 'correct' : 'wrong');
+      area.querySelectorAll('.opt-btn').forEach(b => {
+        b.classList.add('locked');
+        if (parseInt(b.dataset.idx) === q.correct) b.classList.add('correct');
+      });
+      showFeedback(isCorrect, q.explain);
+    });
+  });
+}
+
+// =====================================================================
+// MODE: VALID — Is this command valid?
+// =====================================================================
+function showValid(q) {
+  document.getElementById('qLabel').textContent = 'VALID OR INVALID?';
+  document.getElementById('synopsisDisplay').innerHTML = q.synopsis;
+
+  // Pick one command to test
+  const cmds = shuffle(q.commands);
+  const cmd = cmds[0];
+
+  document.getElementById('qText').innerHTML = `Given the synopsis above, is this command valid?<br><br><code style="font-size:0.9rem;color:var(--accent-cyan);background:var(--bg-primary);padding:3px 8px;border-radius:4px;">${esc(cmd.cmd)}</code>`;
+
+  const area = document.getElementById('optionsArea');
+  area.style.display = 'grid';
+  area.innerHTML = `
+    <button class="opt-btn" data-val="true">VALID</button>
+    <button class="opt-btn" data-val="false">INVALID</button>
+  `;
+
+  area.querySelectorAll('.opt-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (answered) return;
+      answered = true;
+      const picked = btn.dataset.val === 'true';
+      const isCorrect = picked === cmd.valid;
+      btn.classList.add(isCorrect ? 'correct' : 'wrong');
+      area.querySelectorAll('.opt-btn').forEach(b => {
+        b.classList.add('locked');
+        if ((b.dataset.val === 'true') === cmd.valid) b.classList.add('correct');
+      });
+      showFeedback(isCorrect, cmd.why);
+    });
+  });
+}
+
+// =====================================================================
+// MODE: BUILD — Construct the synopsis
+// =====================================================================
+function showBuild(q) {
+  document.getElementById('qLabel').textContent = 'BUILD THE SYNOPSIS';
+  document.getElementById('synopsisDisplay').innerHTML = '';
+  document.getElementById('qText').innerHTML = q.desc;
+  document.getElementById('buildArea').classList.add('visible');
+  document.getElementById('optionsArea').style.display = 'none';
+
+  buildPieces = [];
+  const chips = shuffle(q.chips);
+
+  renderBuild(chips, q);
+}
+
+function renderBuild(chips, q) {
+  if (!q) q = questions[currentQ];
+  const partsEl = document.getElementById('buildParts');
+  partsEl.innerHTML = chips.map((c, i) => {
+    const used = buildPieces.includes(i);
+    let cls = 'build-chip';
+    if (used) cls += ' used';
+    if (/^\[/.test(c)) cls += ' opt';
+    else if (/^[{(]/.test(c)) cls += ' sym';
+    else if (/^<|^[A-Z]/.test(c)) cls += ' meta';
+    else cls += ' lit';
+    return `<button class="${cls}" data-ci="${i}">${esc(c)}</button>`;
+  }).join('');
+
+  partsEl.querySelectorAll('.build-chip:not(.used)').forEach(btn => {
+    btn.addEventListener('click', () => {
+      buildPieces.push(parseInt(btn.dataset.ci));
+      renderBuild(chips, q);
+    });
+  });
+
+  const result = buildPieces.map(i => chips[i]).join(' ');
+  document.getElementById('buildResult').textContent = result || '(click parts to build)';
+}
+
+function buildUndo() {
+  buildPieces.pop();
+  renderBuild(shuffle(questions[currentQ].chips).length ? null : null);
+  // Re-render with same chip order — we need to store it
+  const q = questions[currentQ];
+  // Chips are shuffled once at start; for simplicity re-render from buildArea data
+  const chips = Array.from(document.querySelectorAll('#buildParts .build-chip')).map(el => {
+    // Get chip text from existing DOM order
+    return el.textContent;
+  });
+  // Actually, let's just re-trigger showBuild logic cleanly
+  renderBuildFromState();
+}
+
+function buildClear() {
+  buildPieces = [];
+  renderBuildFromState();
+}
+
+function renderBuildFromState() {
+  const q = questions[currentQ];
+  // Reconstruct chips from DOM
+  const chipEls = document.querySelectorAll('#buildParts .build-chip');
+  const chips = Array.from(chipEls).map(el => el.textContent);
+  if (chips.length === 0) {
+    showBuild(q);
+    return;
+  }
+
+  const partsEl = document.getElementById('buildParts');
+  chipEls.forEach((btn, i) => {
+    const used = buildPieces.includes(i);
+    if (used) {
+      btn.classList.add('used');
+      btn.style.pointerEvents = 'none';
+    } else {
+      btn.classList.remove('used');
+      btn.style.pointerEvents = '';
+    }
+  });
+
+  const result = buildPieces.map(i => chips[i]).join(' ');
+  document.getElementById('buildResult').textContent = result || '(click parts to build)';
+}
+
+function buildCheck() {
+  if (answered) return;
+  const q = questions[currentQ];
+  const chipEls = document.querySelectorAll('#buildParts .build-chip');
+  const chips = Array.from(chipEls).map(el => el.textContent);
+  const result = buildPieces.map(i => chips[i]).join(' ');
+  const isCorrect = result === q.answerStr;
+  answered = true;
+  showFeedback(isCorrect, isCorrect ? 'Perfect synopsis!' : `Expected: <code>${esc(q.answerStr)}</code>`);
+}
+
+// =====================================================================
+// MODE: PARSE — Read and answer about a real synopsis
+// =====================================================================
+function showParse(q) {
+  document.getElementById('qLabel').textContent = 'PARSE THE SYNOPSIS';
+  document.getElementById('synopsisDisplay').innerHTML = q.synopsis;
+  document.getElementById('qText').innerHTML = q.q;
+
+  const area = document.getElementById('optionsArea');
+  area.style.display = 'grid';
+  const shuffled = q.opts.map((o, i) => ({text: o, idx: i}));
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+
+  area.innerHTML = shuffled.map(o =>
+    `<button class="opt-btn" data-idx="${o.idx}">${esc(o.text)}</button>`
+  ).join('');
+
+  area.querySelectorAll('.opt-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (answered) return;
+      answered = true;
+      const picked = parseInt(btn.dataset.idx);
+      const isCorrect = picked === q.correct;
+      btn.classList.add(isCorrect ? 'correct' : 'wrong');
+      area.querySelectorAll('.opt-btn').forEach(b => {
+        b.classList.add('locked');
+        if (parseInt(b.dataset.idx) === q.correct) b.classList.add('correct');
+      });
+      showFeedback(isCorrect, q.explain);
+    });
+  });
+}
+
+// =====================================================================
+// FEEDBACK & NAVIGATION
+// =====================================================================
+function showFeedback(isCorrect, explain) {
+  const fb = document.getElementById('feedback');
+  if (isCorrect) {
+    score += 10 + streak * 2;
+    streak++;
+    if (streak > maxStreak) maxStreak = streak;
+    fb.innerHTML = `CORRECT! ${explain}`;
+    fb.className = 'feedback visible correct';
+  } else {
+    streak = 0;
+    fb.innerHTML = `WRONG. ${explain}`;
+    fb.className = 'feedback visible wrong';
+  }
+  document.getElementById('nextBtn').classList.add('visible');
+  updateScore();
+}
+
+function nextQuestion() {
+  currentQ++;
+  showQuestion();
+}
+
+function showVictory() {
+  document.getElementById('questionCard').style.display = 'none';
+  const v = document.getElementById('victory');
+  v.classList.add('visible');
+  const total = questions.length * 10;
+  document.getElementById('victoryStats').innerHTML =
+    `Score: ${score} | Max Streak: ${maxStreak} | ${questions.length} questions<br>Mode: ${mode.toUpperCase()}`;
+  document.getElementById('progressFill').style.width = '100%';
+}
+
+function esc(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+init();
+</script>
+</body>
+</html>
