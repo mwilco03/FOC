@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Python Terminal - FOC</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.css">
+<style>
+:root{--bg:#0a0e17;--card:#141925;--border:#2a3650;--text:#e2e8f0;--muted:#64748b;--cyan:#06b6d4;--green:#10b981;--red:#ef4444;--blue:#3b82f6;--amber:#f59e0b}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'JetBrains Mono',monospace,system-ui,sans-serif;background:var(--bg);color:var(--text);height:100vh;display:flex;flex-direction:column;overflow:hidden}
+.top-bar{display:flex;justify-content:space-between;align-items:center;padding:.5rem 1rem;border-bottom:1px solid var(--border);background:var(--card);flex-shrink:0}
+.top-bar a{color:var(--muted);text-decoration:none;font-size:.8rem}
+.top-bar a:hover{color:var(--cyan)}
+.top-bar h1{font-size:1rem;color:var(--cyan)}
+.top-bar .score-area{font-size:.75rem;color:var(--muted)}
+.top-bar .score-area .v{color:var(--cyan);font-weight:700}
+.challenge-panel{background:var(--card);border-bottom:1px solid var(--border);padding:.6rem 1rem;flex-shrink:0;display:flex;gap:1rem;align-items:flex-start;min-height:0}
+.challenge-panel .ch-info{flex:1;min-width:0}
+.challenge-panel .ch-title{font-size:.82rem;font-weight:700;color:var(--cyan);margin-bottom:.25rem}
+.challenge-panel .ch-desc{font-size:.75rem;color:var(--muted);line-height:1.4}
+.challenge-panel .ch-sig{font-size:.75rem;color:#c9d1d9;background:#0d1117;padding:.4rem .6rem;border-radius:4px;margin-top:.3rem;white-space:pre;overflow-x:auto}
+.challenge-panel .ch-tests{font-size:.7rem;color:var(--muted);margin-top:.25rem}
+.challenge-panel .ch-nav{display:flex;gap:.3rem;flex-shrink:0;align-items:center}
+.ch-nav button{font-family:inherit;font-size:.72rem;padding:.3rem .6rem;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--muted);cursor:pointer}
+.ch-nav button:hover{border-color:var(--cyan);color:var(--cyan)}
+.ch-nav .ch-counter{font-size:.72rem;color:var(--muted);white-space:nowrap}
+#terminal-container{flex:1;min-height:0;padding:2px}
+.loading-overlay{position:fixed;inset:0;background:rgba(10,14,23,.95);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:100}
+.loading-overlay h2{color:var(--cyan);font-size:1.2rem;margin-bottom:.5rem}
+.loading-overlay p{color:var(--muted);font-size:.82rem}
+.loading-overlay .spinner{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--cyan);border-radius:50%;animation:spin 1s linear infinite;margin-bottom:1rem}
+@keyframes spin{to{transform:rotate(360deg)}}
+.mode-toggle{display:flex;gap:.3rem;flex-shrink:0}
+.mode-toggle button{font-family:inherit;font-size:.7rem;padding:.25rem .5rem;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--muted);cursor:pointer}
+.mode-toggle button.active{color:var(--cyan);border-color:var(--cyan);background:rgba(6,182,212,.08)}
+</style>
+</head>
+<body>
+
+<div class="loading-overlay" id="loading">
+  <div class="spinner"></div>
+  <h2>Loading Python Environment</h2>
+  <p>Downloading Pyodide (CPython in WebAssembly)...</p>
+  <p id="load-status" style="margin-top:.5rem;color:var(--cyan);font-size:.75rem"></p>
+</div>
+
+<div class="top-bar">
+  <a href="index.html">&larr; Home</a>
+  <h1>Python Terminal</h1>
+  <div class="score-area">
+    <span class="mode-toggle">
+      <button id="mode-challenge" class="active" onclick="setMode('challenge')">Challenges</button>
+      <button id="mode-repl" onclick="setMode('repl')">Free REPL</button>
+    </span>
+    &nbsp; SCORE: <span class="v" id="score">0</span> / <span id="total">20</span>
+  </div>
+</div>
+
+<div class="challenge-panel" id="challenge-panel">
+  <div class="ch-info">
+    <div class="ch-title" id="ch-title">Challenge 1: add(a, b)</div>
+    <div class="ch-desc" id="ch-desc">Return the sum of a and b</div>
+    <div class="ch-sig" id="ch-sig">def add(a, b):
+    # your code here</div>
+    <div class="ch-tests" id="ch-tests">add(2,3)==5  add(-1,1)==0  add(100,250)==350</div>
+  </div>
+  <div class="ch-nav">
+    <span class="ch-counter" id="ch-counter">1 / 20</span>
+    <button onclick="prevChallenge()">&laquo; Prev</button>
+    <button onclick="nextChallenge()">Next &raquo;</button>
+  </div>
+</div>
+
+<div id="terminal-container"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.js"></script>
+<script src="https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js"></script>
+<script>
+// ============ CHALLENGES ============
+const CHALLENGES = [
+  { name:'add', sig:'def add(a, b):', desc:'Return the sum of a and b',
+    tests:[['add(2, 3)','5'],['add(-1, 1)','0'],['add(100, 250)','350'],['add(0, 0)','0']]},
+  { name:'celsius_to_fahrenheit', sig:'def celsius_to_fahrenheit(c):', desc:'Convert Celsius to Fahrenheit (F = C * 9/5 + 32)',
+    tests:[['celsius_to_fahrenheit(0)','32.0'],['celsius_to_fahrenheit(100)','212.0'],['celsius_to_fahrenheit(-40)','-40.0']]},
+  { name:'count_evens', sig:'def count_evens(numbers):', desc:'Count how many even numbers are in the list',
+    tests:[['count_evens([1,2,3,4])','2'],['count_evens([2,4,6,8])','4'],['count_evens([1,3,5])','0'],['count_evens([])','0']]},
+  { name:'reverse_string', sig:'def reverse_string(s):', desc:'Return the reversed string',
+    tests:[['reverse_string("hello")','\'olleh\''],['reverse_string("a")','\'a\''],['reverse_string("")','\'\''],['reverse_string("Python")','\'nohtyP\'']]},
+  { name:'is_palindrome', sig:'def is_palindrome(s):', desc:'Return True if string is a palindrome',
+    tests:[['is_palindrome("radar")','True'],['is_palindrome("hello")','False'],['is_palindrome("")','True'],['is_palindrome("level")','True']]},
+  { name:'count_vowels', sig:'def count_vowels(s):', desc:'Count vowels (a,e,i,o,u) case-insensitive',
+    tests:[['count_vowels("hello")','2'],['count_vowels("sky")','0'],['count_vowels("aeiou")','5'],['count_vowels("AEiOu")','5']]},
+  { name:'multiply_all', sig:'def multiply_all(numbers):', desc:'Return the product of all numbers in the list (1 for empty)',
+    tests:[['multiply_all([1,2,3,4])','24'],['multiply_all([5])','5'],['multiply_all([2,0,5])','0']]},
+  { name:'max_of_three', sig:'def max_of_three(a, b, c):', desc:'Return the largest of three numbers',
+    tests:[['max_of_three(1,2,3)','3'],['max_of_three(3,2,1)','3'],['max_of_three(-1,0,-5)','0'],['max_of_three(5,5,5)','5']]},
+  { name:'sum_digits', sig:'def sum_digits(n):', desc:'Return the sum of all digits in n',
+    tests:[['sum_digits(123)','6'],['sum_digits(0)','0'],['sum_digits(999)','27'],['sum_digits(1001)','2']]},
+  { name:'average', sig:'def average(lst):', desc:'Return the average of numbers (0.0 for empty list)',
+    tests:[['average([2,4,6])','4.0'],['average([1])','1.0'],['average([1,2,3,4])','2.5'],['average([])','0.0']]},
+  { name:'sort_numbers', sig:'def sort_numbers(lst):', desc:'Return a new sorted list (ascending)',
+    tests:[['sort_numbers([3,1,2])','[1, 2, 3]'],['sort_numbers([5])','[5]'],['sort_numbers([])','[]'],['sort_numbers([10,-1])','[-1, 10]']]},
+  { name:'word_count', sig:'def word_count(text):', desc:'Return a dict with word frequencies',
+    tests:[['word_count("hello world hello")','{"hello": 2, "world": 1}'],['word_count("a a a")','{"a": 3}']]},
+  { name:'filter_evens', sig:'def filter_evens(lst):', desc:'Return a list with only the even numbers',
+    tests:[['filter_evens([1,2,3,4])','[2, 4]'],['filter_evens([])','[]'],['filter_evens([1,3,5])','[]'],['filter_evens([0,2,8])','[0, 2, 8]']]},
+  { name:'flatten', sig:'def flatten(matrix):', desc:'Flatten a 2D list into a 1D list',
+    tests:[['flatten([[1,2],[3,4]])','[1, 2, 3, 4]'],['flatten([[5]])','[5]'],['flatten([[]])','[]'],['flatten([[1],[2,3]])','[1, 2, 3]']]},
+  { name:'common_elements', sig:'def common_elements(a, b):', desc:'Return sorted list of items found in both lists',
+    tests:[['common_elements([1,2,3],[2,3,4])','[2, 3]'],['common_elements([],[1])','[]'],['common_elements([1,2],[1,2,3])','[1, 2]']]},
+  { name:'get_keys', sig:'def get_keys(d):', desc:'Return a list of dictionary keys',
+    tests:[['get_keys({"a":1,"b":2})','[\'a\', \'b\']'],['get_keys({})','[]']]},
+  { name:'invert_dict', sig:'def invert_dict(d):', desc:'Return a dictionary with keys and values swapped',
+    tests:[['invert_dict({"a":1,"b":2})','{1: \'a\', 2: \'b\'}'],['invert_dict({})','{}'],['invert_dict({"x":10})','{10: \'x\'}']]},
+  { name:'capitalize_words', sig:'def capitalize_words(sentence):', desc:'Capitalize the first letter of each word',
+    tests:[['capitalize_words("hello world")','\'Hello World\''],['capitalize_words("hi there")','\'Hi There\'']]},
+  { name:'square_dict', sig:'def square_dict(nums):', desc:'Return dict mapping each number to its square',
+    tests:[['square_dict([1,2,3])','{1: 1, 2: 4, 3: 9}'],['square_dict([])','{}'],['square_dict([0])','{0: 0}']]},
+  { name:'find_primes', sig:'def find_primes(n):', desc:'Return list of all prime numbers up to n',
+    tests:[['find_primes(10)','[2, 3, 5, 7]'],['find_primes(1)','[]'],['find_primes(2)','[2]'],['find_primes(20)','[2, 3, 5, 7, 11, 13, 17, 19]']]},
+];
+
+// ============ STATE ============
+let currentChallenge = 0;
+let score = 0;
+let passed = new Set();
+let pyodide = null;
+let term = null;
+let fitAddon = null;
+let currentLine = '';
+let multiLineCode = '';
+let isMultiLine = false;
+let commandHistory = [];
+let historyPos = -1;
+let ready = false;
+let currentMode = 'challenge';
+
+// ============ TERMINAL SETUP ============
+function initTerminal() {
+  term = new Terminal({
+    theme: {
+      background: '#0d1117',
+      foreground: '#c9d1d9',
+      cursor: '#06b6d4',
+      cursorAccent: '#0d1117',
+      selectionBackground: 'rgba(6,182,212,0.3)',
+      black: '#0d1117',
+      red: '#ef4444',
+      green: '#10b981',
+      yellow: '#f59e0b',
+      blue: '#3b82f6',
+      magenta: '#8b5cf6',
+      cyan: '#06b6d4',
+      white: '#c9d1d9',
+      brightBlack: '#64748b',
+      brightRed: '#f87171',
+      brightGreen: '#34d399',
+      brightYellow: '#fbbf24',
+      brightBlue: '#60a5fa',
+      brightMagenta: '#a78bfa',
+      brightCyan: '#22d3ee',
+      brightWhite: '#e2e8f0',
+    },
+    fontFamily: "'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace",
+    fontSize: 14,
+    lineHeight: 1.4,
+    cursorBlink: true,
+    cursorStyle: 'block',
+    scrollback: 5000,
+  });
+
+  fitAddon = new FitAddon.FitAddon();
+  term.loadAddon(fitAddon);
+  term.open(document.getElementById('terminal-container'));
+  fitAddon.fit();
+
+  window.addEventListener('resize', () => fitAddon.fit());
+
+  term.onKey(({ key, domEvent }) => {
+    if (!ready) return;
+    const ev = domEvent;
+
+    if (ev.keyCode === 13) { // Enter
+      term.write('\r\n');
+      const line = currentLine;
+      currentLine = '';
+      handleLine(line);
+    } else if (ev.keyCode === 8) { // Backspace
+      if (currentLine.length > 0) {
+        currentLine = currentLine.slice(0, -1);
+        term.write('\b \b');
+      }
+    } else if (ev.keyCode === 38) { // Up arrow
+      if (commandHistory.length > 0 && historyPos > 0) {
+        historyPos--;
+        clearCurrentLine();
+        currentLine = commandHistory[historyPos];
+        term.write(currentLine);
+      }
+    } else if (ev.keyCode === 40) { // Down arrow
+      if (historyPos < commandHistory.length - 1) {
+        historyPos++;
+        clearCurrentLine();
+        currentLine = commandHistory[historyPos];
+        term.write(currentLine);
+      } else if (historyPos === commandHistory.length - 1) {
+        historyPos = commandHistory.length;
+        clearCurrentLine();
+        currentLine = '';
+      }
+    } else if (ev.keyCode === 9) { // Tab
+      ev.preventDefault();
+      currentLine += '    ';
+      term.write('    ');
+    } else if (ev.ctrlKey && ev.keyCode === 67) { // Ctrl+C
+      term.write('^C\r\n');
+      currentLine = '';
+      multiLineCode = '';
+      isMultiLine = false;
+      showPrompt();
+    } else if (ev.ctrlKey && ev.keyCode === 76) { // Ctrl+L
+      term.clear();
+      showPrompt();
+    } else if (!ev.altKey && !ev.ctrlKey && !ev.metaKey && key.length === 1) {
+      currentLine += key;
+      term.write(key);
+    }
+  });
+
+  // Enable paste
+  term.onData(data => {
+    if (data.length > 1 && !data.startsWith('\x1b')) {
+      // Pasted text
+      const cleaned = data.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+      const lines = cleaned.split('\n');
+      if (lines.length === 1) {
+        currentLine += lines[0];
+        term.write(lines[0]);
+      } else {
+        // Multi-line paste
+        for (let i = 0; i < lines.length; i++) {
+          if (i === lines.length - 1) {
+            currentLine += lines[i];
+            term.write(lines[i]);
+          } else {
+            currentLine += lines[i];
+            term.write(lines[i] + '\r\n');
+            const line = currentLine;
+            currentLine = '';
+            handleLine(line);
+          }
+        }
+      }
+    }
+  });
+
+  term.write('\x1b[36m');
+  term.write('  ____        _   _                   _____                   \r\n');
+  term.write(' |  _ \\ _   _| |_| |__   ___  _ __  |_   _|__ _ __ _ __ ___  \r\n');
+  term.write(' | |_) | | | | __| \'_ \\ / _ \\| \'_ \\   | |/ _ \\ \'__| \'_ ` _ \\ \r\n');
+  term.write(' |  __/| |_| | |_| | | | (_) | | | |  | |  __/ |  | | | | | |\r\n');
+  term.write(' |_|    \\__, |\\__|_| |_|\\___/|_| |_|  |_|\\___|_|  |_| |_| |_|\r\n');
+  term.write('        |___/                                                 \r\n');
+  term.write('\x1b[0m\r\n');
+  term.write('\x1b[33mLoading Python (Pyodide)...\x1b[0m\r\n');
+}
+
+function clearCurrentLine() {
+  while (currentLine.length > 0) {
+    term.write('\b \b');
+    currentLine = currentLine.slice(0, -1);
+  }
+}
+
+function showPrompt() {
+  const prompt = isMultiLine ? '\x1b[36m... \x1b[0m' : '\x1b[36m>>> \x1b[0m';
+  term.write(prompt);
+}
+
+function writeLine(text) {
+  term.write(text.replace(/\n/g, '\r\n'));
+  if (!text.endsWith('\n')) term.write('\r\n');
+}
+
+// ============ PYTHON EXECUTION ============
+async function initPyodide() {
+  const status = document.getElementById('load-status');
+  status.textContent = 'Initializing Pyodide...';
+
+  pyodide = await loadPyodide({
+    indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.24.1/full/'
+  });
+
+  status.textContent = 'Setting up Python environment...';
+
+  // Set up Python helpers
+  await pyodide.runPythonAsync(`
+import sys, traceback, json
+from io import StringIO
+
+def _run_code(code):
+    """Execute code and return (output, error) as JSON."""
+    buf = StringIO()
+    old_stdout = sys.stdout
+    old_stderr = sys.stderr
+    sys.stdout = buf
+    sys.stderr = buf
+    result_repr = None
+    error = None
+    try:
+        try:
+            compiled = compile(code, '<input>', 'eval')
+            result = eval(compiled)
+            if result is not None:
+                result_repr = repr(result)
+        except SyntaxError:
+            exec(compile(code, '<input>', 'exec'), globals())
+    except Exception:
+        error = traceback.format_exc()
+    finally:
+        sys.stdout = old_stdout
+        sys.stderr = old_stderr
+    output = buf.getvalue()
+    return json.dumps({"output": output, "result": result_repr, "error": error})
+
+def _test_challenge(func_name, test_calls):
+    """Run test cases. test_calls is JSON [[call_str, expected_repr], ...]."""
+    import json
+    tests = json.loads(test_calls)
+    results = []
+    for call_str, expected in tests:
+        buf = StringIO()
+        old_stdout = sys.stdout
+        sys.stdout = buf
+        try:
+            result = eval(call_str)
+            actual = repr(result)
+            sys.stdout = old_stdout
+            stdout = buf.getvalue()
+            passed = (actual == expected)
+            results.append({"call": call_str, "expected": expected, "actual": actual, "passed": passed, "error": None})
+        except Exception as e:
+            sys.stdout = old_stdout
+            results.append({"call": call_str, "expected": expected, "actual": None, "passed": False, "error": str(e)})
+    return json.dumps(results)
+  `);
+
+  // Ready
+  document.getElementById('loading').style.display = 'none';
+  ready = true;
+
+  term.write('\x1b[32mPython ' + pyodide.runPython('sys.version.split()[0]') + ' (Pyodide) ready!\x1b[0m\r\n');
+  term.write('\x1b[90mType Python code directly. Use \x1b[36mtest()\x1b[90m to check your solution.\x1b[0m\r\n');
+  term.write('\x1b[90mCommands: \x1b[36mtest()\x1b[90m  \x1b[36mnext()\x1b[90m  \x1b[36mprev()\x1b[90m  \x1b[36mhelp()\x1b[90m  \x1b[36mreset()\x1b[90m  \x1b[36mclear()\x1b[0m\r\n\r\n');
+  showChallengeInTerminal();
+  showPrompt();
+  term.focus();
+}
+
+async function executePython(code) {
+  try {
+    const resultJson = pyodide.runPython(`_run_code(${JSON.stringify(code)})`);
+    const result = JSON.parse(resultJson);
+
+    if (result.output) {
+      term.write(result.output.replace(/\n/g, '\r\n'));
+      if (!result.output.endsWith('\n')) term.write('\r\n');
+    }
+    if (result.result) {
+      term.write(result.result + '\r\n');
+    }
+    if (result.error) {
+      // Show just the last few lines of traceback
+      const lines = result.error.trim().split('\n');
+      const shortened = lines.length > 4 ? lines.slice(-3) : lines;
+      term.write('\x1b[31m' + shortened.join('\r\n') + '\x1b[0m\r\n');
+    }
+  } catch (e) {
+    term.write('\x1b[31mError: ' + e.message + '\x1b[0m\r\n');
+  }
+}
+
+// ============ LINE HANDLING ============
+async function handleLine(line) {
+  if (line.trim().length > 0) {
+    commandHistory.push(line);
+    historyPos = commandHistory.length;
+  }
+
+  // Special commands (only when not in multi-line mode)
+  if (!isMultiLine) {
+    const trimmed = line.trim();
+    if (trimmed === 'test()') { await runTests(); showPrompt(); return; }
+    if (trimmed === 'next()') { nextChallenge(); showPrompt(); return; }
+    if (trimmed === 'prev()') { prevChallenge(); showPrompt(); return; }
+    if (trimmed === 'help()') { showHelp(); showPrompt(); return; }
+    if (trimmed === 'reset()') { resetChallenge(); showPrompt(); return; }
+    if (trimmed === 'clear()') { term.clear(); showPrompt(); return; }
+    if (trimmed === 'challenge()') { showChallengeInTerminal(); showPrompt(); return; }
+    if (trimmed.match(/^challenge\((\d+)\)$/)) {
+      const n = parseInt(RegExp.$1) - 1;
+      if (n >= 0 && n < CHALLENGES.length) { currentChallenge = n; updateChallengePanel(); showChallengeInTerminal(); }
+      else writeLine('\x1b[31mChallenge number out of range (1-' + CHALLENGES.length + ')\x1b[0m');
+      showPrompt(); return;
+    }
+  }
+
+  // Multi-line handling
+  if (isMultiLine) {
+    if (line.trim() === '' && !multiLineCode.trim().endsWith(':')) {
+      isMultiLine = false;
+      const code = multiLineCode;
+      multiLineCode = '';
+      await executePython(code);
+      showPrompt();
+    } else {
+      multiLineCode += line + '\n';
+      showPrompt();
+    }
+    return;
+  }
+
+  // Check if this line starts a multi-line block
+  if (line.trim().endsWith(':') || line.trim().startsWith('@')) {
+    isMultiLine = true;
+    multiLineCode = line + '\n';
+    showPrompt();
+    return;
+  }
+
+  // Empty line
+  if (line.trim() === '') {
+    showPrompt();
+    return;
+  }
+
+  // Single line execution
+  await executePython(line);
+  showPrompt();
+}
+
+// ============ CHALLENGE SYSTEM ============
+function updateChallengePanel() {
+  const ch = CHALLENGES[currentChallenge];
+  document.getElementById('ch-title').textContent = `Challenge ${currentChallenge + 1}: ${ch.name}(...)`;
+  document.getElementById('ch-desc').textContent = ch.desc;
+  document.getElementById('ch-sig').textContent = ch.sig + '\n    # your code here';
+  document.getElementById('ch-tests').textContent = ch.tests.map(t => `${t[0]} == ${t[1]}`).join('  |  ');
+  document.getElementById('ch-counter').textContent = `${currentChallenge + 1} / ${CHALLENGES.length}`;
+  document.getElementById('total').textContent = CHALLENGES.length;
+}
+
+function showChallengeInTerminal() {
+  const ch = CHALLENGES[currentChallenge];
+  const marker = passed.has(currentChallenge) ? '\x1b[32m [PASSED]\x1b[0m' : '';
+  writeLine('');
+  writeLine(`\x1b[36m--- Challenge ${currentChallenge + 1}/${CHALLENGES.length}: ${ch.name}(...) ---\x1b[0m${marker}`);
+  writeLine(`\x1b[90m${ch.desc}\x1b[0m`);
+  writeLine(`\x1b[33m${ch.sig}\x1b[0m`);
+  writeLine(`\x1b[90mTests: ${ch.tests.map(t => t[0] + '==' + t[1]).join(' | ')}\x1b[0m`);
+  writeLine('');
+}
+
+async function runTests() {
+  const ch = CHALLENGES[currentChallenge];
+
+  // Check if function exists
+  try {
+    const exists = pyodide.runPython(`callable(${ch.name}) if '${ch.name}' in dir() else False`);
+    if (!exists) {
+      writeLine(`\x1b[31mFunction '${ch.name}' not found. Define it first!\x1b[0m`);
+      return;
+    }
+  } catch (e) {
+    writeLine(`\x1b[31mFunction '${ch.name}' not found. Define it first!\x1b[0m`);
+    return;
+  }
+
+  const testsJson = JSON.stringify(ch.tests);
+  const resultJson = pyodide.runPython(`_test_challenge("${ch.name}", ${JSON.stringify(testsJson)})`);
+  const results = JSON.parse(resultJson);
+
+  writeLine('');
+  writeLine(`\x1b[36mTesting ${ch.name}()...\x1b[0m`);
+
+  let allPassed = true;
+  for (const r of results) {
+    if (r.passed) {
+      writeLine(`  \x1b[32m  ${r.call} == ${r.expected}\x1b[0m`);
+    } else if (r.error) {
+      writeLine(`  \x1b[31m  ${r.call} raised: ${r.error}\x1b[0m`);
+      allPassed = false;
+    } else {
+      writeLine(`  \x1b[31m  ${r.call} returned ${r.actual}, expected ${r.expected}\x1b[0m`);
+      allPassed = false;
+    }
+  }
+
+  if (allPassed) {
+    if (!passed.has(currentChallenge)) {
+      passed.add(currentChallenge);
+      score++;
+      document.getElementById('score').textContent = score;
+    }
+    writeLine(`\x1b[32m\r\n  All tests passed! Type next() for the next challenge.\x1b[0m`);
+  } else {
+    writeLine(`\x1b[33m\r\n  Some tests failed. Keep trying!\x1b[0m`);
+  }
+  writeLine('');
+}
+
+function nextChallenge() {
+  if (currentChallenge < CHALLENGES.length - 1) {
+    currentChallenge++;
+    updateChallengePanel();
+    showChallengeInTerminal();
+  } else {
+    writeLine('\x1b[32mYou\'ve reached the last challenge! Score: ' + score + '/' + CHALLENGES.length + '\x1b[0m');
+    if (score === CHALLENGES.length) {
+      writeLine('\x1b[33m  Perfect score! Outstanding work!\x1b[0m');
+    }
+  }
+}
+
+function prevChallenge() {
+  if (currentChallenge > 0) {
+    currentChallenge--;
+    updateChallengePanel();
+    showChallengeInTerminal();
+  } else {
+    writeLine('\x1b[90mAlready at the first challenge.\x1b[0m');
+  }
+}
+
+function resetChallenge() {
+  const ch = CHALLENGES[currentChallenge];
+  try { pyodide.runPython(`del ${ch.name}`); } catch (e) {}
+  writeLine(`\x1b[90mReset: ${ch.name} has been cleared.\x1b[0m`);
+  showChallengeInTerminal();
+}
+
+function showHelp() {
+  writeLine('');
+  writeLine('\x1b[36m=== Python Terminal Help ===\x1b[0m');
+  writeLine('\x1b[90mThis is a real Python environment running in your browser via Pyodide.\x1b[0m');
+  writeLine('');
+  writeLine('\x1b[33mChallenge Commands:\x1b[0m');
+  writeLine('  \x1b[36mtest()\x1b[0m        Run tests for the current challenge');
+  writeLine('  \x1b[36mnext()\x1b[0m        Go to the next challenge');
+  writeLine('  \x1b[36mprev()\x1b[0m        Go to the previous challenge');
+  writeLine('  \x1b[36mchallenge()\x1b[0m   Show current challenge details');
+  writeLine('  \x1b[36mchallenge(5)\x1b[0m  Jump to challenge #5');
+  writeLine('  \x1b[36mreset()\x1b[0m       Clear your current function');
+  writeLine('');
+  writeLine('\x1b[33mTerminal:\x1b[0m');
+  writeLine('  \x1b[36mclear()\x1b[0m       Clear terminal screen');
+  writeLine('  \x1b[36mCtrl+C\x1b[0m        Cancel current input');
+  writeLine('  \x1b[36mCtrl+L\x1b[0m        Clear screen');
+  writeLine('  \x1b[36mUp/Down\x1b[0m       Command history');
+  writeLine('');
+  writeLine('\x1b[33mWorkflow:\x1b[0m');
+  writeLine('  1. Read the challenge in the panel above');
+  writeLine('  2. Define your function (press Enter twice after the body)');
+  writeLine('  3. Type \x1b[36mtest()\x1b[0m to check your solution');
+  writeLine('  4. Type \x1b[36mnext()\x1b[0m to advance');
+  writeLine('');
+  writeLine('\x1b[33mTip:\x1b[0m You can also use this as a free Python REPL!');
+  writeLine('  Try: 2 + 2, "hello".upper(), [x**2 for x in range(5)]');
+  writeLine('');
+}
+
+function setMode(mode) {
+  currentMode = mode;
+  document.getElementById('mode-challenge').classList.toggle('active', mode === 'challenge');
+  document.getElementById('mode-repl').classList.toggle('active', mode === 'repl');
+  document.getElementById('challenge-panel').style.display = mode === 'challenge' ? 'flex' : 'none';
+  setTimeout(() => fitAddon.fit(), 50);
+}
+
+// ============ INIT ============
+updateChallengePanel();
+initTerminal();
+initPyodide();
+</script>
+</body>
+</html>

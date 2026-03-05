@@ -1,0 +1,1099 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bash Terminal - FOC</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.css">
+<style>
+:root{--bg:#0a0e17;--card:#141925;--border:#2a3650;--text:#e2e8f0;--muted:#64748b;--cyan:#06b6d4;--green:#10b981;--red:#ef4444;--blue:#3b82f6;--amber:#f59e0b}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'JetBrains Mono',monospace,system-ui,sans-serif;background:var(--bg);color:var(--text);height:100vh;display:flex;flex-direction:column;overflow:hidden}
+.top-bar{display:flex;justify-content:space-between;align-items:center;padding:.5rem 1rem;border-bottom:1px solid var(--border);background:var(--card);flex-shrink:0}
+.top-bar a{color:var(--muted);text-decoration:none;font-size:.8rem}
+.top-bar a:hover{color:var(--cyan)}
+.top-bar h1{font-size:1rem;color:var(--cyan)}
+.top-bar .score-area{font-size:.75rem;color:var(--muted)}
+.top-bar .score-area .v{color:var(--cyan);font-weight:700}
+.challenge-panel{background:var(--card);border-bottom:1px solid var(--border);padding:.6rem 1rem;flex-shrink:0;display:flex;gap:1rem;align-items:flex-start;min-height:0}
+.challenge-panel .ch-info{flex:1;min-width:0}
+.challenge-panel .ch-title{font-size:.82rem;font-weight:700;color:var(--cyan);margin-bottom:.25rem}
+.challenge-panel .ch-desc{font-size:.75rem;color:var(--muted);line-height:1.4}
+.challenge-panel .ch-sig{font-size:.75rem;color:#c9d1d9;background:#0d1117;padding:.4rem .6rem;border-radius:4px;margin-top:.3rem;white-space:pre;overflow-x:auto}
+.challenge-panel .ch-tests{font-size:.7rem;color:var(--muted);margin-top:.25rem}
+.challenge-panel .ch-nav{display:flex;gap:.3rem;flex-shrink:0;align-items:center}
+.ch-nav button{font-family:inherit;font-size:.72rem;padding:.3rem .6rem;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--muted);cursor:pointer}
+.ch-nav button:hover{border-color:var(--cyan);color:var(--cyan)}
+.ch-nav .ch-counter{font-size:.72rem;color:var(--muted);white-space:nowrap}
+#terminal-container{flex:1;min-height:0;padding:2px}
+.mode-toggle{display:flex;gap:.3rem;flex-shrink:0}
+.mode-toggle button{font-family:inherit;font-size:.7rem;padding:.25rem .5rem;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--muted);cursor:pointer}
+.mode-toggle button.active{color:var(--cyan);border-color:var(--cyan);background:rgba(6,182,212,.08)}
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <a href="index.html">&larr; Home</a>
+  <h1>Bash Terminal</h1>
+  <div class="score-area">
+    <span class="mode-toggle">
+      <button id="mode-challenge" class="active" onclick="setMode('challenge')">Challenges</button>
+      <button id="mode-repl" onclick="setMode('repl')">Free Shell</button>
+    </span>
+    &nbsp; SCORE: <span class="v" id="score">0</span> / <span id="total">20</span>
+  </div>
+</div>
+
+<div class="challenge-panel" id="challenge-panel">
+  <div class="ch-info">
+    <div class="ch-title" id="ch-title">Challenge 1: add_two_numbers</div>
+    <div class="ch-desc" id="ch-desc">Print the sum of two arguments</div>
+    <div class="ch-sig" id="ch-sig">add_two_numbers() {
+  local a=$1 b=$2
+  # your code here
+}</div>
+    <div class="ch-tests" id="ch-tests">add_two_numbers 2 3 -> 5</div>
+  </div>
+  <div class="ch-nav">
+    <span class="ch-counter" id="ch-counter">1 / 20</span>
+    <button onclick="prevChallenge()">&laquo; Prev</button>
+    <button onclick="nextChallenge()">Next &raquo;</button>
+  </div>
+</div>
+
+<div id="terminal-container"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.js"></script>
+<script>
+// ============ CHALLENGES ============
+const CHALLENGES = [
+  { name:'add_two_numbers',
+    sig:'add_two_numbers() {\n  local a=$1 b=$2\n  # TODO: Print the sum of $a and $b\n}',
+    desc:'Print the sum of two arguments',
+    hint:'Use echo $((a + b))',
+    tests:[{args:'2 3',expected:'5'},{args:'-1 1',expected:'0'},{args:'100 250',expected:'350'},{args:'0 0',expected:'0'}],
+    answers:['echo $((a + b))','echo $(($a + $b))','echo $((a+b))','echo $(( a + b ))','echo $(( $a + $b ))']},
+  { name:'greet_user',
+    sig:'greet_user() {\n  local name="$1"\n  # TODO: Print "Hello, <name>!"\n}',
+    desc:'Print a greeting with the given name',
+    hint:'Use echo "Hello, $name!"',
+    tests:[{args:'Alex',expected:'Hello, Alex!'},{args:'Taylor',expected:'Hello, Taylor!'},{args:'World',expected:'Hello, World!'}],
+    answers:['echo "Hello, $name!"','echo "Hello, ${name}!"']},
+  { name:'is_even',
+    sig:'is_even() {\n  local n=$1\n  # TODO: Print "true" if even, "false" otherwise\n}',
+    desc:'Check if a number is even or odd',
+    hint:'Use (( n % 2 == 0 )) with if/then or && / ||',
+    tests:[{args:'4',expected:'true'},{args:'3',expected:'false'},{args:'0',expected:'true'},{args:'-2',expected:'true'}],
+    answers:['if (( n % 2 == 0 )); then echo "true"; else echo "false"; fi','[[ $((n % 2)) -eq 0 ]] && echo "true" || echo "false"','(( n % 2 == 0 )) && echo "true" || echo "false"']},
+  { name:'reverse_string',
+    sig:'reverse_string() {\n  local text="$1"\n  # TODO: Reverse the string\n}',
+    desc:'Print the input string reversed',
+    hint:'Pipe to rev: echo "$text" | rev',
+    tests:[{args:'Bash',expected:'hsaB'},{args:'hello',expected:'olleh'},{args:'12345',expected:'54321'}],
+    answers:['echo "$text" | rev','echo $text | rev','echo "${text}" | rev']},
+  { name:'count_words',
+    sig:'count_words() {\n  local sentence="$1"\n  # TODO: Count words in $sentence\n}',
+    desc:'Count the number of words in a sentence',
+    hint:'Use echo "$sentence" | wc -w',
+    tests:[{args:'"Bash is fun"',expected:'3'},{args:'"One two three four"',expected:'4'},{args:'"Hi"',expected:'1'}],
+    answers:['echo "$sentence" | wc -w','echo $sentence | wc -w']},
+  { name:'get_extension',
+    sig:'get_extension() {\n  local file="$1"\n  # TODO: Print the file extension\n}',
+    desc:'Extract the file extension from a filename',
+    hint:'Use parameter expansion: ${file##*.}',
+    tests:[{args:'doc.txt',expected:'txt'},{args:'archive.tar.gz',expected:'gz'},{args:'.bashrc',expected:'bashrc'}],
+    answers:['echo "${file##*.}"','echo ${file##*.}']},
+  { name:'to_upper',
+    sig:'to_upper() {\n  local input="$1"\n  # TODO: Convert to uppercase\n}',
+    desc:'Convert a string to uppercase',
+    hint:'Use tr or ${input^^}',
+    tests:[{args:'hello',expected:'HELLO'},{args:'Bash',expected:'BASH'},{args:'123abc',expected:'123ABC'}],
+    answers:["echo \"$input\" | tr 'a-z' 'A-Z'","echo ${input^^}","echo \"$input\" | tr '[a-z]' '[A-Z]'"]},
+  { name:'show_menu',
+    sig:'show_menu() {\n  local input="$1"\n  # TODO: Use case for start/stop/restart/exit\n}',
+    desc:'Handle menu options with a case statement',
+    hint:'Use case "$input" in start) echo "Starting...";; ...',
+    tests:[{args:'start',expected:'Starting...'},{args:'stop',expected:'Stopping...'},{args:'restart',expected:'Restarting...'},{args:'exit',expected:'Exiting...'}],
+    answers:['case "$input" in start) echo "Starting...";; stop) echo "Stopping...";; restart) echo "Restarting...";; exit) echo "Exiting...";; esac']},
+  { name:'multiply_array',
+    sig:'multiply_array() {\n  local arr=("$@")\n  # TODO: Multiply all elements, print result\n}',
+    desc:'Multiply all elements in an array together',
+    hint:'Loop with ((result*=n)) and echo $result',
+    tests:[{args:'1 2 3',expected:'6'},{args:'4 5',expected:'20'},{args:'10 0 2',expected:'0'},{args:'7',expected:'7'}],
+    answers:['local result=1; for n in "${arr[@]}"; do ((result*=n)); done; echo $result','local r=1; for n in "${arr[@]}"; do r=$((r*n)); done; echo $r']},
+  { name:'sum_args',
+    sig:'sum_args() {\n  # TODO: Sum any number of arguments\n}',
+    desc:'Add up all arguments and print the total',
+    hint:'Loop over "$@" with ((s+=n))',
+    tests:[{args:'1 2 3',expected:'6'},{args:'10 5',expected:'15'},{args:'0',expected:'0'}],
+    answers:['local s=0; for n in "$@"; do ((s+=n)); done; echo $s','local s=0; for n in "$@"; do s=$((s+n)); done; echo $s']},
+  { name:'check_file',
+    sig:'check_file() {\n  local file="$1"\n  # TODO: Print "exists", "empty", or "missing"\n}',
+    desc:'Check if a file exists, is empty, or is missing',
+    hint:'Use [[ -s "$file" ]] for non-empty, [[ -f "$file" ]] for exists',
+    tests:[{args:'/etc/passwd',expected:'exists'},{args:'/nonexistent/file',expected:'missing'}],
+    answers:['if [[ -s "$file" ]]; then echo "exists"; elif [[ -f "$file" ]]; then echo "empty"; else echo "missing"; fi']},
+  { name:'generate_range',
+    sig:'generate_range() {\n  local start=$1 end=$2\n  # TODO: Print numbers from start to end\n}',
+    desc:'Use seq to print a range of numbers',
+    hint:'seq $start $end',
+    tests:[{args:'1 5',expected:'1\n2\n3\n4\n5'},{args:'3 3',expected:'3'}],
+    answers:['seq $start $end','seq "$start" "$end"']},
+  { name:'sort_unique',
+    sig:'sort_unique() {\n  local list="$1"\n  # TODO: Sort and remove duplicates\n}',
+    desc:'Sort numbers and remove duplicates',
+    hint:'Use tr, sort -n, and uniq',
+    tests:[{args:'"3 1 2 3 1"',expected:'1\n2\n3'},{args:'"5 5 5"',expected:'5'}],
+    answers:['echo "$list" | tr " " "\\n" | sort -n | uniq','echo $list | tr " " "\\n" | sort -nu']},
+  { name:'check_command',
+    sig:'check_command() {\n  local cmd="$1"\n  # TODO: Check if command exists\n}',
+    desc:'Report whether a command is available on the system',
+    hint:'Use command -v "$cmd" with && / ||',
+    tests:[{args:'bash',expected:'found'},{args:'nonexistenttool',expected:'not found'}],
+    answers:['command -v "$cmd" &>/dev/null && echo "found" || echo "not found"','which "$cmd" &>/dev/null && echo "found" || echo "not found"']},
+  { name:'pipeline_grep_count',
+    sig:'pipeline_grep_count() {\n  local pattern="$1" file="$2"\n  # TODO: Count lines matching pattern\n}',
+    desc:'Count the number of lines matching a pattern in a file',
+    hint:'Use grep -c "$pattern" "$file"',
+    tests:[{args:'"bash" "/etc/passwd"',expected:'(count of matching lines)'}],
+    answers:['grep -c "$pattern" "$file"','grep "$pattern" "$file" | wc -l']},
+  { name:'replace_text',
+    sig:'replace_text() {\n  local file="$1" search="$2" replace="$3"\n  # TODO: Use sed to replace text in-place\n}',
+    desc:'Replace all occurrences of a string in a file using sed',
+    hint:'sed -i "s/$search/$replace/g" "$file"',
+    tests:[{args:'demo.txt foo bar',expected:'(replaces foo with bar in file)'}],
+    answers:["sed -i \"s/$search/$replace/g\" \"$file\"","sed -i 's/'\"$search\"'/'\"$replace\"'/g' \"$file\""]},
+  { name:'parse_fields',
+    sig:'parse_fields() {\n  local line="$1"\n  # TODO: Use awk to print first and second field\n}',
+    desc:'Extract the first two comma-separated fields',
+    hint:"echo \"$line\" | awk -F',' '{print $1, $2}'",
+    tests:[{args:'"name,age,city"',expected:'name age'},{args:'"john,30,NY"',expected:'john 30'}],
+    answers:["echo \"$line\" | awk -F',' '{print $1, $2}'","echo $line | awk -F, '{print $1,$2}'"]},
+  { name:'validate_email',
+    sig:'validate_email() {\n  local email="$1"\n  # TODO: Check email format with regex\n}',
+    desc:'Validate an email address format using regex',
+    hint:'Use [[ "$email" =~ ^[^@]+@[^@]+\\.[^@]+$ ]]',
+    tests:[{args:'user@example.com',expected:'valid'},{args:'notanemail',expected:'invalid'},{args:'a@b.c',expected:'valid'}],
+    answers:['[[ "$email" =~ ^[^@]+@[^@]+\\.[^@]+$ ]] && echo "valid" || echo "invalid"']},
+  { name:'generate_password',
+    sig:'generate_password() {\n  local length="$1"\n  # TODO: Generate random alphanumeric password\n}',
+    desc:'Generate a random password of the given length',
+    hint:"tr -dc 'A-Za-z0-9' < /dev/urandom | head -c $length",
+    tests:[{args:'8',expected:'(8 random characters)'},{args:'12',expected:'(12 random characters)'}],
+    answers:["tr -dc 'A-Za-z0-9' < /dev/urandom | head -c $length","cat /dev/urandom | tr -dc 'a-zA-Z0-9' | head -c $length"]},
+  { name:'print_banner',
+    sig:'print_banner() {\n  local msg="$1"\n  # TODO: Print centered in 60-char banner with = padding\n}',
+    desc:'Print a message centered in a 60-character wide banner with = padding',
+    hint:'Calculate padding: (60 - length) / 2, then use printf',
+    tests:[{args:'WELCOME',expected:'(centered in 60 chars with = padding)'}],
+    answers:['local pad=$(( (60 - ${#msg}) / 2 )); printf "%*s%s%*s\\n" $pad "" "$msg" $pad ""']},
+];
+
+// ============ STATE ============
+let currentChallenge = 0;
+let score = 0;
+let passedSet = new Set();
+let term = null;
+let fitAddon = null;
+let currentLine = '';
+let multiLineCode = '';
+let isMultiLine = false;
+let commandHistory = [];
+let historyPos = -1;
+let userFunctions = {};
+let currentMode = 'challenge';
+
+// ============ SIMULATED FILESYSTEM ============
+const virtualFS = {
+  '/etc/passwd': 'root:x:0:0:root:/root:/bin/bash\ndaemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin\nbin:x:2:2:bin:/bin:/usr/sbin/nologin\nsys:x:3:3:sys:/dev:/usr/sbin/nologin\nwww-data:x:33:33:www-data:/var/www:/usr/sbin/nologin\nstudent:x:1000:1000:student:/home/student:/bin/bash\n',
+  '/tmp/demo.txt': 'Hello World\nfoo bar baz\nfoo is great\nBash scripting\n',
+  '/home/student/notes.txt': 'Study networking\nPractice subnetting\nLearn bash scripting\nReview OSI model\n',
+  '/home/student/data.csv': 'name,age,city\nAlice,30,New York\nBob,25,Chicago\nCharlie,35,Boston\n',
+};
+
+// Simulated environment variables
+const envVars = {
+  HOME: '/home/student',
+  USER: 'student',
+  SHELL: '/bin/bash',
+  PATH: '/usr/local/bin:/usr/bin:/bin',
+  PWD: '/home/student',
+  HOSTNAME: 'foc-terminal',
+  TERM: 'xterm-256color',
+};
+
+let cwd = '/home/student';
+
+// ============ BASH SIMULATOR ============
+function simulateBash(input) {
+  const trimmed = input.trim();
+  if (!trimmed) return '';
+
+  // Variable assignment: VAR=value
+  const assignMatch = trimmed.match(/^([A-Za-z_]\w*)=(.*)$/);
+  if (assignMatch) {
+    envVars[assignMatch[1]] = expandVars(assignMatch[2].replace(/^["']|["']$/g, ''));
+    return '';
+  }
+
+  // Expand variables in input
+  const expanded = expandVars(trimmed);
+
+  // Parse command and args (basic)
+  const parts = shellSplit(expanded);
+  if (parts.length === 0) return '';
+
+  const cmd = parts[0];
+  const args = parts.slice(1);
+
+  // Handle pipes
+  if (expanded.includes('|') && !expanded.match(/\|\|/)) {
+    return handlePipeline(expanded);
+  }
+
+  // Handle redirections (basic output redirect)
+  if (expanded.includes('>') && !expanded.includes('&>')) {
+    return handleRedirect(expanded);
+  }
+
+  return executeCommand(cmd, args, expanded);
+}
+
+function expandVars(str) {
+  // Expand $VAR, ${VAR}, $((expr)), $(cmd)
+  let result = str;
+
+  // Arithmetic: $((expr))
+  result = result.replace(/\$\(\(([^)]+)\)\)/g, (_, expr) => {
+    try {
+      // Replace variable refs in arithmetic
+      let evalExpr = expr.replace(/([A-Za-z_]\w*)/g, (m) => {
+        return envVars[m] !== undefined ? envVars[m] : m;
+      });
+      return String(eval(evalExpr));
+    } catch { return '0'; }
+  });
+
+  // ${VAR##pattern} and other parameter expansions
+  result = result.replace(/\$\{(\w+)##\*\./g, (_, v) => {
+    const val = envVars[v] || '';
+    const idx = val.lastIndexOf('.');
+    return idx >= 0 ? val.substring(idx + 1) : val;
+  });
+
+  result = result.replace(/\$\{(\w+)\^\^\}/g, (_, v) => {
+    return (envVars[v] || '').toUpperCase();
+  });
+
+  result = result.replace(/\$\{#(\w+)\}/g, (_, v) => {
+    return String((envVars[v] || '').length);
+  });
+
+  // ${VAR} and $VAR
+  result = result.replace(/\$\{(\w+)\}/g, (_, v) => envVars[v] || '');
+  result = result.replace(/\$(\w+)/g, (_, v) => envVars[v] || '');
+
+  return result;
+}
+
+function shellSplit(str) {
+  const parts = [];
+  let current = '';
+  let inSingle = false;
+  let inDouble = false;
+  let escape = false;
+
+  for (let i = 0; i < str.length; i++) {
+    const ch = str[i];
+    if (escape) { current += ch; escape = false; continue; }
+    if (ch === '\\' && !inSingle) { escape = true; continue; }
+    if (ch === "'" && !inDouble) { inSingle = !inSingle; continue; }
+    if (ch === '"' && !inSingle) { inDouble = !inDouble; continue; }
+    if (ch === ' ' && !inSingle && !inDouble) {
+      if (current) parts.push(current);
+      current = '';
+      continue;
+    }
+    current += ch;
+  }
+  if (current) parts.push(current);
+  return parts;
+}
+
+function executeCommand(cmd, args, fullLine) {
+  switch (cmd) {
+    case 'echo': return args.join(' ') + '\n';
+    case 'printf': return handlePrintf(args);
+    case 'cat': return args.map(f => virtualFS[f] || `cat: ${f}: No such file or directory\n`).join('');
+    case 'ls': return handleLs(args);
+    case 'pwd': return cwd + '\n';
+    case 'cd': cwd = args[0] || envVars.HOME; envVars.PWD = cwd; return '';
+    case 'whoami': return envVars.USER + '\n';
+    case 'hostname': return envVars.HOSTNAME + '\n';
+    case 'date': return new Date().toString() + '\n';
+    case 'env': return Object.entries(envVars).map(([k,v]) => `${k}=${v}`).join('\n') + '\n';
+    case 'export': {
+      const m = (args[0]||'').match(/^(\w+)=(.*)$/);
+      if (m) envVars[m[1]] = m[2];
+      return '';
+    }
+    case 'seq': return handleSeq(args);
+    case 'rev': return args.length ? args.join(' ').split('').reverse().join('') + '\n' : '';
+    case 'wc': return handleWc(args);
+    case 'sort': return handleSort(args);
+    case 'uniq': return handleUniq(args);
+    case 'tr': return handleTr(args);
+    case 'cut': return handleCut(args);
+    case 'grep': return handleGrep(args);
+    case 'awk': return handleAwk(args);
+    case 'sed': return handleSed(args);
+    case 'head': return handleHead(args);
+    case 'tail': return handleTail(args);
+    case 'basename': return (args[0] || '').split('/').pop() + '\n';
+    case 'dirname': { const p = (args[0]||'').split('/'); p.pop(); return (p.join('/') || '.') + '\n'; }
+    case 'test': case '[': case '[[': return ''; // handled in conditionals
+    case 'true': return '';
+    case 'false': return '';
+    case 'command': {
+      if (args[0] === '-v') {
+        const known = ['bash','sh','echo','cat','ls','grep','awk','sed','tr','cut','sort','uniq','wc','seq','rev','head','tail','curl','ping','test','true','false','printf','date','whoami','hostname','env','export','cd','pwd','basename','dirname','command','which','nc'];
+        return known.includes(args[1]) ? `/usr/bin/${args[1]}\n` : '';
+      }
+      return '';
+    }
+    case 'which': {
+      const known = ['bash','sh','echo','cat','ls','grep','awk','sed','tr','cut','sort','uniq','wc','seq','rev','head','tail','curl','ping'];
+      return known.includes(args[0]) ? `/usr/bin/${args[0]}\n` : `${args[0]} not found\n`;
+    }
+    case 'help': showHelp(); return '';
+    case 'clear': term.clear(); return '';
+    default:
+      // Check if it's a user-defined function call
+      if (userFunctions[cmd]) {
+        return callUserFunction(cmd, args);
+      }
+      return `bash: ${cmd}: command not found\n`;
+  }
+}
+
+function handlePipeline(input) {
+  const stages = input.split(/\s*\|\s*(?![|])/);
+  let data = '';
+
+  for (const stage of stages) {
+    const parts = shellSplit(expandVars(stage.trim()));
+    if (parts.length === 0) continue;
+    const cmd = parts[0];
+    const args = [...parts.slice(1)];
+
+    // For piped commands, add stdin data as if it were input
+    switch (cmd) {
+      case 'rev': data = data.split('\n').map(l => l.split('').reverse().join('')).join('\n'); break;
+      case 'wc': {
+        const flag = args[0] || '-l';
+        if (flag === '-w') data = String(data.trim().split(/\s+/).filter(Boolean).length) + '\n';
+        else if (flag === '-c') data = String(data.length) + '\n';
+        else data = String(data.trim().split('\n').filter(Boolean).length) + '\n';
+        break;
+      }
+      case 'sort': {
+        let lines = data.trim().split('\n').filter(Boolean);
+        if (args.includes('-n')) lines.sort((a,b) => parseFloat(a)-parseFloat(b));
+        else if (args.includes('-rn') || (args.includes('-r') && args.includes('-n'))) lines.sort((a,b) => parseFloat(b)-parseFloat(a));
+        else if (args.includes('-r')) lines.sort().reverse();
+        else lines.sort();
+        if (args.includes('-u') || args.includes('-nu')) lines = [...new Set(lines)];
+        data = lines.join('\n') + '\n';
+        break;
+      }
+      case 'uniq': {
+        let lines = data.trim().split('\n');
+        if (args.includes('-c')) {
+          const counts = {};
+          lines.forEach(l => counts[l] = (counts[l]||0)+1);
+          data = Object.entries(counts).map(([k,v]) => `   ${v} ${k}`).join('\n') + '\n';
+        } else {
+          const unique = [];
+          let prev = null;
+          for (const l of lines) { if (l !== prev) unique.push(l); prev = l; }
+          data = unique.join('\n') + '\n';
+        }
+        break;
+      }
+      case 'tr': data = handleTrOnData(args, data); break;
+      case 'grep': {
+        const pattern = args.find(a => !a.startsWith('-')) || '';
+        const flags = args.filter(a => a.startsWith('-')).join('');
+        let lines = data.trim().split('\n');
+        const re = new RegExp(pattern, flags.includes('i') ? 'i' : '');
+        const matched = flags.includes('v') ? lines.filter(l => !re.test(l)) : lines.filter(l => re.test(l));
+        if (flags.includes('c')) data = String(matched.length) + '\n';
+        else data = matched.join('\n') + (matched.length ? '\n' : '');
+        break;
+      }
+      case 'awk': data = handleAwkOnData(args, data); break;
+      case 'head': {
+        const n = args.includes('-n') ? parseInt(args[args.indexOf('-n')+1]) : (args[0] ? parseInt(args[0].replace('-','')) : 10);
+        data = data.trim().split('\n').slice(0, n||10).join('\n') + '\n';
+        break;
+      }
+      case 'tail': {
+        const n = args.includes('-n') ? parseInt(args[args.indexOf('-n')+1]) : 10;
+        data = data.trim().split('\n').slice(-n).join('\n') + '\n';
+        break;
+      }
+      case 'cut': data = handleCutOnData(args, data); break;
+      case 'sed': data = handleSedOnData(args, data); break;
+      case 'cat': data = data; break;
+      case 'echo': data = args.join(' ') + '\n'; break;
+      default:
+        if (userFunctions[cmd]) {
+          // Store piped data temporarily
+          const oldStdin = envVars._STDIN;
+          envVars._STDIN = data;
+          data = callUserFunction(cmd, args);
+          envVars._STDIN = oldStdin;
+        }
+    }
+  }
+  return data;
+}
+
+function handleRedirect(input) {
+  const [cmdPart, filePart] = input.split(/\s*>\s*/);
+  const output = simulateBash(cmdPart);
+  if (filePart) {
+    virtualFS[filePart.trim()] = output;
+  }
+  return '';
+}
+
+function handleSeq(args) {
+  let start = 1, end = 1, step = 1;
+  if (args.length === 1) { end = parseInt(args[0]); }
+  else if (args.length === 2) { start = parseInt(args[0]); end = parseInt(args[1]); }
+  else if (args.length === 3) { start = parseInt(args[0]); step = parseInt(args[1]); end = parseInt(args[2]); }
+  const result = [];
+  if (start <= end) {
+    for (let i = start; i <= end; i += Math.abs(step)) result.push(String(i));
+  } else {
+    for (let i = start; i >= end; i -= Math.abs(step)) result.push(String(i));
+  }
+  return result.join('\n') + '\n';
+}
+
+function handleWc(args) {
+  const flag = args.find(a => a.startsWith('-')) || '-l';
+  const file = args.find(a => !a.startsWith('-'));
+  if (!file) return '0\n';
+  const content = virtualFS[file];
+  if (!content) return `wc: ${file}: No such file or directory\n`;
+  if (flag.includes('w')) return String(content.trim().split(/\s+/).filter(Boolean).length) + ` ${file}\n`;
+  if (flag.includes('c')) return String(content.length) + ` ${file}\n`;
+  return String(content.trim().split('\n').filter(Boolean).length) + ` ${file}\n`;
+}
+
+function handleSort(args) {
+  const file = args.find(a => !a.startsWith('-'));
+  if (!file || !virtualFS[file]) return '';
+  let lines = virtualFS[file].trim().split('\n');
+  if (args.includes('-n')) lines.sort((a,b) => parseFloat(a)-parseFloat(b));
+  else lines.sort();
+  if (args.includes('-u')) lines = [...new Set(lines)];
+  return lines.join('\n') + '\n';
+}
+
+function handleUniq(args) {
+  const file = args.find(a => !a.startsWith('-'));
+  if (!file || !virtualFS[file]) return '';
+  const lines = virtualFS[file].trim().split('\n');
+  const unique = [];
+  let prev = null;
+  for (const l of lines) { if (l !== prev) unique.push(l); prev = l; }
+  return unique.join('\n') + '\n';
+}
+
+function handleTr(args) { return ''; }
+function handleTrOnData(args, data) {
+  if (args.includes('-d')) {
+    const chars = (args[args.indexOf('-d')+1] || '').replace(/['"]/g, '');
+    return data.split('').filter(c => !chars.includes(c)).join('');
+  }
+  const set1 = (args[0] || '').replace(/['"]/g, '');
+  const set2 = (args[1] || '').replace(/['"]/g, '');
+  if (set1 === 'a-z' && set2 === 'A-Z') return data.toUpperCase();
+  if (set1 === 'A-Z' && set2 === 'a-z') return data.toLowerCase();
+  if (set1 === ' ' && set2 === '\\n') return data.replace(/ /g, '\n');
+  if (set1 === '\\n' && set2 === ' ') return data.replace(/\n/g, ' ');
+  // Generic single char replacement
+  let result = data;
+  for (let i = 0; i < set1.length && i < set2.length; i++) {
+    result = result.split(set1[i]).join(set2[i]);
+  }
+  return result;
+}
+
+function handleCut(args) { return ''; }
+function handleCutOnData(args, data) {
+  const dIdx = args.indexOf('-d');
+  const delim = dIdx >= 0 ? (args[dIdx+1] || ',').replace(/['"]/g, '') : '\t';
+  const fIdx = args.indexOf('-f');
+  const field = fIdx >= 0 ? parseInt(args[fIdx+1]) - 1 : 0;
+  return data.trim().split('\n').map(l => {
+    const fields = l.split(delim);
+    return fields[field] || '';
+  }).join('\n') + '\n';
+}
+
+function handleGrep(args) {
+  const flags = args.filter(a => a.startsWith('-')).join('');
+  const nonFlags = args.filter(a => !a.startsWith('-'));
+  const pattern = nonFlags[0] || '';
+  const file = nonFlags[1];
+  if (!file || !virtualFS[file]) return file ? `grep: ${file}: No such file or directory\n` : '';
+  const lines = virtualFS[file].trim().split('\n');
+  const re = new RegExp(pattern, flags.includes('i') ? 'i' : '');
+  const matched = lines.filter(l => re.test(l));
+  if (flags.includes('c')) return String(matched.length) + '\n';
+  return matched.join('\n') + (matched.length ? '\n' : '');
+}
+
+function handleAwk(args) { return '(awk output)\n'; }
+function handleAwkOnData(args, data) {
+  // Very basic awk simulation
+  const progIdx = args.findIndex(a => a.includes('{'));
+  if (progIdx < 0) return data;
+  const prog = args.slice(progIdx).join(' ').replace(/^'|'$/g, '');
+  const fsIdx = args.indexOf('-F');
+  const fs = fsIdx >= 0 ? args[fsIdx+1].replace(/['"]/g, '') : /\s+/;
+
+  // Parse simple print commands
+  const printMatch = prog.match(/\{print\s+(.+)\}/);
+  if (!printMatch) return data;
+
+  const fields = printMatch[1];
+  return data.trim().split('\n').filter(Boolean).map(line => {
+    const parts = typeof fs === 'string' ? line.split(fs) : line.split(fs);
+    return fields.replace(/\$(\d+)/g, (_, n) => {
+      const idx = parseInt(n);
+      return idx === 0 ? line : (parts[idx-1] || '');
+    }).replace(/,\s*/g, ' ');
+  }).join('\n') + '\n';
+}
+
+function handleSed(args) { return ''; }
+function handleSedOnData(args, data) {
+  const expr = args.find(a => a.startsWith('s/') || a.startsWith("'s/"));
+  if (!expr) return data;
+  const clean = expr.replace(/^'|'$/g, '');
+  const parts = clean.split('/');
+  if (parts.length < 3) return data;
+  const search = parts[1];
+  const replace = parts[2];
+  const flags = parts[3] || '';
+  const re = new RegExp(search, flags.includes('g') ? 'g' : '');
+  return data.split('\n').map(l => l.replace(re, replace)).join('\n');
+}
+
+function handleHead(args) {
+  const n = args.includes('-n') ? parseInt(args[args.indexOf('-n')+1]) : 10;
+  const file = args.find(a => !a.startsWith('-'));
+  if (!file || !virtualFS[file]) return '';
+  return virtualFS[file].trim().split('\n').slice(0, n).join('\n') + '\n';
+}
+
+function handleTail(args) {
+  const n = args.includes('-n') ? parseInt(args[args.indexOf('-n')+1]) : 10;
+  const file = args.find(a => !a.startsWith('-'));
+  if (!file || !virtualFS[file]) return '';
+  return virtualFS[file].trim().split('\n').slice(-n).join('\n') + '\n';
+}
+
+function handlePrintf(args) {
+  if (args.length === 0) return '';
+  let fmt = args[0].replace(/\\n/g, '\n').replace(/\\t/g, '\t');
+  let result = fmt;
+  let argIdx = 1;
+  result = result.replace(/%s/g, () => args[argIdx++] || '');
+  result = result.replace(/%d/g, () => parseInt(args[argIdx++]) || 0);
+  result = result.replace(/%\*s/g, () => {
+    const width = parseInt(args[argIdx++]) || 0;
+    const str = args[argIdx++] || '';
+    return str.padStart(width);
+  });
+  return result;
+}
+
+function handleLs(args) {
+  const dir = args.find(a => !a.startsWith('-')) || cwd;
+  const files = Object.keys(virtualFS).filter(f => {
+    const fDir = f.substring(0, f.lastIndexOf('/')) || '/';
+    return fDir === dir;
+  }).map(f => f.split('/').pop());
+  return files.length ? files.join('  ') + '\n' : '';
+}
+
+// ============ USER FUNCTION SYSTEM ============
+function callUserFunction(name, args) {
+  const func = userFunctions[name];
+  if (!func) return `bash: ${name}: command not found\n`;
+
+  // Set positional parameters
+  const savedArgs = { ...envVars };
+  args.forEach((a, i) => envVars[String(i + 1)] = a);
+  envVars['@'] = args.join(' ');
+  envVars['#'] = String(args.length);
+
+  let output = '';
+  const lines = func.body.split('\n');
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) continue;
+    output += simulateBash(trimmed);
+  }
+
+  // Restore
+  args.forEach((_, i) => delete envVars[String(i + 1)]);
+  delete envVars['@'];
+  delete envVars['#'];
+
+  return output;
+}
+
+function parseFunction(code) {
+  // Parse: funcname() { ... }
+  const match = code.match(/^(\w+)\s*\(\)\s*\{/);
+  if (!match) return null;
+
+  const name = match[1];
+  // Find matching }
+  let depth = 1;
+  let bodyStart = code.indexOf('{') + 1;
+  let i = bodyStart;
+  while (i < code.length && depth > 0) {
+    if (code[i] === '{') depth++;
+    if (code[i] === '}') depth--;
+    i++;
+  }
+  const body = code.substring(bodyStart, i - 1).trim();
+  return { name, body };
+}
+
+// ============ TERMINAL SETUP ============
+function initTerminal() {
+  term = new Terminal({
+    theme: {
+      background: '#0d1117',
+      foreground: '#c9d1d9',
+      cursor: '#06b6d4',
+      cursorAccent: '#0d1117',
+      selectionBackground: 'rgba(6,182,212,0.3)',
+      black: '#0d1117',
+      red: '#ef4444',
+      green: '#10b981',
+      yellow: '#f59e0b',
+      blue: '#3b82f6',
+      magenta: '#8b5cf6',
+      cyan: '#06b6d4',
+      white: '#c9d1d9',
+      brightBlack: '#64748b',
+      brightRed: '#f87171',
+      brightGreen: '#34d399',
+      brightYellow: '#fbbf24',
+      brightBlue: '#60a5fa',
+      brightMagenta: '#a78bfa',
+      brightCyan: '#22d3ee',
+      brightWhite: '#e2e8f0',
+    },
+    fontFamily: "'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace",
+    fontSize: 14,
+    lineHeight: 1.4,
+    cursorBlink: true,
+    cursorStyle: 'block',
+    scrollback: 5000,
+  });
+
+  fitAddon = new FitAddon.FitAddon();
+  term.loadAddon(fitAddon);
+  term.open(document.getElementById('terminal-container'));
+  fitAddon.fit();
+
+  window.addEventListener('resize', () => fitAddon.fit());
+
+  term.onKey(({ key, domEvent }) => {
+    const ev = domEvent;
+
+    if (ev.keyCode === 13) { // Enter
+      term.write('\r\n');
+      const line = currentLine;
+      currentLine = '';
+      handleLine(line);
+    } else if (ev.keyCode === 8) { // Backspace
+      if (currentLine.length > 0) {
+        currentLine = currentLine.slice(0, -1);
+        term.write('\b \b');
+      }
+    } else if (ev.keyCode === 38) { // Up
+      if (commandHistory.length > 0 && historyPos > 0) {
+        historyPos--;
+        clearCurrentLine();
+        currentLine = commandHistory[historyPos];
+        term.write(currentLine);
+      }
+    } else if (ev.keyCode === 40) { // Down
+      if (historyPos < commandHistory.length - 1) {
+        historyPos++;
+        clearCurrentLine();
+        currentLine = commandHistory[historyPos];
+        term.write(currentLine);
+      } else if (historyPos === commandHistory.length - 1) {
+        historyPos = commandHistory.length;
+        clearCurrentLine();
+        currentLine = '';
+      }
+    } else if (ev.keyCode === 9) { // Tab
+      ev.preventDefault();
+      currentLine += '  ';
+      term.write('  ');
+    } else if (ev.ctrlKey && ev.keyCode === 67) { // Ctrl+C
+      term.write('^C\r\n');
+      currentLine = '';
+      multiLineCode = '';
+      isMultiLine = false;
+      showPrompt();
+    } else if (ev.ctrlKey && ev.keyCode === 76) { // Ctrl+L
+      term.clear();
+      showPrompt();
+    } else if (!ev.altKey && !ev.ctrlKey && !ev.metaKey && key.length === 1) {
+      currentLine += key;
+      term.write(key);
+    }
+  });
+
+  // Enable paste
+  term.onData(data => {
+    if (data.length > 1 && !data.startsWith('\x1b')) {
+      const cleaned = data.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+      const lines = cleaned.split('\n');
+      if (lines.length === 1) {
+        currentLine += lines[0];
+        term.write(lines[0]);
+      } else {
+        for (let i = 0; i < lines.length; i++) {
+          if (i === lines.length - 1) {
+            currentLine += lines[i];
+            term.write(lines[i]);
+          } else {
+            currentLine += lines[i];
+            term.write(lines[i] + '\r\n');
+            const line = currentLine;
+            currentLine = '';
+            handleLine(line);
+          }
+        }
+      }
+    }
+  });
+
+  // Banner
+  term.write('\x1b[36m');
+  term.write('  ____            _       _____                   \r\n');
+  term.write(' | __ )  __ _ ___| |__   |_   _|__ _ __ _ __ ___  \r\n');
+  term.write(' |  _ \\ / _` / __| \'_ \\    | |/ _ \\ \'__| \'_ ` _ \\ \r\n');
+  term.write(' | |_) | (_| \\__ \\ | | |   | |  __/ |  | | | | | |\r\n');
+  term.write(' |____/ \\__,_|___/_| |_|   |_|\\___|_|  |_| |_| |_|\r\n');
+  term.write('\x1b[0m\r\n');
+  term.write('\x1b[32mBash Terminal (Simulated) ready!\x1b[0m\r\n');
+  term.write('\x1b[90mDefine functions, then use \x1b[36mtest\x1b[90m to check your solution.\x1b[0m\r\n');
+  term.write('\x1b[90mCommands: \x1b[36mtest\x1b[90m  \x1b[36mnext\x1b[90m  \x1b[36mprev\x1b[90m  \x1b[36mhelp\x1b[90m  \x1b[36mreset\x1b[90m  \x1b[36mclear\x1b[0m\r\n\r\n');
+  showChallengeInTerminal();
+  showPrompt();
+  term.focus();
+}
+
+function clearCurrentLine() {
+  while (currentLine.length > 0) {
+    term.write('\b \b');
+    currentLine = currentLine.slice(0, -1);
+  }
+}
+
+function showPrompt() {
+  const prompt = isMultiLine ? '\x1b[36m> \x1b[0m' : `\x1b[32m${envVars.USER}@${envVars.HOSTNAME}\x1b[0m:\x1b[34m${cwd}\x1b[0m$ `;
+  term.write(prompt);
+}
+
+function writeLine(text) {
+  term.write(text.replace(/\n/g, '\r\n'));
+  if (!text.endsWith('\n')) term.write('\r\n');
+}
+
+// ============ LINE HANDLING ============
+function handleLine(line) {
+  if (line.trim().length > 0) {
+    commandHistory.push(line);
+    historyPos = commandHistory.length;
+  }
+
+  // Special terminal commands
+  if (!isMultiLine) {
+    const trimmed = line.trim();
+    if (trimmed === 'test') { runTests(); showPrompt(); return; }
+    if (trimmed === 'next') { nextChallenge(); showPrompt(); return; }
+    if (trimmed === 'prev') { prevChallenge(); showPrompt(); return; }
+    if (trimmed === 'help') { showHelp(); showPrompt(); return; }
+    if (trimmed === 'reset') { resetChallenge(); showPrompt(); return; }
+    if (trimmed === 'clear') { term.clear(); showPrompt(); return; }
+    if (trimmed === 'challenge') { showChallengeInTerminal(); showPrompt(); return; }
+    if (trimmed === 'hint') { showHint(); showPrompt(); return; }
+    if (trimmed.match(/^challenge\s+(\d+)$/)) {
+      const n = parseInt(RegExp.$1) - 1;
+      if (n >= 0 && n < CHALLENGES.length) { currentChallenge = n; updateChallengePanel(); showChallengeInTerminal(); }
+      else writeLine(`\x1b[31mChallenge number out of range (1-${CHALLENGES.length})\x1b[0m`);
+      showPrompt(); return;
+    }
+  }
+
+  // Multi-line: function definition
+  if (isMultiLine) {
+    multiLineCode += line + '\n';
+    if (line.trim() === '}') {
+      isMultiLine = false;
+      const func = parseFunction(multiLineCode);
+      if (func) {
+        userFunctions[func.name] = func;
+        writeLine(`\x1b[32mFunction '${func.name}' defined.\x1b[0m`);
+      } else {
+        writeLine(`\x1b[31mFailed to parse function.\x1b[0m`);
+      }
+      multiLineCode = '';
+      showPrompt();
+    } else {
+      showPrompt();
+    }
+    return;
+  }
+
+  // Check if line starts a function definition
+  if (line.trim().match(/^\w+\s*\(\)\s*\{/) || line.trim().match(/^function\s+\w+/)) {
+    isMultiLine = true;
+    if (line.includes('}')) {
+      // Single-line function
+      isMultiLine = false;
+      const func = parseFunction(line);
+      if (func) {
+        userFunctions[func.name] = func;
+        writeLine(`\x1b[32mFunction '${func.name}' defined.\x1b[0m`);
+      }
+      showPrompt();
+      return;
+    }
+    multiLineCode = line + '\n';
+    showPrompt();
+    return;
+  }
+
+  // Empty line
+  if (line.trim() === '') { showPrompt(); return; }
+
+  // Execute command
+  const output = simulateBash(line);
+  if (output) {
+    term.write(output.replace(/\n/g, '\r\n'));
+    if (!output.endsWith('\n')) term.write('\r\n');
+  }
+  showPrompt();
+}
+
+// ============ CHALLENGE SYSTEM ============
+function updateChallengePanel() {
+  const ch = CHALLENGES[currentChallenge];
+  document.getElementById('ch-title').textContent = `Challenge ${currentChallenge + 1}: ${ch.name}`;
+  document.getElementById('ch-desc').textContent = ch.desc;
+  document.getElementById('ch-sig').textContent = ch.sig;
+  document.getElementById('ch-tests').textContent = ch.tests.map(t => `${ch.name} ${t.args} -> ${t.expected}`).join('  |  ');
+  document.getElementById('ch-counter').textContent = `${currentChallenge + 1} / ${CHALLENGES.length}`;
+  document.getElementById('total').textContent = CHALLENGES.length;
+}
+
+function showChallengeInTerminal() {
+  const ch = CHALLENGES[currentChallenge];
+  const marker = passedSet.has(currentChallenge) ? '\x1b[32m [PASSED]\x1b[0m' : '';
+  writeLine('');
+  writeLine(`\x1b[36m--- Challenge ${currentChallenge + 1}/${CHALLENGES.length}: ${ch.name} ---\x1b[0m${marker}`);
+  writeLine(`\x1b[90m${ch.desc}\x1b[0m`);
+  writeLine(`\x1b[33m${ch.sig}\x1b[0m`);
+  writeLine(`\x1b[90mTests: ${ch.tests.slice(0, 3).map(t => ch.name + ' ' + t.args + ' -> ' + t.expected).join(' | ')}\x1b[0m`);
+  writeLine(`\x1b[90mType \x1b[36mhint\x1b[90m for a hint, \x1b[36mtest\x1b[90m to check your answer.\x1b[0m`);
+  writeLine('');
+}
+
+function runTests() {
+  const ch = CHALLENGES[currentChallenge];
+
+  if (!userFunctions[ch.name]) {
+    writeLine(`\x1b[31mFunction '${ch.name}' not defined. Write it first!\x1b[0m`);
+    writeLine(`\x1b[90mType the function definition, e.g.:\x1b[0m`);
+    writeLine(`\x1b[33m${ch.name}() {\x1b[0m`);
+    writeLine(`\x1b[33m  # your code\x1b[0m`);
+    writeLine(`\x1b[33m}\x1b[0m`);
+    return;
+  }
+
+  writeLine('');
+  writeLine(`\x1b[36mTesting ${ch.name}()...\x1b[0m`);
+
+  // Check answer against accepted answers
+  const funcBody = userFunctions[ch.name].body.trim();
+  // Strip 'local' declarations to get the actual logic
+  const logicLines = funcBody.split('\n')
+    .map(l => l.trim())
+    .filter(l => l && !l.startsWith('#'));
+
+  // Try to match against accepted answers
+  const normalizedBody = logicLines.join('; ').replace(/\s+/g, ' ').trim();
+  const bodyWithoutLocals = logicLines.filter(l => !l.startsWith('local ')).join('; ').replace(/\s+/g, ' ').trim();
+
+  let matched = false;
+  for (const answer of ch.answers) {
+    const normalizedAnswer = answer.replace(/\s+/g, ' ').trim();
+    if (normalizedBody === normalizedAnswer || bodyWithoutLocals === normalizedAnswer ||
+        normalizedBody.includes(normalizedAnswer) || bodyWithoutLocals.includes(normalizedAnswer)) {
+      matched = true;
+      break;
+    }
+  }
+
+  // Also try functional testing by actually calling the simulated function
+  let functionalPass = true;
+  const testableTests = ch.tests.filter(t => !t.expected.startsWith('('));
+  for (const t of testableTests) {
+    const args = shellSplit(t.args.replace(/"/g, ''));
+    const output = callUserFunction(ch.name, args).trim();
+    const expected = t.expected.replace(/\\n/g, '\n').trim();
+    if (output === expected) {
+      writeLine(`  \x1b[32m  ${ch.name} ${t.args} -> ${output}\x1b[0m`);
+    } else {
+      writeLine(`  \x1b[31m  ${ch.name} ${t.args} -> "${output}" (expected: "${expected}")\x1b[0m`);
+      functionalPass = false;
+    }
+  }
+
+  // For tests with non-exact expected values, check pattern match
+  const patternTests = ch.tests.filter(t => t.expected.startsWith('('));
+  for (const t of patternTests) {
+    if (matched) {
+      writeLine(`  \x1b[32m  ${ch.name} ${t.args} -> (correct pattern)\x1b[0m`);
+    } else {
+      writeLine(`  \x1b[33m  ${ch.name} ${t.args} -> ${t.expected} (check manually)\x1b[0m`);
+    }
+  }
+
+  const allPassed = (functionalPass && (patternTests.length === 0 || matched)) ||
+                    (testableTests.length === 0 && matched);
+
+  if (allPassed || matched) {
+    if (!passedSet.has(currentChallenge)) {
+      passedSet.add(currentChallenge);
+      score++;
+      document.getElementById('score').textContent = score;
+    }
+    writeLine(`\x1b[32m\r\n  All tests passed! Type next for the next challenge.\x1b[0m`);
+  } else if (functionalPass && patternTests.length > 0) {
+    // Partial pass - functional tests pass but pattern tests unclear
+    if (!passedSet.has(currentChallenge)) {
+      passedSet.add(currentChallenge);
+      score++;
+      document.getElementById('score').textContent = score;
+    }
+    writeLine(`\x1b[32m\r\n  Tests passed! Type next for the next challenge.\x1b[0m`);
+  } else {
+    writeLine(`\x1b[33m\r\n  Some tests failed. Keep trying! Type hint for a hint.\x1b[0m`);
+  }
+  writeLine('');
+}
+
+function nextChallenge() {
+  if (currentChallenge < CHALLENGES.length - 1) {
+    currentChallenge++;
+    updateChallengePanel();
+    showChallengeInTerminal();
+  } else {
+    writeLine(`\x1b[32mYou've reached the last challenge! Score: ${score}/${CHALLENGES.length}\x1b[0m`);
+    if (score === CHALLENGES.length) writeLine('\x1b[33m  Perfect score! Outstanding work!\x1b[0m');
+  }
+}
+
+function prevChallenge() {
+  if (currentChallenge > 0) {
+    currentChallenge--;
+    updateChallengePanel();
+    showChallengeInTerminal();
+  } else {
+    writeLine('\x1b[90mAlready at the first challenge.\x1b[0m');
+  }
+}
+
+function resetChallenge() {
+  const ch = CHALLENGES[currentChallenge];
+  delete userFunctions[ch.name];
+  writeLine(`\x1b[90mReset: ${ch.name} has been cleared.\x1b[0m`);
+  showChallengeInTerminal();
+}
+
+function showHint() {
+  const ch = CHALLENGES[currentChallenge];
+  writeLine(`\x1b[33mHint: ${ch.hint}\x1b[0m`);
+}
+
+function showHelp() {
+  writeLine('');
+  writeLine('\x1b[36m=== Bash Terminal Help ===\x1b[0m');
+  writeLine('\x1b[90mThis is a simulated Bash environment for practicing shell scripting.\x1b[0m');
+  writeLine('');
+  writeLine('\x1b[33mChallenge Commands:\x1b[0m');
+  writeLine('  \x1b[36mtest\x1b[0m          Run tests for the current challenge');
+  writeLine('  \x1b[36mnext\x1b[0m          Go to the next challenge');
+  writeLine('  \x1b[36mprev\x1b[0m          Go to the previous challenge');
+  writeLine('  \x1b[36mchallenge\x1b[0m     Show current challenge details');
+  writeLine('  \x1b[36mchallenge 5\x1b[0m   Jump to challenge #5');
+  writeLine('  \x1b[36mhint\x1b[0m          Show a hint for current challenge');
+  writeLine('  \x1b[36mreset\x1b[0m         Clear your current function');
+  writeLine('');
+  writeLine('\x1b[33mSupported Shell Commands:\x1b[0m');
+  writeLine('  echo, printf, cat, ls, pwd, cd, whoami, date, env, export');
+  writeLine('  seq, rev, wc, sort, uniq, tr, cut, grep, awk, sed');
+  writeLine('  head, tail, basename, dirname, command, which');
+  writeLine('');
+  writeLine('\x1b[33mDefining Functions:\x1b[0m');
+  writeLine('  Type your function, then close with }:');
+  writeLine('  \x1b[36madd_two_numbers() {\x1b[0m');
+  writeLine('  \x1b[36m  local a=$1 b=$2\x1b[0m');
+  writeLine('  \x1b[36m  echo $((a + b))\x1b[0m');
+  writeLine('  \x1b[36m}\x1b[0m');
+  writeLine('');
+  writeLine('\x1b[33mTerminal:\x1b[0m');
+  writeLine('  \x1b[36mclear\x1b[0m         Clear terminal');
+  writeLine('  \x1b[36mCtrl+C\x1b[0m        Cancel current input');
+  writeLine('  \x1b[36mUp/Down\x1b[0m       Command history');
+  writeLine('');
+  writeLine('\x1b[33mTip:\x1b[0m Pipes work! Try: echo "hello" | rev');
+  writeLine('');
+}
+
+function setMode(mode) {
+  currentMode = mode;
+  document.getElementById('mode-challenge').classList.toggle('active', mode === 'challenge');
+  document.getElementById('mode-repl').classList.toggle('active', mode === 'repl');
+  document.getElementById('challenge-panel').style.display = mode === 'challenge' ? 'flex' : 'none';
+  setTimeout(() => fitAddon.fit(), 50);
+}
+
+// ============ INIT ============
+updateChallengePanel();
+initTerminal();
+</script>
+</body>
+</html>
