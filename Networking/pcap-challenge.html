@@ -68,12 +68,41 @@ body::before{content:'';position:fixed;inset:0;background:linear-gradient(rgba(5
 .detail-tabs{display:flex;border-bottom:1px solid var(--border);}
 .detail-tab{font-size:0.65rem;padding:0.5rem 1rem;cursor:pointer;color:var(--text-muted);border-bottom:2px solid transparent;}
 .detail-tab.active{color:var(--accent-cyan);border-bottom-color:var(--accent-cyan);}
-.detail-content{padding:0.75rem;font-size:0.72rem;line-height:1.6;max-height:250px;overflow-y:auto;}
+.detail-content{padding:0;font-size:0.72rem;line-height:1.6;max-height:350px;overflow-y:auto;}
 .detail-content pre{background:var(--bg-primary);padding:0.5rem;border-radius:4px;white-space:pre-wrap;word-break:break-all;font-size:0.7rem;}
 .detail-content .field{margin-bottom:0.3rem;}
 .detail-content .field-name{color:var(--accent-cyan);font-weight:600;}
 .detail-content .field-val{color:var(--text-secondary);}
 .detail-content .suspicious-val{color:var(--accent-red);font-weight:600;background:rgba(239,68,68,0.1);padding:1px 4px;border-radius:3px;}
+
+/* Protocol tree (Wireshark-style) */
+.proto-layer{border-bottom:1px solid rgba(42,54,80,0.3);}
+.proto-layer:last-child{border-bottom:none;}
+.proto-layer-header{display:flex;align-items:center;gap:0.4rem;padding:0.35rem 0.6rem;cursor:pointer;font-size:0.7rem;font-weight:600;user-select:none;}
+.proto-layer-header:hover{background:rgba(59,130,246,0.06);}
+.proto-layer-header .arrow{font-size:0.5rem;color:var(--text-muted);transition:transform 0.15s;width:0.7rem;text-align:center;flex-shrink:0;}
+.proto-layer-header.open .arrow{transform:rotate(90deg);}
+.proto-layer-header .layer-name{color:var(--accent-cyan);}
+.proto-layer-header .layer-summary{color:var(--text-muted);font-weight:400;font-size:0.65rem;margin-left:0.4rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.proto-layer-fields{display:none;padding:0.15rem 0 0.3rem 1.5rem;font-size:0.68rem;}
+.proto-layer-fields.open{display:block;}
+.proto-field{padding:0.12rem 0.6rem;display:flex;gap:0.5rem;}
+.proto-field:hover{background:rgba(59,130,246,0.04);}
+.proto-field .pf-name{color:var(--accent-blue);min-width:140px;flex-shrink:0;}
+.proto-field .pf-val{color:var(--text-secondary);}
+.proto-field .pf-val.suspicious{color:var(--accent-red);font-weight:600;background:rgba(239,68,68,0.08);padding:0 3px;border-radius:2px;}
+
+/* Hex dump (Wireshark-style) */
+.hex-dump{font-family:'JetBrains Mono',monospace;font-size:0.68rem;line-height:1.5;padding:0.5rem;}
+.hex-row{display:flex;gap:0;}
+.hex-offset{color:var(--accent-blue);min-width:60px;user-select:none;}
+.hex-bytes{min-width:380px;letter-spacing:0.5px;}
+.hex-bytes .hb{display:inline-block;width:23px;text-align:center;cursor:default;border-radius:1px;}
+.hex-bytes .hb:hover{background:rgba(59,130,246,0.15);}
+.hex-bytes .gap{display:inline-block;width:8px;}
+.hex-ascii{color:var(--accent-green);letter-spacing:1px;}
+.hex-ascii .ha{display:inline;cursor:default;}
+.hex-ascii .ha:hover{background:rgba(16,185,129,0.15);}
 
 .submit-area{margin-top:1rem;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:1rem;}
 .submit-area label{font-size:0.75rem;color:var(--text-muted);display:block;margin-bottom:0.4rem;}
@@ -380,6 +409,188 @@ function selectPacket(no) {
   showFollowStreamBtn();
 }
 
+// Build Wireshark-style protocol layer dissection from packet data
+function dissectPacket(pkt) {
+  const layers = [];
+  // Extract ports from info
+  const portMatch = pkt.info.match(/(\d+)\s*→\s*(\d+)/);
+  const srcPort = portMatch ? portMatch[1] : '';
+  const dstPort = portMatch ? portMatch[2] : '';
+  // Extract flags
+  const flagMatch = pkt.info.match(/\[([^\]]+)\]/);
+  const flags = flagMatch ? flagMatch[1] : '';
+  // Extract seq/ack/win
+  const seqMatch = pkt.info.match(/Seq=(\d+)/);
+  const ackMatch = pkt.info.match(/Ack=(\d+)/);
+  const winMatch = pkt.info.match(/Win=(\d+)/);
+
+  // Frame layer
+  layers.push({
+    name: 'Frame',
+    summary: `${pkt.len} bytes on wire, ${pkt.len} bytes captured`,
+    color: 'var(--text-muted)',
+    fields: [
+      ['Frame Length', `${pkt.len} bytes`],
+      ['Capture Length', `${pkt.len} bytes`],
+      ['Arrival Time', `${pkt.time} seconds`],
+      ['Frame Number', `${pkt.no}`],
+    ]
+  });
+
+  // Ethernet layer
+  const ethSrc = (pkt.headers.ethernet || '').match(/Src:\s*([0-9a-f:]+)/i);
+  const ethDst = (pkt.headers.ethernet || '').match(/Dst:\s*([0-9a-f:]+)/i);
+  const ethType = pkt.proto === 'ARP' ? '0x0806 (ARP)' : '0x0800 (IPv4)';
+  layers.push({
+    name: 'Ethernet II',
+    summary: `Src: ${ethSrc ? ethSrc[1] : '??:??:??:??:??:??'}, Dst: ${ethDst ? ethDst[1] : '??:??:??:??:??:??'}`,
+    color: 'var(--text-muted)',
+    fields: [
+      ['Destination', ethDst ? ethDst[1] : 'ff:ff:ff:ff:ff:ff'],
+      ['Source', ethSrc ? ethSrc[1] : '??:??:??:??:??:??'],
+      ['Type', ethType],
+    ]
+  });
+
+  if (pkt.proto === 'ARP') {
+    const opcode = (pkt.headers.arp || '').match(/Opcode:\s*(.+)/i);
+    layers.push({
+      name: 'Address Resolution Protocol',
+      summary: pkt.info,
+      color: 'var(--accent-amber)',
+      fields: [
+        ['Hardware type', 'Ethernet (1)'],
+        ['Protocol type', 'IPv4 (0x0800)'],
+        ['Opcode', opcode ? opcode[1] : '?'],
+        ['Sender IP', pkt.src],
+        ['Target IP', pkt.dst],
+      ]
+    });
+    return layers;
+  }
+
+  // IP layer
+  const ttl = (pkt.headers.ip || '').match(/TTL:\s*(\d+)/);
+  const ipId = (pkt.headers.ip || '').match(/ID:\s*(0x[0-9a-f]+)/i);
+  const ipProto = ['TCP','HTTP','FTP','SSH'].includes(pkt.proto) ? '6 (TCP)' : pkt.proto === 'DNS' ? '17 (UDP)' : '6 (TCP)';
+  layers.push({
+    name: 'Internet Protocol Version 4',
+    summary: `Src: ${pkt.src}, Dst: ${pkt.dst}`,
+    color: 'var(--accent-green)',
+    fields: [
+      ['Version', '4'],
+      ['Header Length', '20 bytes (5)'],
+      ['Total Length', `${pkt.len - 14}`],
+      ['Identification', ipId ? ipId[1] : '0x' + (Math.floor(Math.random()*65535)).toString(16).padStart(4,'0')],
+      ['Flags', '0x40, Don\'t fragment'],
+      ['Time to Live', ttl ? ttl[1] : '64'],
+      ['Protocol', ipProto],
+      ['Source Address', pkt.src],
+      ['Destination Address', pkt.dst],
+    ]
+  });
+
+  // Transport layer
+  if (pkt.proto === 'DNS' || (pkt.headers.udp)) {
+    const udpSrc = (pkt.headers.udp || '').match(/Src Port:\s*(\d+)/);
+    const udpDst = (pkt.headers.udp || '').match(/Dst Port:\s*(\d+)/);
+    layers.push({
+      name: 'User Datagram Protocol',
+      summary: `Src Port: ${udpSrc ? udpSrc[1] : '?'}, Dst Port: ${udpDst ? udpDst[1] : '?'}`,
+      color: 'var(--accent-cyan)',
+      fields: [
+        ['Source Port', udpSrc ? udpSrc[1] : '?'],
+        ['Destination Port', udpDst ? udpDst[1] : '?'],
+        ['Length', `${pkt.len - 34}`],
+        ['Checksum', '0x' + (Math.floor(Math.random()*65535)).toString(16).padStart(4,'0') + ' [valid]'],
+      ]
+    });
+  } else if (srcPort) {
+    const tcpFlags = [];
+    if (flags.includes('SYN')) tcpFlags.push('SYN');
+    if (flags.includes('ACK')) tcpFlags.push('ACK');
+    if (flags.includes('RST')) tcpFlags.push('RST');
+    if (flags.includes('FIN')) tcpFlags.push('FIN');
+    if (flags.includes('PSH')) tcpFlags.push('PSH');
+    const win = (pkt.headers.tcp || '').match(/Window:\s*(\d+)/);
+    const opts = (pkt.headers.tcp || '').match(/Options:\s*\[([^\]]+)\]/);
+    layers.push({
+      name: 'Transmission Control Protocol',
+      summary: `${srcPort} → ${dstPort} [${flags || 'ACK'}] Seq=${seqMatch?seqMatch[1]:'0'}${ackMatch?' Ack='+ackMatch[1]:''}${win?' Win='+win[1]:''}`,
+      color: 'var(--accent-purple)',
+      fields: [
+        ['Source Port', srcPort],
+        ['Destination Port', dstPort],
+        ['Sequence Number', seqMatch ? seqMatch[1] : '0'],
+        ['Acknowledgment Number', ackMatch ? ackMatch[1] : '0'],
+        ['Header Length', opts ? '32 bytes (8)' : '20 bytes (5)'],
+        ['Flags', `0x${tcpFlags.includes('SYN')&&tcpFlags.includes('ACK')?'012':tcpFlags.includes('SYN')?'002':tcpFlags.includes('RST')&&tcpFlags.includes('ACK')?'014':tcpFlags.includes('RST')?'004':tcpFlags.includes('FIN')?'001':'010'} (${tcpFlags.join(', ') || 'ACK'})`],
+        ['Window', win ? win[1] : '65535'],
+        ...(opts ? [['Options', opts[1]]] : []),
+      ]
+    });
+  }
+
+  // Application layer
+  if (pkt.proto === 'DNS') {
+    const dnsFields = [];
+    const txn = (pkt.headers.dns || '').match(/Transaction ID:\s*(0x[0-9a-f]+)/i);
+    if (txn) dnsFields.push(['Transaction ID', txn[1]]);
+    const isResponse = (pkt.headers.dns || '').includes('Response');
+    dnsFields.push(['QR', isResponse ? '1 (Response)' : '0 (Query)']);
+    const query = (pkt.headers.dns || '').match(/(?:Query|Response):\s*A\s+(\S+)/);
+    if (query) dnsFields.push(['Name', query[1]]);
+    const ans = (pkt.headers.dns || '').match(/->\s*([\d.]+)/);
+    if (ans) dnsFields.push(['Address', ans[1]]);
+    const dttl = (pkt.headers.dns || '').match(/TTL:\s*(\d+)/);
+    if (dttl) dnsFields.push(['Time to Live', dttl[1]]);
+    layers.push({
+      name: 'Domain Name System',
+      summary: isResponse ? 'Standard query response' : 'Standard query',
+      color: 'var(--accent-cyan)',
+      fields: dnsFields
+    });
+  } else if (pkt.proto === 'SSH') {
+    const sshFields = [];
+    Object.entries(pkt.headers).forEach(([k,v]) => {
+      if (k.startsWith('ssh')) sshFields.push([k.replace(/_/g,' ').replace(/ssh\s*/i,'').replace(/^\w/,c=>c.toUpperCase()) || 'Protocol', v]);
+    });
+    layers.push({
+      name: 'SSH Protocol',
+      summary: pkt.info,
+      color: 'var(--accent-amber)',
+      fields: sshFields
+    });
+  } else if (pkt.proto === 'HTTP') {
+    const httpFields = [];
+    Object.entries(pkt.headers).forEach(([k,v]) => {
+      const label = k.replace(/^http_?/,'').replace(/_/g,'-').replace(/^\w/,c=>c.toUpperCase()) || 'Request/Status';
+      httpFields.push([label === '' ? 'HTTP' : label, v]);
+    });
+    const isReq = pkt.info.match(/^(GET|POST|PUT|DELETE|PATCH|HEAD|OPTIONS)/);
+    layers.push({
+      name: 'Hypertext Transfer Protocol',
+      summary: isReq ? `${isReq[1]} request` : pkt.info,
+      color: 'var(--accent-green)',
+      fields: httpFields
+    });
+  } else if (pkt.proto === 'FTP') {
+    const ftpFields = [];
+    Object.entries(pkt.headers).forEach(([k,v]) => {
+      const label = k.replace(/^ftp_?/,'').replace(/_/g,' ').replace(/^\w/,c=>c.toUpperCase()) || 'FTP';
+      ftpFields.push([label, v]);
+    });
+    layers.push({
+      name: 'File Transfer Protocol',
+      summary: pkt.info,
+      color: 'var(--accent-amber)',
+      fields: ftpFields
+    });
+  }
+
+  return layers;
+}
+
 function showDetailView(pkt, view) {
   currentView = view;
   const content = document.getElementById('detailContent');
@@ -390,26 +601,55 @@ function showDetailView(pkt, view) {
   });
 
   if (view === 'headers') {
-    const fields = Object.entries(pkt.headers).map(([k, v]) => {
-      const isSuspicious = /nmap|p@ssw0rd|password=|exfil|evil\.com|PASS |USER /i.test(v);
-      return `<div class="field"><span class="field-name">${k}:</span> <span class="${isSuspicious ? 'suspicious-val' : 'field-val'}">${escHtml(v)}</span></div>`;
+    const layers = dissectPacket(pkt);
+    content.innerHTML = layers.map((layer, i) => {
+      const fieldsHtml = layer.fields.map(([name, val]) => {
+        const isSusp = /nmap|p@ssw0rd|password=|exfil|evil\.com|PASS |USER |shadow/i.test(val);
+        return `<div class="proto-field"><span class="pf-name">${escHtml(name)}:</span><span class="pf-val${isSusp?' suspicious':''}">${escHtml(val)}</span></div>`;
+      }).join('');
+      return `<div class="proto-layer">
+        <div class="proto-layer-header${i >= layers.length - 1 ? ' open' : ''}" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open');">
+          <span class="arrow">&#9654;</span>
+          <span class="layer-name" style="color:${layer.color}">${escHtml(layer.name)}</span>
+          <span class="layer-summary">${escHtml(layer.summary)}</span>
+        </div>
+        <div class="proto-layer-fields${i >= layers.length - 1 ? ' open' : ''}">${fieldsHtml}</div>
+      </div>`;
     }).join('');
-    content.innerHTML = `<div class="field"><span class="field-name">Frame:</span> <span class="field-val">${pkt.len} bytes on wire</span></div>
-      <div class="field"><span class="field-name">Source:</span> <span class="field-val">${pkt.src}</span></div>
-      <div class="field"><span class="field-name">Destination:</span> <span class="field-val">${pkt.dst}</span></div>
-      <div class="field"><span class="field-name">Protocol:</span> <span class="field-val">${pkt.proto}</span></div>
-      ${fields}`;
   } else if (view === 'payload') {
     content.innerHTML = pkt.payload ?
-      `<pre>${escHtml(pkt.payload.replace(/\\r\\n/g, '\r\n'))}</pre>` :
-      '<span style="color:var(--text-muted);">No payload data</span>';
+      `<div style="padding:0.75rem;"><pre>${escHtml(pkt.payload.replace(/\\r\\n/g, '\r\n'))}</pre></div>` :
+      '<div style="padding:0.75rem;"><span style="color:var(--text-muted);">No payload data</span></div>';
   } else if (view === 'hex') {
-    const hex = pkt.hex || '';
-    const ascii = hex.split(' ').map(h => {
-      const c = parseInt(h, 16);
-      return c >= 32 && c <= 126 ? String.fromCharCode(c) : '.';
-    }).join('');
-    content.innerHTML = `<pre style="display:flex;gap:2rem;"><div>${hex}</div><div style="color:var(--accent-green);">${escHtml(ascii)}</div></pre>`;
+    const bytes = (pkt.hex || '').split(' ').filter(Boolean);
+    let html = '<div class="hex-dump">';
+    for (let offset = 0; offset < bytes.length; offset += 16) {
+      const chunk = bytes.slice(offset, offset + 16);
+      const offsetStr = offset.toString(16).padStart(4, '0');
+      // Hex bytes with gap at byte 8
+      let hexPart = '';
+      for (let j = 0; j < 16; j++) {
+        if (j === 8) hexPart += '<span class="gap"></span>';
+        if (j < chunk.length) {
+          hexPart += `<span class="hb">${chunk[j]}</span>`;
+        } else {
+          hexPart += `<span class="hb">  </span>`;
+        }
+      }
+      // ASCII
+      let asciiPart = '';
+      for (let j = 0; j < chunk.length; j++) {
+        const c = parseInt(chunk[j], 16);
+        const ch = (c >= 32 && c <= 126) ? String.fromCharCode(c) : '.';
+        asciiPart += `<span class="ha">${escHtml(ch)}</span>`;
+      }
+      html += `<div class="hex-row"><span class="hex-offset">${offsetStr}</span><span class="hex-bytes">${hexPart}</span><span class="hex-ascii">${asciiPart}</span></div>`;
+    }
+    if (bytes.length === 0) {
+      html += '<div style="padding:0.75rem;color:var(--text-muted);">No hex data available</div>';
+    }
+    html += '</div>';
+    content.innerHTML = html;
   }
 }
 
