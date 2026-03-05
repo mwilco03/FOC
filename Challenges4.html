@@ -34,11 +34,26 @@ code{font-family:'JetBrains Mono',monospace;font-size:.82rem;background:rgba(6,1
 .drill-card .func-sig{font-family:'JetBrains Mono',monospace;font-size:.8rem;color:#c9d1d9;background:#0d1117;padding:.6rem;border-radius:6px;margin-bottom:.6rem;white-space:pre-wrap;line-height:1.5}
 .drill-card .func-sig .todo{color:var(--amber)}
 .drill-card .tests{font-family:'JetBrains Mono',monospace;font-size:.72rem;color:var(--muted);margin-bottom:.6rem;line-height:1.5}
-.input-row{display:flex;gap:.5rem}
-.input-row input{flex:1;font-family:'JetBrains Mono',monospace;font-size:.82rem;padding:.5rem;background:#0d1117;border:1px solid var(--border);border-radius:6px;color:var(--text);outline:none}
-.input-row input:focus{border-color:var(--blue)}
-.input-row input.correct{border-color:var(--green);background:rgba(16,185,129,.08)}
-.input-row input.wrong{border-color:var(--red);background:rgba(239,68,68,.08)}
+.input-row{display:flex;gap:.5rem;flex-wrap:wrap}
+.input-row textarea{flex:1;min-width:0;font-family:'JetBrains Mono',monospace;font-size:.82rem;padding:.5rem;background:#0d1117;border:1px solid var(--border);border-radius:6px;color:var(--text);outline:none;resize:vertical;line-height:1.5;min-height:5.5em}
+.input-row textarea:focus{border-color:var(--blue)}
+.input-row textarea.correct{border-color:var(--green);background:rgba(16,185,129,.08)}
+.input-row textarea.wrong{border-color:var(--red);background:rgba(239,68,68,.08)}
+.btn-reset{background:var(--amber);color:#000}
+.btn-reset:hover{background:#d97706}
+.btn-group{display:flex;gap:.4rem;flex-direction:column}
+.live-area{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1rem;margin-bottom:1rem}
+.live-term{background:#0d1117;border:1px solid var(--border);border-radius:6px;padding:.75rem;font-family:'JetBrains Mono',monospace;font-size:.78rem;min-height:200px;max-height:400px;overflow-y:auto;line-height:1.6;color:#c9d1d9;white-space:pre-wrap;margin-bottom:.75rem}
+.live-term .prompt-line{color:var(--green)}
+.live-term .output-line{color:#c9d1d9}
+.live-term .error-line{color:var(--red)}
+.live-input-row{display:flex;gap:.5rem}
+.live-input-row span{color:var(--green);font-family:'JetBrains Mono',monospace;font-size:.82rem;line-height:2.2}
+.live-input-row input{flex:1;font-family:'JetBrains Mono',monospace;font-size:.82rem;padding:.5rem;background:#0d1117;border:1px solid var(--border);border-radius:6px;color:var(--text);outline:none}
+.live-input-row input:focus{border-color:var(--blue)}
+.live-examples{display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.75rem}
+.live-examples button{font-family:'JetBrains Mono',monospace;font-size:.7rem;padding:.3rem .6rem;background:rgba(6,182,212,.08);border:1px solid var(--border);border-radius:4px;color:var(--cyan);cursor:pointer}
+.live-examples button:hover{border-color:var(--cyan)}
 .btn{font-family:inherit;font-size:.78rem;padding:.45rem .9rem;border:none;border-radius:6px;cursor:pointer;color:#fff}
 .btn-check{background:var(--blue)}
 .btn-check:hover{background:#2563eb}
@@ -62,6 +77,7 @@ code{font-family:'JetBrains Mono',monospace;font-size:.82rem;background:rgba(6,1
 <div class="top-bar"><a href="index.html">&larr; Home</a><h1>Bash Lab</h1><span style="font-size:.7rem;color:var(--muted)">FOC</span></div>
 <div class="tabs">
 <button class="tab-btn active" data-tab="ref">Reference</button>
+<button class="tab-btn" data-tab="explore">Live Explorer</button>
 <button class="tab-btn" data-tab="drill">Challenge Drill</button>
 <button class="tab-btn" data-tab="quiz">Quick Quiz</button>
 </div>
@@ -259,6 +275,33 @@ cmd1 || cmd2        # run cmd2 if cmd1 fails</pre>
 </div></details>
 </div>
 
+<!-- ======= LIVE EXPLORER ======= -->
+<div class="tab-panel" id="tab-explore">
+<p style="font-size:.82rem;color:var(--muted);margin-bottom:.75rem;">Try Bash commands interactively. This simulator supports common commands like <code>echo</code>, <code>printf</code>, variable assignment, arithmetic <code>$(( ))</code>, pipes, <code>tr</code>, <code>cut</code>, <code>awk</code>, <code>sed</code>, <code>grep</code>, <code>sort</code>, <code>uniq</code>, <code>wc</code>, <code>rev</code>, <code>seq</code>, <code>head</code>, <code>tail</code>, and more.</p>
+<div class="live-area">
+<div class="live-term" id="live-term"></div>
+<div class="live-input-row">
+  <span>$</span>
+  <input type="text" id="live-input" placeholder="Type a bash command..." autocomplete="off">
+  <button class="btn btn-check" id="live-run">Run</button>
+  <button class="btn btn-reset" id="live-clear">Clear</button>
+</div>
+<div class="live-examples">
+  <span style="font-size:.7rem;color:var(--muted);margin-right:.25rem;">Try:</span>
+  <button onclick="liveRun('echo \"Hello, World!\"')">echo</button>
+  <button onclick="liveRun('name=Alice; echo $name')">variables</button>
+  <button onclick="liveRun('echo $((42 + 8))')">arithmetic</button>
+  <button onclick="liveRun('echo \"hello world\" | tr a-z A-Z')">tr</button>
+  <button onclick="liveRun('echo \"alice,30,NY\" | cut -d, -f2')">cut</button>
+  <button onclick="liveRun('echo \"alice,30,NY\" | awk -F, \\x27{print $1, $3}\\x27')">awk</button>
+  <button onclick="liveRun('echo \"Bash is fun\" | rev')">rev</button>
+  <button onclick="liveRun('seq 1 5 | sort -r')">seq+sort</button>
+  <button onclick="liveRun('echo \"3 1 2 3 1\" | tr \" \" \"\\n\" | sort -n | uniq')">sort+uniq</button>
+  <button onclick="liveRun('for i in $(seq 1 5); do echo \"Number: $i\"; done')">for loop</button>
+</div>
+</div>
+</div>
+
 <!-- ======= CHALLENGE DRILL ======= -->
 <div class="tab-panel" id="tab-drill">
 <div class="stats">SCORE: <span class="v" id="d-score">0</span> &nbsp; STREAK: <span class="v" id="d-streak">0</span> &nbsp; <span id="d-num">1</span>/<span id="d-total">20</span></div>
@@ -318,26 +361,42 @@ function showDrill(){
     <div class="func-sig">${d.sig.replace(/# TODO/g,'<span class="todo"># TODO</span>')}</div>
     <div class="tests">${d.tests}</div>
     <div class="prompt">Type the missing line(s):</div>
-    <div class="input-row"><input type="text" id="drill-input" placeholder="echo ..."><button class="btn btn-check" onclick="checkDrill()">Check</button></div>
+    <div class="input-row"><textarea id="drill-input" rows="4" placeholder="echo ...&#10;# You have 4 lines to work with"></textarea><div class="btn-group"><button class="btn btn-check" onclick="checkDrill()">Check</button><button class="btn btn-reset" onclick="resetDrill()">Reset</button></div></div>
     <div class="feedback" id="drill-fb"></div>
     <div style="margin-top:.5rem;text-align:right"><button class="btn btn-next" onclick="nextDrill()" style="display:none" id="drill-next">Next</button></div>
   </div>`;
-  document.getElementById('drill-input').addEventListener('keydown',e=>{if(e.key==='Enter')checkDrill()});
+  document.getElementById('drill-input').addEventListener('keydown',e=>{if(e.key==='Enter'&&e.ctrlKey)checkDrill()});
   document.getElementById('drill-input').focus();
+}
+
+function resetDrill(){
+  const inp=document.getElementById('drill-input');
+  inp.value='';
+  inp.disabled=false;
+  inp.classList.remove('correct','wrong');
+  const fb=document.getElementById('drill-fb');
+  fb.textContent='';fb.className='feedback';
+  document.getElementById('drill-next').style.display='none';
+  inp.focus();
 }
 
 function checkDrill(){
   const inp=document.getElementById('drill-input');
   if(inp.disabled) return;
   const fb=document.getElementById('drill-fb');
-  const val=inp.value.trim().replace(/\s+/g,' ');
+  // Collapse multi-line input to single line for comparison (join non-empty lines with '; ')
+  const lines=inp.value.split('\n').map(l=>l.trim()).filter(l=>l&&!l.startsWith('#'));
+  const val=lines.join('; ').replace(/\s+/g,' ').trim();
+  // Also try single-line collapsed version
+  const valFlat=inp.value.trim().replace(/\n/g,' ').replace(/\s+/g,' ');
   const d=DRILLS[dIdx];
-  const ok=d.answers.some(a=>val===a.replace(/\s+/g,' ').trim());
+  const normalize=s=>s.replace(/\s+/g,' ').trim();
+  const ok=d.answers.some(a=>val===normalize(a)||valFlat===normalize(a));
   if(ok){
     inp.classList.add('correct');fb.textContent='Correct!';fb.className='feedback correct';
     dScore+=10;dStreak++;
   }else{
-    inp.classList.add('wrong');fb.innerHTML='Expected: <code>'+d.answers[0].replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</code>';fb.className='feedback wrong';
+    inp.classList.add('wrong');fb.innerHTML='Try again or see answer: <code>'+d.answers[0].replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</code>';fb.className='feedback wrong';
     dStreak=0;
   }
   document.getElementById('d-score').textContent=dScore;
@@ -427,6 +486,335 @@ function nextQuiz(){
   showQuiz();
 }
 showQuiz();
+
+// ============ LIVE EXPLORER ============
+const liveVars={};
+const liveHistory=[];
+let liveHistIdx=-1;
+
+function liveRun(cmd){
+  if(cmd===undefined){
+    cmd=document.getElementById('live-input').value.trim();
+  }
+  if(!cmd)return;
+  document.getElementById('live-input').value='';
+  liveHistory.unshift(cmd);
+  liveHistIdx=-1;
+  appendTerm('$ '+cmd,'prompt-line');
+  const out=evalBash(cmd);
+  if(out.error) appendTerm(out.error,'error-line');
+  else if(out.text) appendTerm(out.text,'output-line');
+}
+
+function appendTerm(text,cls){
+  const term=document.getElementById('live-term');
+  const div=document.createElement('div');
+  div.className=cls;
+  div.textContent=text;
+  term.appendChild(div);
+  term.scrollTop=term.scrollHeight;
+}
+
+function evalBash(cmd){
+  try{
+    // Handle semicolon-separated commands
+    if(cmd.includes(';')&&!cmd.includes("'")){
+      const parts=cmd.split(';').map(s=>s.trim()).filter(Boolean);
+      let allOut=[];
+      for(const p of parts){
+        const r=evalBash(p);
+        if(r.error)return r;
+        if(r.text)allOut.push(r.text);
+      }
+      return{text:allOut.join('\n')};
+    }
+    // Handle for loops
+    const forMatch=cmd.match(/^for\s+(\w+)\s+in\s+\$\(seq\s+(\d+)\s+(\d+)\);\s*do\s+(.*?);\s*done$/);
+    if(forMatch){
+      const[,varName,start,end,body]=forMatch;
+      let out=[];
+      for(let i=parseInt(start);i<=parseInt(end);i++){
+        liveVars[varName]=String(i);
+        const r=evalBash(body);
+        if(r.text)out.push(r.text);
+      }
+      return{text:out.join('\n')};
+    }
+    // Handle pipes
+    if(cmd.includes('|')&&!cmd.includes("'")){
+      return evalPipe(cmd);
+    }
+    // Variable assignment: name=value
+    const assignMatch=cmd.match(/^(\w+)=(.*)$/);
+    if(assignMatch){
+      liveVars[assignMatch[1]]=expandVars(assignMatch[2].replace(/^["']|["']$/g,''));
+      return{text:''};
+    }
+    // echo
+    if(cmd.startsWith('echo ')){
+      let arg=cmd.slice(5).trim();
+      arg=expandVars(arg);
+      // Handle arithmetic $(( ))
+      arg=arg.replace(/\$\(\(([^)]+)\)\)/g,(_,expr)=>{
+        try{return String(evalArith(expr));}catch(e){return'ERROR';}
+      });
+      // Remove quotes
+      arg=arg.replace(/^["']|["']$/g,'');
+      return{text:arg};
+    }
+    // printf
+    if(cmd.startsWith('printf ')){
+      let arg=cmd.slice(7).trim();
+      arg=expandVars(arg);
+      arg=arg.replace(/^["']|["']$/g,'').replace(/\\n/g,'\n').replace(/\\t/g,'\t');
+      return{text:arg};
+    }
+    // seq
+    const seqMatch=cmd.match(/^seq\s+(\d+)\s+(\d+)$/);
+    if(seqMatch){
+      const nums=[];
+      for(let i=parseInt(seqMatch[1]);i<=parseInt(seqMatch[2]);i++)nums.push(i);
+      return{text:nums.join('\n')};
+    }
+    const seqMatch3=cmd.match(/^seq\s+(\d+)\s+(\d+)\s+(\d+)$/);
+    if(seqMatch3){
+      const nums=[];
+      for(let i=parseInt(seqMatch3[1]);i<=parseInt(seqMatch3[3]);i+=parseInt(seqMatch3[2]))nums.push(i);
+      return{text:nums.join('\n')};
+    }
+    // rev
+    if(cmd.startsWith('rev')){
+      let arg=cmd.slice(3).trim();
+      arg=expandVars(arg).replace(/^["']|["']$/g,'');
+      return{text:arg.split('').reverse().join('')};
+    }
+    // wc
+    if(cmd.startsWith('wc ')){
+      let arg=cmd.slice(3).trim();
+      const flag=arg.match(/^-(\w)/);
+      if(flag){arg=arg.slice(flag[0].length).trim();}
+      arg=expandVars(arg).replace(/^["']|["']$/g,'');
+      if(flag&&flag[1]==='w')return{text:String(arg.split(/\s+/).filter(Boolean).length)};
+      if(flag&&flag[1]==='l')return{text:String(arg.split('\n').length)};
+      if(flag&&flag[1]==='c')return{text:String(arg.length)};
+      const lines=arg.split('\n');
+      return{text:`${lines.length} ${arg.split(/\s+/).filter(Boolean).length} ${arg.length}`};
+    }
+    // tr
+    const trMatch=cmd.match(/^tr\s+(?:-d\s+)?['"]?([^'"]+)['"]?\s*['"]?([^'"]*?)['"]?\s*$/);
+    if(trMatch){
+      return{text:'',error:'tr requires piped input'};
+    }
+    // cut
+    if(cmd.startsWith('cut ')){return{error:'cut requires piped input'};}
+    // sort
+    if(cmd.startsWith('sort')){return{error:'sort requires piped input'};}
+    // awk
+    if(cmd.startsWith('awk ')){return{error:'awk requires piped input'};}
+    // sed
+    if(cmd.startsWith('sed ')){return{error:'sed requires piped input'};}
+    // grep
+    if(cmd.startsWith('grep ')){return{error:'grep requires piped input (in this simulator)'};}
+    // help
+    if(cmd==='help'){
+      return{text:'Available: echo, printf, seq, rev, wc, tr, cut, sort, uniq, awk, sed, grep, head, tail\nUse pipes: echo "text" | tr a-z A-Z\nVariables: name=value; echo $name\nArithmetic: echo $((2+3))\nLoops: for i in $(seq 1 5); do echo $i; done'};
+    }
+    // clear
+    if(cmd==='clear'){
+      document.getElementById('live-term').innerHTML='';
+      return{text:''};
+    }
+    return{error:`Command not found: ${cmd.split(' ')[0]}. Type 'help' for available commands.`};
+  }catch(e){
+    return{error:'Error: '+e.message};
+  }
+}
+
+function evalPipe(cmd){
+  // Split by pipe, but not inside quotes
+  const stages=[];
+  let current='',inQ=false,qChar='';
+  for(let i=0;i<cmd.length;i++){
+    const c=cmd[i];
+    if((c==="'"||c==='"')&&!inQ){inQ=true;qChar=c;current+=c;}
+    else if(c===qChar&&inQ){inQ=false;current+=c;}
+    else if(c==='|'&&!inQ){stages.push(current.trim());current='';}
+    else current+=c;
+  }
+  stages.push(current.trim());
+
+  let data='';
+  for(let i=0;i<stages.length;i++){
+    const s=stages[i].trim();
+    if(i===0){
+      const r=evalBash(s);
+      if(r.error)return r;
+      data=r.text||'';
+    }else{
+      data=applyPipe(s,data);
+      if(typeof data==='object')return data; // error
+    }
+  }
+  return{text:data};
+}
+
+function applyPipe(cmd,input){
+  // tr
+  const trDel=cmd.match(/^tr\s+-d\s+['"]?(.+?)['"]?\s*$/);
+  if(trDel){
+    const chars=trDel[1];
+    return input.split('').filter(c=>!chars.includes(c)).join('');
+  }
+  const trMatch=cmd.match(/^tr\s+['"]?([^'"]+?)['"]?\s+['"]?([^'"]+?)['"]?\s*$/);
+  if(trMatch){
+    let[,from,to]=trMatch;
+    // Handle ranges like a-z
+    from=expandRange(from);to=expandRange(to);
+    if(from==='\\n'||from==='\\n')return input.replace(/ /g,'\n'); // hack for common case
+    if(from===' '&&to==='\\n')return input.split(' ').join('\n');
+    if(from==='"\\n"'||from==='\\n')return input.replace(/\n/g,to);
+    let result='';
+    for(const c of input){
+      const idx=from.indexOf(c);
+      result+=idx>=0?(to[Math.min(idx,to.length-1)]||c):c;
+    }
+    return result;
+  }
+  // Handle tr with escaped chars
+  if(cmd.startsWith('tr ')){
+    const parts=cmd.slice(3).trim().split(/\s+/);
+    if(parts[0]==='"\\n"'||parts[0]==='\\n'){
+      return input.replace(/\n/g,parts[1]?.replace(/['"]/g,'')||' ');
+    }
+    if((parts[0]==='" "'||parts[0]==='\' \'')&&(parts[1]==='"\\n"'||parts[1]==='\\n')){
+      return input.split(' ').join('\n');
+    }
+  }
+  // rev
+  if(cmd==='rev'){
+    return input.split('\n').map(l=>l.split('').reverse().join('')).join('\n');
+  }
+  // sort
+  if(cmd==='sort'||cmd==='sort -n'){
+    const lines=input.split('\n').filter(Boolean);
+    if(cmd.includes('-n'))lines.sort((a,b)=>parseFloat(a)-parseFloat(b));
+    else lines.sort();
+    return lines.join('\n');
+  }
+  if(cmd==='sort -r'||cmd==='sort -rn'||cmd==='sort -nr'){
+    const lines=input.split('\n').filter(Boolean);
+    if(cmd.includes('n'))lines.sort((a,b)=>parseFloat(b)-parseFloat(a));
+    else lines.sort().reverse();
+    return lines.join('\n');
+  }
+  if(cmd==='sort -nu'||cmd==='sort -un'){
+    const lines=[...new Set(input.split('\n').filter(Boolean))];
+    lines.sort((a,b)=>parseFloat(a)-parseFloat(b));
+    return lines.join('\n');
+  }
+  // uniq
+  if(cmd==='uniq'){
+    const lines=input.split('\n');
+    return lines.filter((l,i)=>i===0||l!==lines[i-1]).join('\n');
+  }
+  if(cmd==='uniq -c'){
+    const lines=input.split('\n').filter(Boolean);
+    const result=[];
+    let count=1;
+    for(let i=1;i<=lines.length;i++){
+      if(i<lines.length&&lines[i]===lines[i-1])count++;
+      else{result.push(`      ${count} ${lines[i-1]}`);count=1;}
+    }
+    return result.join('\n');
+  }
+  // wc
+  if(cmd==='wc -w')return String(input.split(/\s+/).filter(Boolean).length);
+  if(cmd==='wc -l')return String(input.split('\n').filter(Boolean).length);
+  if(cmd==='wc -c')return String(input.length);
+  // cut
+  const cutMatch=cmd.match(/^cut\s+-d\s*['"]?(.)['"]?\s+-f\s*(\d+)$/);
+  if(cutMatch){
+    const[,delim,field]=cutMatch;
+    const f=parseInt(field)-1;
+    return input.split('\n').map(line=>line.split(delim)[f]||'').join('\n');
+  }
+  const cutMatch2=cmd.match(/^cut\s+-d(.)?\s+-f(\d+)$/);
+  if(cutMatch2){
+    const delim=cutMatch2[1]||'\t';
+    const f=parseInt(cutMatch2[2])-1;
+    return input.split('\n').map(line=>line.split(delim)[f]||'').join('\n');
+  }
+  // awk
+  const awkMatch=cmd.match(/^awk\s+(?:-F\s*['"]?(.)['"]?\s+)?['"\x27]\{print\s+(.*?)\}['"\x27]\s*$/);
+  if(awkMatch){
+    const delim=awkMatch[1]||/\s+/;
+    const fields=awkMatch[2];
+    return input.split('\n').filter(Boolean).map(line=>{
+      const parts=typeof delim==='string'?line.split(delim):line.split(delim);
+      return fields.replace(/\$(\d+)/g,(_,n)=>parts[parseInt(n)-1]||'').replace(/,\s*/g,' ');
+    }).join('\n');
+  }
+  // sed
+  const sedMatch=cmd.match(/^sed\s+['"]s\/(.+?)\/(.+?)\/(g?)['"]?\s*$/);
+  if(sedMatch){
+    const[,pat,rep,g]=sedMatch;
+    const regex=new RegExp(pat,g?'g':'');
+    return input.split('\n').map(l=>l.replace(regex,rep)).join('\n');
+  }
+  // grep
+  if(cmd.startsWith('grep ')){
+    let pattern=cmd.slice(5).trim();
+    let flags='';
+    if(pattern.startsWith('-i ')){flags='i';pattern=pattern.slice(3).trim();}
+    if(pattern.startsWith('-c ')){
+      pattern=pattern.slice(3).trim().replace(/^["']|["']$/g,'');
+      const regex=new RegExp(pattern,flags);
+      return String(input.split('\n').filter(l=>regex.test(l)).length);
+    }
+    pattern=pattern.replace(/^["']|["']$/g,'');
+    const regex=new RegExp(pattern,flags);
+    return input.split('\n').filter(l=>regex.test(l)).join('\n');
+  }
+  // head
+  const headMatch=cmd.match(/^head\s+-n?\s*(\d+)$/);
+  if(headMatch){return input.split('\n').slice(0,parseInt(headMatch[1])).join('\n');}
+  if(cmd==='head'){return input.split('\n').slice(0,10).join('\n');}
+  // tail
+  const tailMatch=cmd.match(/^tail\s+-n?\s*(\d+)$/);
+  if(tailMatch){return input.split('\n').slice(-parseInt(tailMatch[1])).join('\n');}
+  if(cmd==='tail'){return input.split('\n').slice(-10).join('\n');}
+
+  return{error:`Pipe stage not understood: ${cmd}`};
+}
+
+function expandRange(s){
+  const m=s.match(/^([a-zA-Z])-([a-zA-Z])$/);
+  if(!m)return s;
+  let result='';
+  for(let i=m[1].charCodeAt(0);i<=m[2].charCodeAt(0);i++)result+=String.fromCharCode(i);
+  return result;
+}
+
+function expandVars(s){
+  return s.replace(/\$(\w+)/g,(_,name)=>liveVars[name]||'')
+          .replace(/\$\(\(([^)]+)\)\)/g,(_,expr)=>{
+            try{return String(evalArith(expr));}catch(e){return'ERROR';}
+          });
+}
+
+function evalArith(expr){
+  const sanitized=expandVars(expr).replace(/[^0-9+\-*/%() ]/g,'');
+  return Function('"use strict"; return ('+sanitized+')')();
+}
+
+// Live Explorer event handlers
+document.getElementById('live-run').addEventListener('click',()=>liveRun());
+document.getElementById('live-clear').addEventListener('click',()=>{document.getElementById('live-term').innerHTML='';});
+document.getElementById('live-input').addEventListener('keydown',e=>{
+  if(e.key==='Enter')liveRun();
+  if(e.key==='ArrowUp'){e.preventDefault();liveHistIdx=Math.min(liveHistIdx+1,liveHistory.length-1);if(liveHistIdx>=0)document.getElementById('live-input').value=liveHistory[liveHistIdx];}
+  if(e.key==='ArrowDown'){e.preventDefault();liveHistIdx=Math.max(liveHistIdx-1,-1);document.getElementById('live-input').value=liveHistIdx>=0?liveHistory[liveHistIdx]:'';}
+});
 
 // Progress persistence
 (function(){
