@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Data &amp; APIs Lab - FOC</title>
+<style>
+:root{--bg:#0a0e17;--card:#141925;--border:#2a3650;--text:#e2e8f0;--muted:#64748b;--cyan:#06b6d4;--green:#10b981;--red:#ef4444;--blue:#3b82f6;--amber:#f59e0b}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+.container{max-width:820px;margin:0 auto;padding:1rem}
+.top-bar{display:flex;justify-content:space-between;align-items:center;padding:.5rem 0;border-bottom:1px solid var(--border);margin-bottom:1rem}
+.top-bar a{color:var(--muted);text-decoration:none;font-size:.8rem}
+.top-bar a:hover{color:var(--cyan)}
+.top-bar h1{font-family:'JetBrains Mono',monospace;font-size:1.1rem;color:var(--cyan)}
+.tabs{display:flex;gap:.5rem;margin-bottom:1rem;flex-wrap:wrap}
+.tab-btn{font-family:inherit;font-size:.82rem;padding:.5rem 1rem;background:var(--card);border:1px solid var(--border);border-radius:6px;color:var(--muted);cursor:pointer}
+.tab-btn.active{color:var(--cyan);border-color:var(--cyan);background:rgba(6,182,212,.08)}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+.stats{font-size:.75rem;color:var(--muted);margin-bottom:1rem;display:flex;gap:1.5rem}
+.stats .v{color:var(--cyan);font-weight:700}
+details{background:var(--card);border:1px solid var(--border);border-radius:8px;margin-bottom:.6rem;overflow:hidden}
+summary{padding:.75rem 1rem;cursor:pointer;font-weight:600;font-size:.88rem;list-style:none}
+summary::-webkit-details-marker{display:none}
+summary::before{content:'\25B6';display:inline-block;margin-right:.5rem;font-size:.65rem;transition:transform .2s}
+details[open]>summary::before{transform:rotate(90deg)}
+.ref-body{padding:0 1rem 1rem}
+.ref-body p{font-size:.82rem;color:var(--muted);line-height:1.6;margin-bottom:.5rem}
+pre{background:#0d1117;border:1px solid var(--border);border-radius:6px;padding:.75rem;font-family:'JetBrains Mono',monospace;font-size:.78rem;overflow-x:auto;line-height:1.5;color:#c9d1d9;margin:.5rem 0}
+code{font-family:'JetBrains Mono',monospace;font-size:.82rem;background:rgba(6,182,212,.1);padding:1px 5px;border-radius:3px;color:var(--cyan)}
+.drill-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.2rem;margin-bottom:1rem}
+.drill-card .prompt{font-size:.82rem;color:var(--muted);margin-bottom:.5rem;line-height:1.5}
+.drill-card .func-sig{font-family:'JetBrains Mono',monospace;font-size:.8rem;color:#c9d1d9;background:#0d1117;padding:.6rem;border-radius:6px;margin-bottom:.6rem;white-space:pre-wrap;line-height:1.5}
+.drill-card .func-sig .todo{color:var(--amber)}
+.drill-card .tests{font-family:'JetBrains Mono',monospace;font-size:.72rem;color:var(--muted);margin-bottom:.6rem;line-height:1.5}
+.input-row{display:flex;gap:.5rem}
+.input-row input{flex:1;font-family:'JetBrains Mono',monospace;font-size:.82rem;padding:.5rem;background:#0d1117;border:1px solid var(--border);border-radius:6px;color:var(--text);outline:none}
+.input-row input:focus{border-color:var(--blue)}
+.input-row input.correct{border-color:var(--green);background:rgba(16,185,129,.08)}
+.input-row input.wrong{border-color:var(--red);background:rgba(239,68,68,.08)}
+.btn{font-family:inherit;font-size:.78rem;padding:.45rem .9rem;border:none;border-radius:6px;cursor:pointer;color:#fff}
+.btn-check{background:var(--blue)}
+.btn-check:hover{background:#2563eb}
+.btn-next{background:var(--cyan);color:#000}
+.btn-next:hover{background:#0891b2}
+.feedback{font-size:.78rem;margin-top:.5rem;min-height:1.2em}
+.feedback.correct{color:var(--green)}
+.feedback.wrong{color:var(--red)}
+.quiz-q{font-size:.88rem;margin-bottom:.75rem;line-height:1.5}
+.quiz-opts{display:grid;grid-template-columns:1fr 1fr;gap:.5rem}
+.quiz-opt{font-size:.82rem;padding:.6rem;background:var(--card);border:2px solid var(--border);border-radius:6px;cursor:pointer;text-align:left;color:var(--text);font-family:inherit}
+.quiz-opt:hover:not(.disabled){border-color:var(--blue)}
+.quiz-opt.correct{border-color:var(--green);background:rgba(16,185,129,.1);color:var(--green)}
+.quiz-opt.wrong{border-color:var(--red);background:rgba(239,68,68,.1);color:var(--red)}
+.quiz-opt.disabled{pointer-events:none;opacity:.6}
+.json-viewer{background:#0d1117;border:1px solid var(--border);border-radius:6px;padding:.75rem;font-family:'JetBrains Mono',monospace;font-size:.75rem;overflow-x:auto;line-height:1.5;color:#c9d1d9;max-height:300px;overflow-y:auto;margin:.5rem 0}
+.json-viewer .key{color:var(--cyan)}.json-viewer .str{color:var(--green)}.json-viewer .num{color:var(--amber)}.json-viewer .bool{color:var(--red)}
+.live-area{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1rem;margin-bottom:1rem}
+.live-area textarea{width:100%;min-height:80px;font-family:'JetBrains Mono',monospace;font-size:.78rem;background:#0d1117;border:1px solid var(--border);border-radius:6px;color:var(--text);padding:.5rem;outline:none;resize:vertical}
+.live-area textarea:focus{border-color:var(--blue)}
+.live-area .output{background:#0d1117;border:1px solid var(--border);border-radius:6px;padding:.5rem;margin-top:.5rem;font-family:'JetBrains Mono',monospace;font-size:.75rem;color:#c9d1d9;min-height:40px;white-space:pre-wrap;max-height:200px;overflow-y:auto}
+@media(max-width:600px){.quiz-opts{grid-template-columns:1fr}.input-row{flex-direction:column}}
+</style>
+</head>
+<body>
+<div class="container">
+<div class="top-bar"><a href="index.html">&larr; Home</a><h1>Data &amp; APIs Lab</h1><span style="font-size:.7rem;color:var(--muted)">FOC</span></div>
+<div class="tabs">
+<button class="tab-btn active" data-tab="ref">Reference</button>
+<button class="tab-btn" data-tab="explore">Live Explorer</button>
+<button class="tab-btn" data-tab="drill">Challenge Drill</button>
+<button class="tab-btn" data-tab="quiz">Quick Quiz</button>
+</div>
+
+<!-- ======= REFERENCE ======= -->
+<div class="tab-panel active" id="tab-ref">
+<details open><summary>JSON Basics</summary><div class="ref-body">
+<p><strong>JSON</strong> (JavaScript Object Notation) is a lightweight data format for exchanging structured data. It's used by virtually every REST API.</p>
+<pre>{
+  "name": "Alice",
+  "age": 30,
+  "active": true,
+  "skills": ["Python", "Bash", "SQL"],
+  "address": {
+    "city": "Denver",
+    "state": "CO"
+  }
+}</pre>
+<p><strong>Data types:</strong> string (<code>"text"</code>), number (<code>42</code>, <code>3.14</code>), boolean (<code>true</code>/<code>false</code>), null, array (<code>[]</code>), object (<code>{}</code>).</p>
+<p><strong>Rules:</strong> Keys must be double-quoted strings. No trailing commas. No comments.</p>
+</div></details>
+
+<details><summary>YAML Basics</summary><div class="ref-body">
+<p><strong>YAML</strong> (YAML Ain't Markup Language) is a human-readable data format used for config files (Ansible, Docker Compose, Kubernetes).</p>
+<pre># YAML equivalent of the JSON above
+name: Alice
+age: 30
+active: true
+skills:
+  - Python
+  - Bash
+  - SQL
+address:
+  city: Denver
+  state: CO</pre>
+<p><strong>Key differences from JSON:</strong> Uses indentation (spaces, not tabs). Supports comments with <code>#</code>. No braces or brackets needed. Strings usually don't need quotes.</p>
+</div></details>
+
+<details><summary>REST API Concepts</summary><div class="ref-body">
+<p><strong>REST</strong> (Representational State Transfer) is an architectural style for APIs using standard HTTP methods.</p>
+<pre># HTTP Methods
+GET    /api/users        # Read all users
+GET    /api/users/42     # Read one user
+POST   /api/users        # Create a user
+PUT    /api/users/42     # Replace a user
+PATCH  /api/users/42     # Partial update
+DELETE /api/users/42     # Delete a user</pre>
+<p><strong>Status codes:</strong></p>
+<pre>200 OK            # Success
+201 Created       # Resource created (POST)
+204 No Content    # Success, no body (DELETE)
+400 Bad Request   # Invalid input
+401 Unauthorized  # Auth required
+403 Forbidden     # Auth OK but no permission
+404 Not Found     # Resource doesn't exist
+500 Internal Error # Server failure</pre>
+</div></details>
+
+<details><summary>curl (Command-Line HTTP)</summary><div class="ref-body">
+<p><code>curl</code> is the universal CLI tool for making HTTP requests.</p>
+<pre># GET request
+curl https://api.example.com/users
+
+# GET with headers
+curl -H "Authorization: Bearer TOKEN" https://api.example.com/me
+
+# POST with JSON body
+curl -X POST https://api.example.com/users \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Alice", "age": 30}'
+
+# PUT (update)
+curl -X PUT https://api.example.com/users/42 \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Alice", "age": 31}'
+
+# DELETE
+curl -X DELETE https://api.example.com/users/42
+
+# Useful flags
+curl -s    # Silent (no progress bar)
+curl -v    # Verbose (show headers)
+curl -o file.json  # Save output to file
+curl -I    # HEAD request (headers only)</pre>
+</div></details>
+
+<details><summary>jq (JSON Processor)</summary><div class="ref-body">
+<p><code>jq</code> is the standard CLI tool for parsing and transforming JSON.</p>
+<pre># Pretty-print
+echo '{"a":1}' | jq .
+
+# Extract a field
+echo '{"name":"Alice","age":30}' | jq '.name'    # "Alice"
+echo '{"name":"Alice","age":30}' | jq -r '.name'  # Alice (raw)
+
+# Array operations
+echo '[1,2,3,4,5]' | jq '.[0]'          # 1 (first element)
+echo '[1,2,3,4,5]' | jq '.[-1]'         # 5 (last element)
+echo '[1,2,3,4,5]' | jq '.[1:3]'        # [2,3] (slice)
+echo '[1,2,3,4,5]' | jq 'length'        # 5
+
+# Filter objects
+cat data.json | jq '.[] | select(.age > 25)'
+cat data.json | jq '[.[] | select(.language == "Sindhi")]'
+
+# Transform
+cat data.json | jq '.[] | {name, id}'   # pick fields
+cat data.json | jq 'map(.name)'         # extract names
+cat data.json | jq 'sort_by(.version)'  # sort
+cat data.json | jq 'group_by(.language)' # group</pre>
+</div></details>
+
+<details><summary>PowerShell REST &amp; JSON</summary><div class="ref-body">
+<pre># GET request
+$response = Invoke-RestMethod -Uri "https://api.example.com/users"
+
+# POST with body
+$body = @{ name = "Alice"; age = 30 } | ConvertTo-Json
+Invoke-RestMethod -Uri "https://api.example.com/users" `
+  -Method POST -Body $body -ContentType "application/json"
+
+# JSON parsing
+$json = '{"name":"Alice","age":30}' | ConvertFrom-Json
+$json.name    # Alice
+
+# Convert back to JSON
+$json | ConvertTo-Json -Depth 10
+
+# Read JSON file
+$data = Get-Content "data.json" -Raw | ConvertFrom-Json
+$data | Where-Object { $_.language -eq "Sindhi" }
+$data | Sort-Object version | Select-Object name, version</pre>
+</div></details>
+
+<details><summary>Python requests &amp; json</summary><div class="ref-body">
+<pre>import requests
+import json
+
+# GET request
+r = requests.get("https://api.example.com/users")
+data = r.json()           # parse JSON response
+print(r.status_code)      # 200
+
+# POST with JSON
+payload = {"name": "Alice", "age": 30}
+r = requests.post("https://api.example.com/users", json=payload)
+
+# Headers
+headers = {"Authorization": "Bearer TOKEN"}
+r = requests.get("https://api.example.com/me", headers=headers)
+
+# JSON module
+import json
+text = '{"name": "Alice", "age": 30}'
+obj = json.loads(text)     # parse string -> dict
+back = json.dumps(obj, indent=2)  # dict -> pretty string
+
+# Read/write JSON files
+with open("data.json") as f:
+    data = json.load(f)
+with open("output.json", "w") as f:
+    json.dump(data, f, indent=2)</pre>
+</div></details>
+
+<details><summary>Regex Basics</summary><div class="ref-body">
+<p><strong>Regular expressions</strong> match patterns in text. Used in grep, sed, Python, PowerShell, and API validation.</p>
+<pre># Metacharacters
+.     # Any character (except newline)
+\d    # Digit [0-9]
+\w    # Word character [a-zA-Z0-9_]
+\s    # Whitespace
+^     # Start of string
+$     # End of string
+\b    # Word boundary
+
+# Quantifiers
+*     # 0 or more
++     # 1 or more
+?     # 0 or 1
+{3}   # Exactly 3
+{2,5} # Between 2 and 5
+
+# Character classes
+[abc]     # a, b, or c
+[a-z]     # lowercase letter
+[^0-9]    # NOT a digit
+
+# Groups and alternation
+(abc)     # Group "abc"
+a|b       # a OR b
+
+# Common patterns
+\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}   # IPv4 (basic)
+^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$  # Email
+^https?://                                           # URL start</pre>
+<p><strong>Usage:</strong></p>
+<pre># grep
+grep -E '\d{3}-\d{4}' contacts.txt
+
+# Python
+import re
+re.findall(r'\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b', text)
+
+# PowerShell
+"test@example.com" -match '^[^@]+@[^@]+\.[^@]+$'  # True
+[regex]::Matches($text, '\d+')
+
+# sed
+sed -E 's/[0-9]{3}-[0-9]{4}/XXX-XXXX/g' file.txt</pre>
+</div></details>
+</div>
+
+<!-- ======= LIVE EXPLORER ======= -->
+<div class="tab-panel" id="tab-explore">
+<p style="font-size:.82rem;color:var(--muted);margin-bottom:.75rem;">Explore the sample dataset loaded from <code>json-dummy-data.json</code>. Write JavaScript expressions to query, filter, and transform the data. The variable <code>data</code> holds the parsed array.</p>
+<div class="live-area">
+<p style="font-size:.75rem;color:var(--muted);margin-bottom:.25rem;">Sample data (first 3 records):</p>
+<div class="json-viewer" id="sample-preview"></div>
+<p style="font-size:.75rem;color:var(--muted);margin:.5rem 0 .25rem;">JavaScript expression:</p>
+<textarea id="expr-input" placeholder="data.filter(d => d.language === 'Sindhi').map(d => d.name)">data.length</textarea>
+<div style="margin-top:.5rem;display:flex;gap:.5rem;align-items:center;">
+<button class="btn btn-check" id="run-expr">Run</button>
+<span style="font-size:.7rem;color:var(--muted);">Try: <code style="cursor:pointer" onclick="document.getElementById('expr-input').value=this.textContent">data.filter(d => d.version > 6)</code> &nbsp; <code style="cursor:pointer" onclick="document.getElementById('expr-input').value=this.textContent">data.map(d => d.name).sort()</code> &nbsp; <code style="cursor:pointer" onclick="document.getElementById('expr-input').value=this.textContent">[...new Set(data.map(d => d.language))]</code></span>
+</div>
+<div class="output" id="expr-output"></div>
+</div>
+
+<div class="live-area">
+<p style="font-size:.82rem;color:var(--muted);margin-bottom:.5rem;"><strong>JSON Validator</strong> — paste JSON to check syntax</p>
+<textarea id="json-input" placeholder='{"name": "test", "value": 42}'></textarea>
+<div style="margin-top:.5rem"><button class="btn btn-check" id="validate-json">Validate</button></div>
+<div class="output" id="json-output"></div>
+</div>
+</div>
+
+<!-- ======= CHALLENGE DRILL ======= -->
+<div class="tab-panel" id="tab-drill">
+<div class="stats">SCORE: <span class="v" id="d-score">0</span> &nbsp; STREAK: <span class="v" id="d-streak">0</span> &nbsp; <span id="d-num">1</span>/<span id="d-total">20</span></div>
+<div id="drill-area"></div>
+</div>
+
+<!-- ======= QUICK QUIZ ======= -->
+<div class="tab-panel" id="tab-quiz">
+<div class="stats">SCORE: <span class="v" id="q-score">0</span> &nbsp; STREAK: <span class="v" id="q-streak">0</span> &nbsp; <span id="q-num">1</span>/<span id="q-total">20</span></div>
+<div id="quiz-area"></div>
+</div>
+</div>
+
+<script>
+// Load sample data
+let data = [];
+fetch('json-dummy-data.json')
+  .then(r => r.json())
+  .then(d => {
+    data = d;
+    document.getElementById('sample-preview').textContent = JSON.stringify(d.slice(0, 3), null, 2);
+  })
+  .catch(() => {
+    data = [
+      {name:"Adeel Solangi",language:"Sindhi",id:"V59OF92YF627HFY0",bio:"Sample bio.",version:6.1},
+      {name:"Afzal Ghaffar",language:"Sindhi",id:"ENTOCR13RSCLZ6KU",bio:"Sample bio.",version:1.88},
+      {name:"Aamir Solangi",language:"Sindhi",id:"IAKPO3R4761JDRVG",bio:"Sample bio.",version:7.27}
+    ];
+    document.getElementById('sample-preview').textContent = JSON.stringify(data, null, 2);
+  });
+
+// Tabs
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-'+btn.dataset.tab).classList.add('active');
+  });
+});
+
+// Live Explorer
+document.getElementById('run-expr').addEventListener('click', runExpr);
+document.getElementById('expr-input').addEventListener('keydown', e => {
+  if(e.key === 'Enter' && e.ctrlKey) runExpr();
+});
+
+function runExpr(){
+  const expr = document.getElementById('expr-input').value.trim();
+  const out = document.getElementById('expr-output');
+  try {
+    const result = new Function('data', 'return ' + expr)(data);
+    out.textContent = JSON.stringify(result, null, 2);
+    out.style.color = '#c9d1d9';
+  } catch(e) {
+    out.textContent = 'Error: ' + e.message;
+    out.style.color = 'var(--red)';
+  }
+}
+
+document.getElementById('validate-json').addEventListener('click', () => {
+  const input = document.getElementById('json-input').value.trim();
+  const out = document.getElementById('json-output');
+  if(!input){ out.textContent = ''; return; }
+  try {
+    const parsed = JSON.parse(input);
+    out.textContent = 'Valid JSON (' + (Array.isArray(parsed) ? 'array, ' + parsed.length + ' items' : typeof parsed) + ')\n\n' + JSON.stringify(parsed, null, 2);
+    out.style.color = 'var(--green)';
+  } catch(e) {
+    out.textContent = 'Invalid JSON: ' + e.message;
+    out.style.color = 'var(--red)';
+  }
+});
+
+// ============ DRILL ============
+const DRILLS=[
+{sig:'# Given JSON string, parse and extract the "name" field\njsonStr = \'{"name": "Alice", "age": 30}\'\n# TODO: Parse and print the name',tests:'"Alice"',answers:['json.loads(jsonStr)["name"]','json.loads(jsonStr).get("name")']},
+{sig:'# Convert a Python dict to a JSON string\nobj = {"host": "192.168.1.1", "port": 8080}\n# TODO: Convert to JSON string',tests:'{"host": "192.168.1.1", "port": 8080}',answers:['json.dumps(obj)','json.dumps(obj, indent=2)']},
+{sig:'# jq: Extract the "name" field from JSON\necho \'{"name":"Alice","age":30}\' | ____',tests:'Alice',answers:["jq -r '.name'","jq '.name'"]},
+{sig:'# jq: Get the first element of a JSON array\necho \'[10, 20, 30]\' | ____',tests:'10',answers:["jq '.[0]'"]},
+{sig:'# jq: Count items in a JSON array\necho \'[1,2,3,4,5]\' | ____',tests:'5',answers:["jq 'length'","jq '. | length'"]},
+{sig:'# curl: Make a GET request (silent mode)\n____',tests:'fetches URL silently',answers:['curl -s https://api.example.com','curl -s "https://api.example.com"']},
+{sig:'# curl: POST JSON data to an API endpoint\ncurl -X POST https://api.example.com/users \\\n  -H "____" \\\n  -d \'{"name":"Alice"}\'',tests:'sets correct content type header',answers:['Content-Type: application/json']},
+{sig:'# PowerShell: Parse a JSON string\n$json = \'{"name":"Alice","age":30}\'\n$obj = ____',tests:'$obj.name -> Alice',answers:["$json | ConvertFrom-Json","'$json' | ConvertFrom-Json"]},
+{sig:'# PowerShell: Make a GET request\n$data = ____',tests:'fetches and parses JSON from URL',answers:['Invoke-RestMethod -Uri "https://api.example.com/users"','Invoke-RestMethod "https://api.example.com/users"']},
+{sig:'# Python: Make a GET request and parse JSON\nimport requests\nr = requests.get("https://api.example.com/users")\ndata = ____',tests:'parses response body as JSON',answers:['r.json()']},
+{sig:'# jq: Filter array where version > 5\ncat data.json | ____',tests:'returns matching objects',answers:["jq '[.[] | select(.version > 5)]'","jq '.[] | select(.version > 5)'"]},
+{sig:'# jq: Extract all names from array of objects\ncat data.json | ____',tests:'["name1", "name2", ...]',answers:["jq 'map(.name)'","jq '[.[] | .name]'","jq '[.[].name]'"]},
+{sig:'# Python: Read a JSON file\nimport json\nwith open("data.json") as f:\n    data = ____',tests:'loads file contents as Python object',answers:['json.load(f)']},
+{sig:'# Regex: Match an IPv4 address pattern\nimport re\npattern = r"____"',tests:'matches 192.168.1.1',answers:['\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}','\\b\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\b']},
+{sig:'# Regex: Match an email address\nimport re\npattern = r"____"',tests:'matches user@example.com',answers:['[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}','^[^@]+@[^@]+\\.[^@]+$','\\S+@\\S+\\.\\S+']},
+{sig:'# jq: Sort array of objects by a field\ncat data.json | ____',tests:'sorts by version field',answers:["jq 'sort_by(.version)'"]},
+{sig:'# jq: Get unique values of a field\ncat data.json | ____',tests:'unique language values',answers:["jq '[.[].language] | unique'","jq 'map(.language) | unique'"]},
+{sig:'# curl: Send a DELETE request\n____',tests:'deletes resource at URL',answers:['curl -X DELETE https://api.example.com/users/42','curl -X DELETE "https://api.example.com/users/42"']},
+{sig:'# Python: Write data to a JSON file with indentation\nimport json\ndata = {"name": "Alice"}\nwith open("out.json", "w") as f:\n    ____',tests:'writes pretty-printed JSON',answers:['json.dump(data, f, indent=2)','json.dump(data, f, indent=4)']},
+{sig:'# grep: Find lines matching an IP address pattern\n____',tests:'searches file for IPs',answers:["grep -E '\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}' file.txt","grep -P '\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}' file.txt"]},
+];
+
+let dIdx=0,dScore=0,dStreak=0;
+document.getElementById('d-total').textContent=DRILLS.length;
+
+function showDrill(){
+  const d=DRILLS[dIdx];
+  document.getElementById('d-num').textContent=dIdx+1;
+  const area=document.getElementById('drill-area');
+  area.innerHTML=`<div class="drill-card">
+    <div class="func-sig">${d.sig.replace(/# TODO/g,'<span class="todo"># TODO</span>').replace(/____/g,'<span class="todo">____</span>')}</div>
+    <div class="tests">${d.tests.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+    <div class="prompt">Type the missing code:</div>
+    <div class="input-row"><input type="text" id="drill-input" placeholder="type answer..."><button class="btn btn-check" onclick="checkDrill()">Check</button></div>
+    <div class="feedback" id="drill-fb"></div>
+    <div style="margin-top:.5rem;text-align:right"><button class="btn btn-next" onclick="nextDrill()" style="display:none" id="drill-next">Next</button></div>
+  </div>`;
+  document.getElementById('drill-input').addEventListener('keydown',e=>{if(e.key==='Enter')checkDrill()});
+  document.getElementById('drill-input').focus();
+}
+
+function checkDrill(){
+  const inp=document.getElementById('drill-input');
+  if(inp.disabled) return;
+  const fb=document.getElementById('drill-fb');
+  const val=inp.value.trim().replace(/\s+/g,' ');
+  const d=DRILLS[dIdx];
+  const ok=d.answers.some(a=>val===a.replace(/\s+/g,' ').trim());
+  if(ok){
+    inp.classList.add('correct');fb.textContent='Correct!';fb.className='feedback correct';
+    dScore+=10;dStreak++;
+  }else{
+    inp.classList.add('wrong');fb.innerHTML='Expected: <code>'+d.answers[0].replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</code>';fb.className='feedback wrong';
+    dStreak=0;
+  }
+  document.getElementById('d-score').textContent=dScore;
+  document.getElementById('d-streak').textContent=dStreak;
+  document.getElementById('drill-next').style.display='inline-block';
+  inp.disabled=true;
+}
+
+function nextDrill(){
+  dIdx++;
+  if(dIdx>=DRILLS.length){
+    const area=document.getElementById('drill-area');
+    area.innerHTML=`<div class="drill-card" style="text-align:center;"><div class="quiz-q" style="color:var(--green);">All Drills Complete!</div><p style="margin:.75rem 0;color:var(--muted);">Final Score: ${dScore} / ${DRILLS.length*10}</p><button class="btn btn-check" onclick="dIdx=0;dScore=0;dStreak=0;document.getElementById('d-score').textContent=0;document.getElementById('d-streak').textContent=0;showDrill()">Restart Drills</button></div>`;
+    return;
+  }
+  showDrill();
+}
+showDrill();
+
+// ============ QUIZ ============
+const QUIZ=[
+{q:'What does JSON stand for?',opts:['JavaScript Object Notation','Java Standard Object Network','JavaScript Open Namespace','JSON Simple Object Naming'],c:0},
+{q:'Which HTTP method is used to create a resource?',opts:['GET','POST','PUT','PATCH'],c:1},
+{q:'What status code means "Not Found"?',opts:['400','401','404','500'],c:2},
+{q:'Which curl flag sends a POST request?',opts:['-G','-H','-d','-X POST'],c:3},
+{q:'What jq filter extracts a field called "name"?',opts:['.name','name','get(name)','$.name'],c:0},
+{q:'What does a 201 status code mean?',opts:['OK','Created','No Content','Accepted'],c:1},
+{q:'Which Python module parses JSON?',opts:['yaml','csv','json','requests'],c:2},
+{q:'What does YAML use for nesting?',opts:['Braces {}','Parentheses ()','Semicolons','Indentation (spaces)'],c:3},
+{q:'What regex metacharacter matches any digit?',opts:['\\d','\\w','\\s','.'],c:0},
+{q:'Which PowerShell cmdlet makes HTTP requests?',opts:['Get-WebRequest','Invoke-RestMethod','Send-HttpRequest','New-WebCall'],c:1},
+{q:'What does the regex quantifier + mean?',opts:['Zero or more','Exactly one','One or more','Zero or one'],c:2},
+{q:'Which HTTP method is idempotent for full replacement?',opts:['POST','PATCH','DELETE','PUT'],c:3},
+{q:'What jq flag outputs raw strings (no quotes)?',opts:['-r','-s','-c','-e'],c:0},
+{q:'What Content-Type header is used for JSON?',opts:['text/json','text/plain','application/json','application/xml'],c:2},
+{q:'Which regex anchors a pattern to the start of a line?',opts:['$','^','\\b','\\A'],c:1},
+{q:'What does json.loads() do in Python?',opts:['Loads a JSON file','Parses a JSON string to a dict','Validates JSON','Dumps dict to JSON'],c:1},
+{q:'Which curl flag adds a custom header?',opts:['-d','-X','-H','-o'],c:2},
+{q:'What does the regex character class [^0-9] match?',opts:['Any digit','Start of string','Any non-digit character','End of string'],c:2},
+{q:'Which jq filter gets array length?',opts:['count','size','length','len'],c:2},
+{q:'What HTTP method retrieves data without modifying it?',opts:['GET','POST','PUT','DELETE'],c:0},
+];
+
+let qIdx=0,qScore=0,qStreak=0,qCorrectIdx=0;
+document.getElementById('q-total').textContent=QUIZ.length;
+
+function shuffleQuizOpts(q){
+  const correctOpt=q.opts[q.c];
+  const shuffled=[...q.opts];
+  for(let i=shuffled.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[shuffled[i],shuffled[j]]=[shuffled[j],shuffled[i]];}
+  return {opts:shuffled,c:shuffled.indexOf(correctOpt)};
+}
+
+function showQuiz(){
+  const q=QUIZ[qIdx];
+  const shuffled=shuffleQuizOpts(q);
+  qCorrectIdx=shuffled.c;
+  document.getElementById('q-num').textContent=qIdx+1;
+  const area=document.getElementById('quiz-area');
+  area.innerHTML=`<div class="drill-card"><div class="quiz-q">${q.q}</div><div class="quiz-opts">${
+    shuffled.opts.map((o,i)=>`<button class="quiz-opt" data-i="${i}">${o}</button>`).join('')
+  }</div><div class="feedback" id="quiz-fb"></div>
+  <div style="margin-top:.5rem;text-align:right"><button class="btn btn-next" onclick="nextQuiz()" style="display:none" id="quiz-next">Next</button></div></div>`;
+  area.querySelectorAll('.quiz-opt').forEach(btn=>{
+    btn.addEventListener('click',()=>answerQuiz(parseInt(btn.dataset.i)));
+  });
+}
+
+function answerQuiz(i){
+  const btns=document.querySelectorAll('.quiz-opt');
+  btns.forEach((b,j)=>{b.classList.add('disabled');if(j===qCorrectIdx)b.classList.add('correct');if(j===i&&i!==qCorrectIdx)b.classList.add('wrong')});
+  const fb=document.getElementById('quiz-fb');
+  if(i===qCorrectIdx){qScore+=10;qStreak++;fb.textContent='Correct!';fb.className='feedback correct'}
+  else{qStreak=0;fb.textContent='Wrong!';fb.className='feedback wrong'}
+  document.getElementById('q-score').textContent=qScore;
+  document.getElementById('q-streak').textContent=qStreak;
+  document.getElementById('quiz-next').style.display='inline-block';
+}
+
+function nextQuiz(){
+  qIdx++;
+  if(qIdx>=QUIZ.length){
+    const area=document.getElementById('quiz-area');
+    area.innerHTML=`<div class="drill-card" style="text-align:center;"><div class="quiz-q" style="color:var(--green);">Quiz Complete!</div><p style="margin:.75rem 0;color:var(--muted);">Final Score: ${qScore} / ${QUIZ.length*10}</p><button class="btn btn-check" onclick="qIdx=0;qScore=0;qStreak=0;document.getElementById('q-score').textContent=0;document.getElementById('q-streak').textContent=0;showQuiz()">Restart Quiz</button></div>`;
+    return;
+  }
+  showQuiz();
+}
+showQuiz();
+
+// Progress persistence
+(function(){
+  const KEY='foc-dataapi-progress';
+  function save(){try{localStorage.setItem(KEY,JSON.stringify({dIdx,dScore,qIdx,qScore}));}catch(e){}}
+  function load(){try{const d=JSON.parse(localStorage.getItem(KEY));if(d){dIdx=d.dIdx||0;dScore=d.dScore||0;qIdx=d.qIdx||0;qScore=d.qScore||0;}}catch(e){}}
+  const _cd=checkDrill;checkDrill=function(){_cd();save()};
+  const _aq=answerQuiz;answerQuiz=function(i){_aq(i);save()};
+  load();if(dIdx>0)showDrill();if(qIdx>0)showQuiz();
+})();
+</script>
+</body>
+</html>
