@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PCAP Forensics - NetDrill</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+:root{--bg-primary:#0a0e17;--bg-secondary:#111827;--bg-card:#1a2235;--border:#2a3650;--text-primary:#e2e8f0;--text-secondary:#94a3b8;--text-muted:#64748b;--accent-blue:#3b82f6;--accent-cyan:#06b6d4;--accent-green:#10b981;--accent-amber:#f59e0b;--accent-red:#ef4444;--accent-purple:#8b5cf6;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'JetBrains Mono',monospace;background:var(--bg-primary);color:var(--text-primary);min-height:100vh;}
+body::before{content:'';position:fixed;inset:0;background:linear-gradient(rgba(59,130,246,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,0.03) 1px,transparent 1px);background-size:60px 60px;pointer-events:none;}
+.container{position:relative;z-index:1;max-width:1100px;margin:0 auto;padding:1rem;}
+.top-bar{display:flex;justify-content:space-between;align-items:center;padding:0.5rem 0;border-bottom:1px solid var(--border);margin-bottom:1rem;}
+.top-bar a{color:var(--text-muted);text-decoration:none;font-size:0.75rem;}
+.top-bar a:hover{color:var(--accent-cyan);}
+.top-bar h1{font-family:'Press Start 2P',monospace;font-size:0.85rem;color:var(--accent-red);}
+
+.scenario-bar{background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:1rem;margin-bottom:1rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.5rem;}
+.scenario-bar .info{font-size:0.75rem;color:var(--text-muted);}
+.scenario-bar .info strong{color:var(--accent-cyan);}
+.scenario-bar .score-area{display:flex;gap:1rem;font-family:'Press Start 2P',monospace;font-size:0.55rem;}
+.scenario-bar .score-area .val{color:var(--accent-green);}
+.scenario-bar .score-area .hint-count{color:var(--accent-amber);}
+
+.mission-panel{background:linear-gradient(135deg,rgba(239,68,68,0.05),rgba(139,92,246,0.05));border:1px solid rgba(239,68,68,0.2);border-radius:8px;padding:1rem;margin-bottom:1rem;}
+.mission-panel h3{font-family:'Press Start 2P',monospace;font-size:0.6rem;color:var(--accent-red);margin-bottom:0.5rem;}
+.mission-panel p{font-size:0.78rem;color:var(--text-secondary);line-height:1.6;}
+
+.checklist{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:0.5rem;margin-bottom:1rem;}
+.check-item{background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:0.6rem 0.8rem;font-size:0.72rem;color:var(--text-muted);cursor:pointer;display:flex;align-items:center;gap:0.5rem;transition:all 0.2s;}
+.check-item:hover{border-color:var(--accent-blue);}
+.check-item .check-icon{width:18px;height:18px;border-radius:50%;border:2px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:0.5rem;transition:all 0.2s;}
+.check-item.found{border-color:var(--accent-green);color:var(--accent-green);}
+.check-item.found .check-icon{border-color:var(--accent-green);background:var(--accent-green);color:#fff;}
+.check-item.wrong{animation:shake 0.4s;}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-3px)}75%{transform:translateX(3px)}}
+
+.pcap-viewer{background:#0d1117;border:1px solid var(--border);border-radius:8px;overflow:hidden;}
+.pcap-toolbar{display:flex;gap:0.5rem;padding:0.5rem;border-bottom:1px solid var(--border);align-items:center;flex-wrap:wrap;}
+.pcap-toolbar input{flex:1;min-width:200px;font-family:'JetBrains Mono',monospace;font-size:0.75rem;padding:0.4rem 0.6rem;background:var(--bg-primary);border:1px solid var(--border);border-radius:4px;color:var(--text-primary);outline:none;}
+.pcap-toolbar input:focus{border-color:var(--accent-blue);}
+.pcap-toolbar button{font-family:'JetBrains Mono',monospace;font-size:0.65rem;padding:0.4rem 0.8rem;border-radius:4px;border:1px solid var(--border);background:var(--bg-secondary);color:var(--text-primary);cursor:pointer;}
+.pcap-toolbar button:hover{border-color:var(--accent-blue);}
+.pcap-toolbar button.active{background:var(--accent-blue);border-color:var(--accent-blue);color:#fff;}
+.pcap-toolbar .filter-count{font-size:0.65rem;color:var(--text-muted);}
+
+.pcap-header{display:grid;grid-template-columns:50px 80px 160px 160px 60px 55px auto;gap:0;padding:0 0.5rem;background:var(--bg-secondary);font-size:0.65rem;color:var(--text-muted);border-bottom:1px solid var(--border);}
+.pcap-header div{padding:0.35rem 0.25rem;font-weight:700;white-space:nowrap;}
+
+.pcap-body{max-height:400px;overflow-y:auto;}
+.pkt-row{display:grid;grid-template-columns:50px 80px 160px 160px 60px 55px auto;gap:0;padding:0 0.5rem;font-size:0.68rem;border-bottom:1px solid rgba(42,54,80,0.3);cursor:pointer;transition:background 0.1s;}
+.pkt-row:hover{background:rgba(59,130,246,0.08);}
+.pkt-row.selected{background:rgba(59,130,246,0.15);border-color:var(--accent-blue);}
+.pkt-row.highlighted{background:rgba(16,185,129,0.1);}
+.pkt-row.suspicious{background:rgba(239,68,68,0.06);}
+.pkt-row div{padding:0.3rem 0.25rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.pkt-row .col-no{color:var(--text-muted);}
+.pkt-row .col-time{color:var(--text-muted);}
+.pkt-row .col-src{color:var(--accent-cyan);}
+.pkt-row .col-dst{color:var(--accent-purple);}
+.pkt-row .col-proto{color:var(--accent-amber);font-weight:600;}
+.pkt-row .col-len{color:var(--text-muted);}
+.pkt-row .col-info{color:var(--text-secondary);}
+
+.detail-panel{background:var(--bg-card);border:1px solid var(--border);border-radius:8px;margin-top:0.75rem;overflow:hidden;display:none;}
+.detail-panel.visible{display:block;}
+.detail-tabs{display:flex;border-bottom:1px solid var(--border);}
+.detail-tab{font-size:0.65rem;padding:0.5rem 1rem;cursor:pointer;color:var(--text-muted);border-bottom:2px solid transparent;}
+.detail-tab.active{color:var(--accent-cyan);border-bottom-color:var(--accent-cyan);}
+.detail-content{padding:0;font-size:0.72rem;line-height:1.6;max-height:350px;overflow-y:auto;}
+.detail-content pre{background:var(--bg-primary);padding:0.5rem;border-radius:4px;white-space:pre-wrap;word-break:break-all;font-size:0.7rem;}
+.detail-content .field{margin-bottom:0.3rem;}
+.detail-content .field-name{color:var(--accent-cyan);font-weight:600;}
+.detail-content .field-val{color:var(--text-secondary);}
+.detail-content .suspicious-val{color:var(--accent-red);font-weight:600;background:rgba(239,68,68,0.1);padding:1px 4px;border-radius:3px;}
+
+/* Protocol tree (Wireshark-style) */
+.proto-layer{border-bottom:1px solid rgba(42,54,80,0.3);}
+.proto-layer:last-child{border-bottom:none;}
+.proto-layer-header{display:flex;align-items:center;gap:0.4rem;padding:0.35rem 0.6rem;cursor:pointer;font-size:0.7rem;font-weight:600;user-select:none;}
+.proto-layer-header:hover{background:rgba(59,130,246,0.06);}
+.proto-layer-header .arrow{font-size:0.5rem;color:var(--text-muted);transition:transform 0.15s;width:0.7rem;text-align:center;flex-shrink:0;}
+.proto-layer-header.open .arrow{transform:rotate(90deg);}
+.proto-layer-header .layer-name{color:var(--accent-cyan);}
+.proto-layer-header .layer-summary{color:var(--text-muted);font-weight:400;font-size:0.65rem;margin-left:0.4rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.proto-layer-fields{display:none;padding:0.15rem 0 0.3rem 1.5rem;font-size:0.68rem;}
+.proto-layer-fields.open{display:block;}
+.proto-field{padding:0.12rem 0.6rem;display:flex;gap:0.5rem;}
+.proto-field:hover{background:rgba(59,130,246,0.04);}
+.proto-field .pf-name{color:var(--accent-blue);min-width:140px;flex-shrink:0;}
+.proto-field .pf-val{color:var(--text-secondary);}
+.proto-field .pf-val.suspicious{color:var(--accent-red);font-weight:600;background:rgba(239,68,68,0.08);padding:0 3px;border-radius:2px;}
+
+/* Hex dump (Wireshark-style) */
+.hex-dump{font-family:'JetBrains Mono',monospace;font-size:0.68rem;line-height:1.5;padding:0.5rem;}
+.hex-row{display:flex;gap:0;}
+.hex-offset{color:var(--accent-blue);min-width:60px;user-select:none;}
+.hex-bytes{min-width:380px;letter-spacing:0.5px;}
+.hex-bytes .hb{display:inline-block;width:23px;text-align:center;cursor:default;border-radius:1px;}
+.hex-bytes .hb:hover{background:rgba(59,130,246,0.15);}
+.hex-bytes .gap{display:inline-block;width:8px;}
+.hex-ascii{color:var(--accent-green);letter-spacing:1px;}
+.hex-ascii .ha{display:inline;cursor:default;}
+.hex-ascii .ha:hover{background:rgba(16,185,129,0.15);}
+
+.submit-area{margin-top:1rem;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:1rem;}
+.submit-area label{font-size:0.75rem;color:var(--text-muted);display:block;margin-bottom:0.4rem;}
+.submit-area input{width:100%;font-family:'JetBrains Mono',monospace;font-size:0.8rem;padding:0.5rem;background:#0d1117;border:1px solid var(--border);border-radius:6px;color:var(--text-primary);outline:none;margin-bottom:0.5rem;}
+.submit-area input:focus{border-color:var(--accent-blue);}
+.submit-area button{font-family:'Press Start 2P',monospace;font-size:0.55rem;padding:0.6rem 1.2rem;border-radius:6px;border:none;cursor:pointer;background:var(--accent-blue);color:#fff;margin-right:0.5rem;}
+.submit-area button:hover{background:#2563eb;}
+.submit-area .hint-btn{background:var(--accent-amber);color:#000;}
+.submit-area .hint-btn:hover{background:#d97706;}
+.feedback-msg{font-family:'Press Start 2P',monospace;font-size:0.55rem;min-height:1.5em;margin-top:0.5rem;}
+.feedback-msg.correct{color:var(--accent-green);}
+.feedback-msg.wrong{color:var(--accent-red);}
+.feedback-msg.hint{color:var(--accent-amber);}
+
+.victory{text-align:center;padding:2rem;display:none;}
+.victory.visible{display:block;}
+.victory h2{font-family:'Press Start 2P',monospace;font-size:1rem;color:var(--accent-green);margin-bottom:1rem;}
+.victory p{font-size:0.78rem;color:var(--text-secondary);margin-bottom:0.5rem;}
+
+.scenario-select{display:flex;gap:0.5rem;margin-bottom:1rem;flex-wrap:wrap;}
+.scenario-btn{font-family:'Press Start 2P',monospace;font-size:0.5rem;padding:0.5rem 1rem;border:1px solid var(--border);border-radius:999px;background:var(--bg-secondary);color:var(--text-muted);cursor:pointer;transition:all 0.2s;}
+.scenario-btn:hover{border-color:var(--accent-blue);color:var(--text-primary);}
+.scenario-btn.active{background:var(--accent-red);border-color:var(--accent-red);color:#fff;}
+.scenario-btn.completed{background:rgba(16,185,129,0.1);border-color:var(--accent-green);color:var(--accent-green);}
+
+.stream-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:100;display:flex;align-items:center;justify-content:center;}
+.stream-modal{background:var(--bg-card);border:1px solid var(--border);border-radius:8px;width:90%;max-width:800px;max-height:80vh;display:flex;flex-direction:column;overflow:hidden;}
+.stream-modal-header{display:flex;justify-content:space-between;align-items:center;padding:0.75rem 1rem;border-bottom:1px solid var(--border);font-size:0.75rem;}
+.stream-modal-header h3{font-family:'Press Start 2P',monospace;font-size:0.55rem;color:var(--accent-cyan);}
+.stream-modal-close{background:none;border:none;color:var(--text-muted);font-size:1.2rem;cursor:pointer;}
+.stream-modal-close:hover{color:var(--accent-red);}
+.stream-body{padding:1rem;overflow-y:auto;flex:1;font-size:0.72rem;line-height:1.7;}
+.stream-body pre{white-space:pre-wrap;word-break:break-all;}
+.stream-client{color:var(--accent-cyan);}
+.stream-server{color:var(--accent-red);}
+.stream-meta{color:var(--text-muted);font-size:0.6rem;margin:0.5rem 0 0.15rem 0;border-top:1px dashed var(--border);padding-top:0.3rem;}
+
+@media(max-width:800px){
+  .pcap-header,.pkt-row{grid-template-columns:40px 60px 120px 120px 50px 45px auto;font-size:0.6rem;}
+  .checklist{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="top-bar">
+    <a href="../index.html">&larr; Back</a>
+    <h1>PCAP FORENSICS</h1>
+    <span style="font-size:0.6rem;color:var(--text-muted);">HUNT</span>
+  </div>
+
+  <div class="scenario-select" id="scenarioSelect"></div>
+
+  <div class="scenario-bar">
+    <div class="info">Scenario: <strong id="scenarioName">Loading...</strong></div>
+    <div class="score-area">
+      <div>FOUND: <span class="val" id="foundCount">0</span>/<span id="totalCount">0</span></div>
+      <div>SCORE: <span class="val" id="totalScore">0</span></div>
+      <div>HINTS: <span class="hint-count" id="hintsUsed">0</span></div>
+    </div>
+  </div>
+
+  <div class="mission-panel">
+    <h3>MISSION BRIEFING</h3>
+    <p id="missionText">Loading scenario...</p>
+  </div>
+
+  <div class="checklist" id="checklist"></div>
+
+  <div class="pcap-viewer">
+    <div class="pcap-toolbar">
+      <input type="text" id="filterInput" placeholder="Filter: ip.src, tcp.port, http, dns, etc.">
+      <button id="filterBtn">Apply</button>
+      <button id="clearFilter">Clear</button>
+      <button id="followStream" style="display:none;">Follow TCP Stream</button>
+      <span class="filter-count" id="filterCount"></span>
+    </div>
+    <div class="pcap-header">
+      <div>No.</div><div>Time</div><div>Source</div><div>Destination</div><div>Proto</div><div>Len</div><div>Info</div>
+    </div>
+    <div class="pcap-body" id="pcapBody"></div>
+  </div>
+
+  <div class="detail-panel" id="detailPanel">
+    <div class="detail-tabs">
+      <div class="detail-tab active" data-view="headers">Headers</div>
+      <div class="detail-tab" data-view="payload">Payload</div>
+      <div class="detail-tab" data-view="hex">Hex Dump</div>
+    </div>
+    <div class="detail-content" id="detailContent"></div>
+  </div>
+
+  <div class="submit-area">
+    <label>Enter your finding (e.g., "nmap scan from 10.0.0.50", "password: admin123"):</label>
+    <input type="text" id="answerInput" placeholder="Type what you found...">
+    <button id="submitBtn">SUBMIT</button>
+    <button class="hint-btn" id="hintBtn">HINT</button>
+    <div class="feedback-msg" id="feedbackMsg"></div>
+  </div>
+
+  <div class="stream-overlay" id="streamOverlay" style="display:none;">
+    <div class="stream-modal">
+      <div class="stream-modal-header">
+        <h3>TCP STREAM</h3>
+        <span id="streamInfo" style="color:var(--text-muted);font-size:0.65rem;"></span>
+        <button class="stream-modal-close" id="streamClose">&times;</button>
+      </div>
+      <div class="stream-body" id="streamBody"></div>
+    </div>
+  </div>
+
+  <div class="victory" id="victoryScreen">
+    <h2>INVESTIGATION COMPLETE!</h2>
+    <p id="victoryStats"></p>
+    <button style="font-family:'Press Start 2P',monospace;font-size:0.55rem;padding:0.6rem 1.2rem;border-radius:6px;border:none;cursor:pointer;background:var(--accent-blue);color:#fff;margin-top:1rem;" id="nextScenarioBtn">NEXT SCENARIO</button>
+  </div>
+</div>
+
+<script>
+// =====================================================================
+// SCENARIO DATA — Simulated PCAP packets with hidden findings
+// =====================================================================
+const SCENARIOS = [
+{
+  name: "Recon & Scanning",
+  mission: "A security alert flagged suspicious activity on the network. Analyze this packet capture to identify: reconnaissance scanning, the scanning tool used, services discovered, and any unusual user-agent strings. Find all 6 indicators of compromise.",
+  findings: [
+    {id:'nmap-scan', label:'Identify the port scanner tool', keywords:['nmap'], hint:'Look at User-Agent strings in HTTP requests. One tool announces itself.', points:20},
+    {id:'syn-scan', label:'Find the SYN scan source IP', keywords:['10.0.0.50','10.0.0.050'], hint:'Which IP is sending many SYN packets to sequential ports without completing handshakes?', points:15},
+    {id:'ssh-version', label:'Identify the SSH server version', keywords:['openssh 8.9','openssh_8.9','ssh-2.0-openssh_8.9p1'], hint:'Look at the SSH banner in the Server Version field of the SSH packet.', points:15},
+    {id:'http-server', label:'Identify the web server software', keywords:['python','python/3.10','simplehttpserver','http.server','python 3.10'], hint:'Check the HTTP response Server header. It reveals what software is running.', points:15},
+    {id:'open-ports', label:'List 3 open ports found by scanner', keywords:['22,80,443','22 80 443','80,22,443','443,80,22','22, 80, 443','80, 22, 443','443, 80, 22','22,443,80','443,22,80','80,443,22'], hint:'Which destination ports have SYN-ACK responses? Those ports are open.', points:20, matchAll:['22','80','443']},
+    {id:'dns-recon', label:'Find the domain being resolved', keywords:['internal.corp.local','corp.local'], hint:'Check DNS query packets. What domain name is being looked up?', points:15},
+  ],
+  packets: [
+    {no:1,time:'0.000000',src:'10.0.0.50',dst:'10.0.0.1',proto:'ARP',len:42,info:'Who has 10.0.0.1? Tell 10.0.0.50',headers:{ethernet:'Src: aa:bb:cc:dd:ee:01, Dst: ff:ff:ff:ff:ff:ff',arp:'Opcode: request (1)'},payload:'',hex:'ff ff ff ff ff ff aa bb cc dd ee 01 08 06 00 01'},
+    {no:2,time:'0.000234',src:'10.0.0.1',dst:'10.0.0.50',proto:'ARP',len:42,info:'10.0.0.1 is at aa:bb:cc:11:22:33',headers:{ethernet:'Src: aa:bb:cc:11:22:33, Dst: aa:bb:cc:dd:ee:01',arp:'Opcode: reply (2)'},payload:'',hex:'aa bb cc dd ee 01 aa bb cc 11 22 33 08 06 00 02'},
+    {no:3,time:'0.001100',src:'10.0.0.50',dst:'10.0.0.10',proto:'DNS',len:74,info:'Standard query A internal.corp.local',headers:{udp:'Src Port: 53214, Dst Port: 53',dns:'Query: A internal.corp.local, Transaction ID: 0x1a2b'},payload:'',hex:'00 1a 2b 01 00 00 01 00 00 00 00 00 08 69 6e 74'},
+    {no:4,time:'0.003200',src:'10.0.0.10',dst:'10.0.0.50',proto:'DNS',len:90,info:'Standard query response A internal.corp.local 10.0.0.100',headers:{udp:'Src Port: 53, Dst Port: 53214',dns:'Response: A internal.corp.local -> 10.0.0.100, TTL: 300'},payload:'',hex:'00 1a 2b 81 80 00 01 00 01 00 00 00 00 08 69 6e'},
+    {no:5,time:'0.010000',src:'10.0.0.50',dst:'10.0.0.100',proto:'TCP',len:54,info:'49152 → 22 [SYN] Seq=0 Win=1024',headers:{tcp:'Src Port: 49152, Dst Port: 22, Flags: SYN, Window: 1024, Options: [MSS 1460]',ip:'TTL: 43, ID: 0x0000'},payload:'',hex:'c0 00 00 16 00 00 00 00 00 00 00 00 60 02 04 00'},
+    {no:6,time:'0.010321',src:'10.0.0.100',dst:'10.0.0.50',proto:'TCP',len:54,info:'22 → 49152 [SYN, ACK] Seq=0 Ack=1 Win=29200',headers:{tcp:'Src Port: 22, Dst Port: 49152, Flags: SYN ACK, Window: 29200'},payload:'',hex:'00 16 c0 00 00 00 00 00 00 00 00 01 60 12 72 10'},
+    {no:7,time:'0.010500',src:'10.0.0.50',dst:'10.0.0.100',proto:'TCP',len:54,info:'49152 → 22 [RST] Seq=1',headers:{tcp:'Src Port: 49152, Dst Port: 22, Flags: RST'},payload:'',hex:'c0 00 00 16 00 00 00 01 00 00 00 00 50 04 00 00'},
+    {no:8,time:'0.011000',src:'10.0.0.50',dst:'10.0.0.100',proto:'TCP',len:54,info:'49153 → 23 [SYN] Seq=0 Win=1024',headers:{tcp:'Src Port: 49153, Dst Port: 23, Flags: SYN, Window: 1024',ip:'TTL: 43, ID: 0x0000'},payload:'',hex:'c0 01 00 17 00 00 00 00 00 00 00 00 60 02 04 00'},
+    {no:9,time:'0.014200',src:'10.0.0.100',dst:'10.0.0.50',proto:'TCP',len:54,info:'23 → 49153 [RST, ACK] Seq=0 Ack=1',headers:{tcp:'Src Port: 23, Dst Port: 49153, Flags: RST ACK — port closed'},payload:'',hex:'00 17 c0 01 00 00 00 00 00 00 00 01 50 14 00 00'},
+    {no:10,time:'0.015000',src:'10.0.0.50',dst:'10.0.0.100',proto:'TCP',len:54,info:'49154 → 25 [SYN] Seq=0 Win=1024',headers:{tcp:'Src Port: 49154, Dst Port: 25 (SMTP), Flags: SYN, Window: 1024',ip:'TTL: 43, ID: 0x0000'},payload:'',hex:'c0 02 00 19 00 00 00 00 00 00 00 00 60 02 04 00'},
+    {no:11,time:'0.018100',src:'10.0.0.100',dst:'10.0.0.50',proto:'TCP',len:54,info:'25 → 49154 [RST, ACK] Seq=0 Ack=1',headers:{tcp:'Src Port: 25, Dst Port: 49154, Flags: RST ACK — port closed'},payload:'',hex:'00 19 c0 02 00 00 00 00 00 00 00 01 50 14 00 00'},
+    {no:12,time:'0.020000',src:'10.0.0.50',dst:'10.0.0.100',proto:'TCP',len:54,info:'49155 → 80 [SYN] Seq=0 Win=1024',headers:{tcp:'Src Port: 49155, Dst Port: 80, Flags: SYN, Window: 1024',ip:'TTL: 43, ID: 0x0000'},payload:'',hex:'c0 03 00 50 00 00 00 00 00 00 00 00 60 02 04 00'},
+    {no:13,time:'0.020198',src:'10.0.0.100',dst:'10.0.0.50',proto:'TCP',len:54,info:'80 → 49155 [SYN, ACK] Seq=0 Ack=1 Win=29200',headers:{tcp:'Src Port: 80, Dst Port: 49155, Flags: SYN ACK, Window: 29200'},payload:'',hex:'00 50 c0 03 00 00 00 00 00 00 00 01 60 12 72 10'},
+    {no:14,time:'0.020400',src:'10.0.0.50',dst:'10.0.0.100',proto:'TCP',len:54,info:'49155 → 80 [RST] Seq=1',headers:{tcp:'Src Port: 49155, Dst Port: 80, Flags: RST'},payload:'',hex:'c0 03 00 50 00 00 00 01 00 00 00 00 50 04 00 00'},
+    {no:15,time:'0.021000',src:'10.0.0.50',dst:'10.0.0.100',proto:'TCP',len:54,info:'49156 → 443 [SYN] Seq=0 Win=1024',headers:{tcp:'Src Port: 49156, Dst Port: 443, Flags: SYN, Window: 1024',ip:'TTL: 43, ID: 0x0000'},payload:'',hex:'c0 04 01 bb 00 00 00 00 00 00 00 00 60 02 04 00'},
+    {no:16,time:'0.021250',src:'10.0.0.100',dst:'10.0.0.50',proto:'TCP',len:54,info:'443 → 49156 [SYN, ACK] Seq=0 Ack=1 Win=29200',headers:{tcp:'Src Port: 443, Dst Port: 49156, Flags: SYN ACK, Window: 29200'},payload:'',hex:'01 bb c0 04 00 00 00 00 00 00 00 01 60 12 72 10'},
+    {no:17,time:'0.021450',src:'10.0.0.50',dst:'10.0.0.100',proto:'TCP',len:54,info:'49156 → 443 [RST] Seq=1',headers:{tcp:'Src Port: 49156, Dst Port: 443, Flags: RST'},payload:'',hex:'c0 04 01 bb 00 00 00 01 00 00 00 00 50 04 00 00'},
+    {no:18,time:'0.050000',src:'10.0.0.50',dst:'10.0.0.100',proto:'TCP',len:54,info:'49160 → 22 [SYN] Seq=0 Win=65535',headers:{tcp:'Src Port: 49160, Dst Port: 22, Flags: SYN, Window: 65535'},payload:'',hex:'c0 08 00 16 00 00 00 00 00 00 00 00 a0 02 ff ff'},
+    {no:19,time:'0.050210',src:'10.0.0.100',dst:'10.0.0.50',proto:'TCP',len:54,info:'22 → 49160 [SYN, ACK] Seq=0 Ack=1',headers:{tcp:'Src Port: 22, Dst Port: 49160, Flags: SYN ACK'},payload:'',hex:'00 16 c0 08 00 00 00 00 00 00 00 01 a0 12 72 10'},
+    {no:20,time:'0.050400',src:'10.0.0.50',dst:'10.0.0.100',proto:'TCP',len:54,info:'49160 → 22 [ACK] Seq=1 Ack=1',headers:{tcp:'Src Port: 49160, Dst Port: 22, Flags: ACK'},payload:'',hex:'c0 08 00 16 00 00 00 01 00 00 00 01 50 10 ff ff'},
+    {no:21,time:'0.051000',src:'10.0.0.100',dst:'10.0.0.50',proto:'SSH',len:87,info:'Server: SSH-2.0-OpenSSH_8.9p1 Ubuntu-3ubuntu0.6',headers:{ssh:'Protocol: SSH-2.0',ssh_version:'Server Version: SSH-2.0-OpenSSH_8.9p1 Ubuntu-3ubuntu0.6'},payload:'SSH-2.0-OpenSSH_8.9p1 Ubuntu-3ubuntu0.6\\r\\n',hex:'53 53 48 2d 32 2e 30 2d 4f 70 65 6e 53 53 48 5f 38 2e 39 70 31'},
+    {no:22,time:'0.100000',src:'10.0.0.50',dst:'10.0.0.100',proto:'HTTP',len:312,info:'GET / HTTP/1.1',headers:{http:'Method: GET, URI: /, Version: HTTP/1.1',http_host:'Host: 10.0.0.100',http_ua:'User-Agent: Mozilla/5.0 (compatible; Nmap Scripting Engine; https://nmap.org/book/nse.html)',http_accept:'Accept: */*',http_connection:'Connection: close'},payload:'GET / HTTP/1.1\\r\\nHost: 10.0.0.100\\r\\nUser-Agent: Mozilla/5.0 (compatible; Nmap Scripting Engine; https://nmap.org/book/nse.html)\\r\\nAccept: */*\\r\\nConnection: close\\r\\n\\r\\n',hex:'47 45 54 20 2f 20 48 54 54 50 2f 31 2e 31 0d 0a'},
+    {no:23,time:'0.102000',src:'10.0.0.100',dst:'10.0.0.50',proto:'HTTP',len:445,info:'HTTP/1.0 200 OK (text/html)',headers:{http:'Status: 200 OK, Version: HTTP/1.0',http_server:'Server: SimpleHTTP/0.6 Python/3.10.12',http_ct:'Content-Type: text/html; charset=utf-8',http_date:'Date: Thu, 05 Mar 2026 14:23:01 GMT'},payload:'HTTP/1.0 200 OK\\r\\nServer: SimpleHTTP/0.6 Python/3.10.12\\r\\nDate: Thu, 05 Mar 2026 14:23:01 GMT\\r\\nContent-Type: text/html\\r\\n\\r\\n<!DOCTYPE html><html><head><title>Index</title></head><body><h1>Directory listing</h1></body></html>',hex:'48 54 54 50 2f 31 2e 30 20 32 30 30 20 4f 4b 0d'},
+    {no:24,time:'0.200000',src:'10.0.0.50',dst:'10.0.0.100',proto:'TCP',len:54,info:'49157 → 3306 [SYN] Seq=0 Win=1024',headers:{tcp:'Src Port: 49157, Dst Port: 3306 (MySQL), Flags: SYN, Window: 1024',ip:'TTL: 43'},payload:'',hex:'c0 05 0c ea 00 00 00 00 00 00 00 00 60 02 04 00'},
+    {no:25,time:'0.203000',src:'10.0.0.100',dst:'10.0.0.50',proto:'TCP',len:54,info:'3306 → 49157 [RST, ACK] Seq=0 Ack=1',headers:{tcp:'Src Port: 3306, Dst Port: 49157, Flags: RST ACK — port closed'},payload:'',hex:'0c ea c0 05 00 00 00 00 00 00 00 01 50 14 00 00'},
+    {no:26,time:'0.300000',src:'192.168.1.5',dst:'10.0.0.100',proto:'TCP',len:54,info:'44200 → 80 [SYN] Seq=0 Win=65535',headers:{tcp:'Src Port: 44200, Dst Port: 80, Flags: SYN, Window: 65535'},payload:'',hex:'ac c8 00 50 00 00 00 00 00 00 00 00 a0 02 ff ff'},
+    {no:27,time:'0.300190',src:'10.0.0.100',dst:'192.168.1.5',proto:'TCP',len:54,info:'80 → 44200 [SYN, ACK] Seq=0 Ack=1',headers:{tcp:'Src Port: 80, Dst Port: 44200, Flags: SYN ACK'},payload:'',hex:'00 50 ac c8 00 00 00 00 00 00 00 01 a0 12 72 10'},
+    {no:28,time:'0.310000',src:'192.168.1.5',dst:'10.0.0.100',proto:'HTTP',len:280,info:'GET /admin/login HTTP/1.1',headers:{http:'Method: GET, URI: /admin/login, Version: HTTP/1.1',http_host:'Host: 10.0.0.100',http_ua:'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/122.0',http_accept:'Accept: text/html',http_cookie:'Cookie: session=abc123'},payload:'GET /admin/login HTTP/1.1\\r\\nHost: 10.0.0.100\\r\\nUser-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/122.0\\r\\n\\r\\n',hex:'47 45 54 20 2f 61 64 6d 69 6e 2f 6c 6f 67 69 6e'},
+    {no:29,time:'0.500000',src:'10.0.0.50',dst:'10.0.0.100',proto:'TCP',len:54,info:'49158 → 8080 [SYN] Seq=0 Win=1024',headers:{tcp:'Src Port: 49158, Dst Port: 8080, Flags: SYN, Window: 1024',ip:'TTL: 43'},payload:'',hex:'c0 06 1f 90 00 00 00 00 00 00 00 00 60 02 04 00'},
+    {no:30,time:'0.503000',src:'10.0.0.100',dst:'10.0.0.50',proto:'TCP',len:54,info:'8080 → 49158 [RST, ACK] Seq=0 Ack=1',headers:{tcp:'Src Port: 8080, Dst Port: 49158, Flags: RST ACK — port closed'},payload:'',hex:'1f 90 c0 06 00 00 00 00 00 00 00 01 50 14 00 00'},
+  ]
+},
+{
+  name: "Credential Theft",
+  mission: "An intrusion detection system flagged potential credential theft on the network. Analyze this capture to find: cleartext passwords, suspicious authentication attempts, data exfiltration indicators, and compromised accounts. Find all 6 findings.",
+  findings: [
+    {id:'ftp-password', label:'Find the FTP password in cleartext', keywords:['p@ssw0rd!','p@ssword!','passw0rd'], hint:'FTP sends credentials in plaintext. Look for FTP PASS commands in the packet info.', points:20},
+    {id:'ftp-user', label:'Identify the FTP username', keywords:['admin','admin@corp'], hint:'Look for FTP USER commands before the PASS command.', points:15},
+    {id:'http-creds', label:'Find credentials in HTTP POST body', keywords:['sysadmin','letmein2026','sysadmin:letmein2026'], hint:'Look at HTTP POST requests to /login endpoints. Check the payload for form data.', points:20},
+    {id:'dns-tunnel', label:'Identify DNS tunneling (exfiltration)', keywords:['data.exfil.evil.com','exfil.evil.com','evil.com'], hint:'Look for unusually long DNS query names. Legitimate domains are short; tunneling encodes data in subdomains.', points:20},
+    {id:'same-subnet', label:'Identify lateral movement (same-net SSH)', keywords:['10.0.0.100','10.0.0.50','lateral'], hint:'Which internal hosts are connecting to other internal hosts via SSH? Internal-to-internal SSH can indicate lateral movement.', points:15},
+    {id:'hash-exfil', label:'Find the MD5 hash in exfiltrated data', keywords:['5d41402abc4b2a76b9719d911017c592','5d41402a'], hint:'Look at the DNS tunneling payloads. The subdomain contains encoded data — one of them is an MD5 hash.', points:10},
+  ],
+  packets: [
+    {no:1,time:'0.000000',src:'10.0.0.25',dst:'10.0.0.100',proto:'TCP',len:54,info:'52100 → 21 [SYN] Seq=0 Win=65535',headers:{tcp:'Src Port: 52100, Dst Port: 21 (FTP), Flags: SYN'},payload:'',hex:'cb 84 00 15 00 00 00 00 00 00 00 00 a0 02 ff ff'},
+    {no:2,time:'0.000300',src:'10.0.0.100',dst:'10.0.0.25',proto:'TCP',len:54,info:'21 → 52100 [SYN, ACK] Seq=0 Ack=1',headers:{tcp:'Src Port: 21, Dst Port: 52100, Flags: SYN ACK'},payload:'',hex:'00 15 cb 84 00 00 00 00 00 00 00 01 a0 12 72 10'},
+    {no:3,time:'0.001000',src:'10.0.0.100',dst:'10.0.0.25',proto:'FTP',len:76,info:'Response: 220 Welcome to Corp FTP Server (vsftpd 3.0.5)',headers:{ftp:'Response Code: 220',ftp_banner:'220 Welcome to Corp FTP Server (vsftpd 3.0.5)'},payload:'220 Welcome to Corp FTP Server (vsftpd 3.0.5)\\r\\n',hex:'32 32 30 20 57 65 6c 63 6f 6d 65 20 74 6f 20 43'},
+    {no:4,time:'0.050000',src:'10.0.0.25',dst:'10.0.0.100',proto:'FTP',len:68,info:'Request: USER admin',headers:{ftp:'Command: USER',ftp_arg:'admin'},payload:'USER admin\\r\\n',hex:'55 53 45 52 20 61 64 6d 69 6e 0d 0a'},
+    {no:5,time:'0.051000',src:'10.0.0.100',dst:'10.0.0.25',proto:'FTP',len:72,info:'Response: 331 Please specify the password.',headers:{ftp:'Response Code: 331'},payload:'331 Please specify the password.\\r\\n',hex:'33 33 31 20 50 6c 65 61 73 65 20 73 70 65 63 69'},
+    {no:6,time:'0.100000',src:'10.0.0.25',dst:'10.0.0.100',proto:'FTP',len:74,info:'Request: PASS p@ssw0rd!',headers:{ftp:'Command: PASS',ftp_arg:'p@ssw0rd!'},payload:'PASS p@ssw0rd!\\r\\n',hex:'50 41 53 53 20 70 40 73 73 77 30 72 64 21 0d 0a'},
+    {no:7,time:'0.101000',src:'10.0.0.100',dst:'10.0.0.25',proto:'FTP',len:68,info:'Response: 230 Login successful.',headers:{ftp:'Response Code: 230'},payload:'230 Login successful.\\r\\n',hex:'32 33 30 20 4c 6f 67 69 6e 20 73 75 63 63 65 73'},
+    {no:8,time:'0.200000',src:'10.0.0.25',dst:'10.0.0.100',proto:'FTP',len:68,info:'Request: RETR /etc/shadow',headers:{ftp:'Command: RETR',ftp_arg:'/etc/shadow'},payload:'RETR /etc/shadow\\r\\n',hex:'52 45 54 52 20 2f 65 74 63 2f 73 68 61 64 6f 77'},
+    {no:9,time:'0.500000',src:'10.0.0.50',dst:'10.0.0.100',proto:'TCP',len:54,info:'48800 → 22 [SYN] Seq=0 Win=65535',headers:{tcp:'Src Port: 48800, Dst Port: 22 (SSH), Flags: SYN'},payload:'',hex:'be a0 00 16 00 00 00 00 00 00 00 00 a0 02 ff ff'},
+    {no:10,time:'0.500200',src:'10.0.0.100',dst:'10.0.0.50',proto:'TCP',len:54,info:'22 → 48800 [SYN, ACK] Seq=0 Ack=1',headers:{tcp:'Src Port: 22, Dst Port: 48800, Flags: SYN ACK'},payload:'',hex:'00 16 be a0 00 00 00 00 00 00 00 01 a0 12 72 10'},
+    {no:11,time:'0.501000',src:'10.0.0.100',dst:'10.0.0.50',proto:'SSH',len:87,info:'Server: SSH-2.0-OpenSSH_8.9p1',headers:{ssh:'Protocol: SSH-2.0',ssh_note:'Internal host 10.0.0.50 connecting to internal host 10.0.0.100 — potential lateral movement'},payload:'SSH-2.0-OpenSSH_8.9p1\\r\\n',hex:'53 53 48 2d 32 2e 30 2d 4f 70 65 6e 53 53 48 5f'},
+    {no:12,time:'1.000000',src:'192.168.1.20',dst:'10.0.0.100',proto:'TCP',len:54,info:'55300 → 80 [SYN] Seq=0 Win=65535',headers:{tcp:'Src Port: 55300, Dst Port: 80, Flags: SYN'},payload:'',hex:'d8 04 00 50 00 00 00 00 00 00 00 00 a0 02 ff ff'},
+    {no:13,time:'1.000200',src:'10.0.0.100',dst:'192.168.1.20',proto:'TCP',len:54,info:'80 → 55300 [SYN, ACK] Seq=0 Ack=1',headers:{tcp:'Src Port: 80, Dst Port: 55300, Flags: SYN ACK'},payload:'',hex:'00 50 d8 04 00 00 00 00 00 00 00 01 a0 12 72 10'},
+    {no:14,time:'1.010000',src:'192.168.1.20',dst:'10.0.0.100',proto:'HTTP',len:380,info:'POST /login HTTP/1.1 (application/x-www-form-urlencoded)',headers:{http:'Method: POST, URI: /login, Version: HTTP/1.1',http_host:'Host: 10.0.0.100',http_ct:'Content-Type: application/x-www-form-urlencoded',http_ua:'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) Firefox/124.0'},payload:'POST /login HTTP/1.1\\r\\nHost: 10.0.0.100\\r\\nContent-Type: application/x-www-form-urlencoded\\r\\n\\r\\nusername=sysadmin&password=letmein2026',hex:'75 73 65 72 6e 61 6d 65 3d 73 79 73 61 64 6d 69 6e 26 70 61 73 73 77 6f 72 64 3d 6c 65 74 6d 65 69 6e 32 30 32 36'},
+    {no:15,time:'1.020000',src:'10.0.0.100',dst:'192.168.1.20',proto:'HTTP',len:250,info:'HTTP/1.1 302 Found → /dashboard',headers:{http:'Status: 302 Found',http_location:'Location: /dashboard',http_cookie_set:'Set-Cookie: session=eyJhbGciOiJIUzI1NiJ9; HttpOnly'},payload:'HTTP/1.1 302 Found\\r\\nLocation: /dashboard\\r\\nSet-Cookie: session=eyJhbGciOiJIUzI1NiJ9; HttpOnly\\r\\n\\r\\n',hex:'48 54 54 50 2f 31 2e 31 20 33 30 32 20 46 6f 75'},
+    {no:16,time:'2.000000',src:'10.0.0.50',dst:'8.8.8.8',proto:'DNS',len:95,info:'Standard query A 5d41402abc4b2a76.data.exfil.evil.com',headers:{udp:'Src Port: 41000, Dst Port: 53',dns:'Query: A 5d41402abc4b2a76.data.exfil.evil.com'},payload:'',hex:'00 45 01 00 00 01 00 00 00 00 00 00 10 35 64 34'},
+    {no:17,time:'2.100000',src:'10.0.0.50',dst:'8.8.8.8',proto:'DNS',len:95,info:'Standard query A b9719d911017c592.data.exfil.evil.com',headers:{udp:'Src Port: 41001, Dst Port: 53',dns:'Query: A b9719d911017c592.data.exfil.evil.com'},payload:'',hex:'00 46 01 00 00 01 00 00 00 00 00 00 10 62 39 37'},
+    {no:18,time:'2.200000',src:'10.0.0.50',dst:'8.8.8.8',proto:'DNS',len:85,info:'Standard query A complete.data.exfil.evil.com',headers:{udp:'Src Port: 41002, Dst Port: 53',dns:'Query: A complete.data.exfil.evil.com'},payload:'',hex:'00 47 01 00 00 01 00 00 00 00 00 00 08 63 6f 6d'},
+    {no:19,time:'3.000000',src:'10.0.0.25',dst:'10.0.0.100',proto:'FTP',len:68,info:'Request: QUIT',headers:{ftp:'Command: QUIT'},payload:'QUIT\\r\\n',hex:'51 55 49 54 0d 0a'},
+    {no:20,time:'3.001000',src:'10.0.0.100',dst:'10.0.0.25',proto:'FTP',len:68,info:'Response: 221 Goodbye.',headers:{ftp:'Response Code: 221'},payload:'221 Goodbye.\\r\\n',hex:'32 32 31 20 47 6f 6f 64 62 79 65 2e 0d 0a'},
+  ]
+}
+];
+
+// =====================================================================
+// GAME STATE
+// =====================================================================
+let currentScenario = 0;
+let foundItems = {};
+let score = 0;
+let hintsUsed = 0;
+let selectedPacket = null;
+let currentView = 'headers';
+let filteredPackets = null;
+let completedScenarios = new Set();
+
+function init() {
+  renderScenarioSelect();
+  loadScenario(currentScenario);
+}
+
+function renderScenarioSelect() {
+  const el = document.getElementById('scenarioSelect');
+  el.innerHTML = SCENARIOS.map((s, i) =>
+    `<button class="scenario-btn ${i === currentScenario ? 'active' : ''} ${completedScenarios.has(i) ? 'completed' : ''}" data-idx="${i}">${i + 1}: ${s.name}</button>`
+  ).join('');
+  el.querySelectorAll('.scenario-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      currentScenario = parseInt(btn.dataset.idx);
+      loadScenario(currentScenario);
+    });
+  });
+}
+
+function loadScenario(idx) {
+  const s = SCENARIOS[idx];
+  foundItems = {};
+  score = 0;
+  hintsUsed = 0;
+  selectedPacket = null;
+  filteredPackets = null;
+
+  document.getElementById('scenarioName').textContent = s.name;
+  document.getElementById('missionText').textContent = s.mission;
+  document.getElementById('totalCount').textContent = s.findings.length;
+  document.getElementById('victoryScreen').classList.remove('visible');
+
+  updateScoreDisplay();
+  renderChecklist();
+  renderPackets();
+  renderScenarioSelect();
+
+  document.getElementById('detailPanel').classList.remove('visible');
+  document.getElementById('filterInput').value = '';
+  document.getElementById('filterCount').textContent = '';
+  document.getElementById('feedbackMsg').textContent = '';
+  document.getElementById('answerInput').value = '';
+}
+
+function renderChecklist() {
+  const s = SCENARIOS[currentScenario];
+  const el = document.getElementById('checklist');
+  el.innerHTML = s.findings.map(f =>
+    `<div class="check-item ${foundItems[f.id] ? 'found' : ''}" data-id="${f.id}">
+      <div class="check-icon">${foundItems[f.id] ? '✓' : ''}</div>
+      <span>${f.label} ${foundItems[f.id] ? '(+' + f.points + ')' : ''}</span>
+    </div>`
+  ).join('');
+}
+
+function renderPackets(packets) {
+  const pkts = packets || SCENARIOS[currentScenario].packets;
+  const body = document.getElementById('pcapBody');
+  body.innerHTML = pkts.map(p =>
+    `<div class="pkt-row ${selectedPacket === p.no ? 'selected' : ''}" data-no="${p.no}">
+      <div class="col-no">${p.no}</div>
+      <div class="col-time">${p.time}</div>
+      <div class="col-src">${p.src}</div>
+      <div class="col-dst">${p.dst}</div>
+      <div class="col-proto">${p.proto}</div>
+      <div class="col-len">${p.len}</div>
+      <div class="col-info">${p.info}</div>
+    </div>`
+  ).join('');
+
+  body.querySelectorAll('.pkt-row').forEach(row => {
+    row.addEventListener('click', () => selectPacket(parseInt(row.dataset.no)));
+  });
+}
+
+function selectPacket(no) {
+  const s = SCENARIOS[currentScenario];
+  const pkt = s.packets.find(p => p.no === no);
+  if (!pkt) return;
+  selectedPacket = no;
+
+  // Re-render to highlight
+  const pkts = filteredPackets || s.packets;
+  renderPackets(pkts);
+
+  // Show detail panel
+  const panel = document.getElementById('detailPanel');
+  panel.classList.add('visible');
+  showDetailView(pkt, currentView);
+  showFollowStreamBtn();
+}
+
+// Build Wireshark-style protocol layer dissection from packet data
+function dissectPacket(pkt) {
+  const layers = [];
+  // Extract ports from info
+  const portMatch = pkt.info.match(/(\d+)\s*→\s*(\d+)/);
+  const srcPort = portMatch ? portMatch[1] : '';
+  const dstPort = portMatch ? portMatch[2] : '';
+  // Extract flags
+  const flagMatch = pkt.info.match(/\[([^\]]+)\]/);
+  const flags = flagMatch ? flagMatch[1] : '';
+  // Extract seq/ack/win
+  const seqMatch = pkt.info.match(/Seq=(\d+)/);
+  const ackMatch = pkt.info.match(/Ack=(\d+)/);
+  const winMatch = pkt.info.match(/Win=(\d+)/);
+
+  // Frame layer
+  layers.push({
+    name: 'Frame',
+    summary: `${pkt.len} bytes on wire, ${pkt.len} bytes captured`,
+    color: 'var(--text-muted)',
+    fields: [
+      ['Frame Length', `${pkt.len} bytes`],
+      ['Capture Length', `${pkt.len} bytes`],
+      ['Arrival Time', `${pkt.time} seconds`],
+      ['Frame Number', `${pkt.no}`],
+    ]
+  });
+
+  // Ethernet layer
+  const ethSrc = (pkt.headers.ethernet || '').match(/Src:\s*([0-9a-f:]+)/i);
+  const ethDst = (pkt.headers.ethernet || '').match(/Dst:\s*([0-9a-f:]+)/i);
+  const ethType = pkt.proto === 'ARP' ? '0x0806 (ARP)' : '0x0800 (IPv4)';
+  layers.push({
+    name: 'Ethernet II',
+    summary: `Src: ${ethSrc ? ethSrc[1] : '??:??:??:??:??:??'}, Dst: ${ethDst ? ethDst[1] : '??:??:??:??:??:??'}`,
+    color: 'var(--text-muted)',
+    fields: [
+      ['Destination', ethDst ? ethDst[1] : 'ff:ff:ff:ff:ff:ff'],
+      ['Source', ethSrc ? ethSrc[1] : '??:??:??:??:??:??'],
+      ['Type', ethType],
+    ]
+  });
+
+  if (pkt.proto === 'ARP') {
+    const opcode = (pkt.headers.arp || '').match(/Opcode:\s*(.+)/i);
+    layers.push({
+      name: 'Address Resolution Protocol',
+      summary: pkt.info,
+      color: 'var(--accent-amber)',
+      fields: [
+        ['Hardware type', 'Ethernet (1)'],
+        ['Protocol type', 'IPv4 (0x0800)'],
+        ['Opcode', opcode ? opcode[1] : '?'],
+        ['Sender IP', pkt.src],
+        ['Target IP', pkt.dst],
+      ]
+    });
+    return layers;
+  }
+
+  // IP layer
+  const ttl = (pkt.headers.ip || '').match(/TTL:\s*(\d+)/);
+  const ipId = (pkt.headers.ip || '').match(/ID:\s*(0x[0-9a-f]+)/i);
+  const ipProto = ['TCP','HTTP','FTP','SSH'].includes(pkt.proto) ? '6 (TCP)' : pkt.proto === 'DNS' ? '17 (UDP)' : '6 (TCP)';
+  layers.push({
+    name: 'Internet Protocol Version 4',
+    summary: `Src: ${pkt.src}, Dst: ${pkt.dst}`,
+    color: 'var(--accent-green)',
+    fields: [
+      ['Version', '4'],
+      ['Header Length', '20 bytes (5)'],
+      ['Total Length', `${pkt.len - 14}`],
+      ['Identification', ipId ? ipId[1] : '0x' + (Math.floor(Math.random()*65535)).toString(16).padStart(4,'0')],
+      ['Flags', '0x40, Don\'t fragment'],
+      ['Time to Live', ttl ? ttl[1] : '64'],
+      ['Protocol', ipProto],
+      ['Source Address', pkt.src],
+      ['Destination Address', pkt.dst],
+    ]
+  });
+
+  // Transport layer
+  if (pkt.proto === 'DNS' || (pkt.headers.udp)) {
+    const udpSrc = (pkt.headers.udp || '').match(/Src Port:\s*(\d+)/);
+    const udpDst = (pkt.headers.udp || '').match(/Dst Port:\s*(\d+)/);
+    layers.push({
+      name: 'User Datagram Protocol',
+      summary: `Src Port: ${udpSrc ? udpSrc[1] : '?'}, Dst Port: ${udpDst ? udpDst[1] : '?'}`,
+      color: 'var(--accent-cyan)',
+      fields: [
+        ['Source Port', udpSrc ? udpSrc[1] : '?'],
+        ['Destination Port', udpDst ? udpDst[1] : '?'],
+        ['Length', `${pkt.len - 34}`],
+        ['Checksum', '0x' + (Math.floor(Math.random()*65535)).toString(16).padStart(4,'0') + ' [valid]'],
+      ]
+    });
+  } else if (srcPort) {
+    const tcpFlags = [];
+    if (flags.includes('SYN')) tcpFlags.push('SYN');
+    if (flags.includes('ACK')) tcpFlags.push('ACK');
+    if (flags.includes('RST')) tcpFlags.push('RST');
+    if (flags.includes('FIN')) tcpFlags.push('FIN');
+    if (flags.includes('PSH')) tcpFlags.push('PSH');
+    const win = (pkt.headers.tcp || '').match(/Window:\s*(\d+)/);
+    const opts = (pkt.headers.tcp || '').match(/Options:\s*\[([^\]]+)\]/);
+    layers.push({
+      name: 'Transmission Control Protocol',
+      summary: `${srcPort} → ${dstPort} [${flags || 'ACK'}] Seq=${seqMatch?seqMatch[1]:'0'}${ackMatch?' Ack='+ackMatch[1]:''}${win?' Win='+win[1]:''}`,
+      color: 'var(--accent-purple)',
+      fields: [
+        ['Source Port', srcPort],
+        ['Destination Port', dstPort],
+        ['Sequence Number', seqMatch ? seqMatch[1] : '0'],
+        ['Acknowledgment Number', ackMatch ? ackMatch[1] : '0'],
+        ['Header Length', opts ? '32 bytes (8)' : '20 bytes (5)'],
+        ['Flags', `0x${tcpFlags.includes('SYN')&&tcpFlags.includes('ACK')?'012':tcpFlags.includes('SYN')?'002':tcpFlags.includes('RST')&&tcpFlags.includes('ACK')?'014':tcpFlags.includes('RST')?'004':tcpFlags.includes('FIN')?'001':'010'} (${tcpFlags.join(', ') || 'ACK'})`],
+        ['Window', win ? win[1] : '65535'],
+        ...(opts ? [['Options', opts[1]]] : []),
+      ]
+    });
+  }
+
+  // Application layer
+  if (pkt.proto === 'DNS') {
+    const dnsFields = [];
+    const txn = (pkt.headers.dns || '').match(/Transaction ID:\s*(0x[0-9a-f]+)/i);
+    if (txn) dnsFields.push(['Transaction ID', txn[1]]);
+    const isResponse = (pkt.headers.dns || '').includes('Response');
+    dnsFields.push(['QR', isResponse ? '1 (Response)' : '0 (Query)']);
+    const query = (pkt.headers.dns || '').match(/(?:Query|Response):\s*A\s+(\S+)/);
+    if (query) dnsFields.push(['Name', query[1]]);
+    const ans = (pkt.headers.dns || '').match(/->\s*([\d.]+)/);
+    if (ans) dnsFields.push(['Address', ans[1]]);
+    const dttl = (pkt.headers.dns || '').match(/TTL:\s*(\d+)/);
+    if (dttl) dnsFields.push(['Time to Live', dttl[1]]);
+    layers.push({
+      name: 'Domain Name System',
+      summary: isResponse ? 'Standard query response' : 'Standard query',
+      color: 'var(--accent-cyan)',
+      fields: dnsFields
+    });
+  } else if (pkt.proto === 'SSH') {
+    const sshFields = [];
+    Object.entries(pkt.headers).forEach(([k,v]) => {
+      if (k.startsWith('ssh')) sshFields.push([k.replace(/_/g,' ').replace(/ssh\s*/i,'').replace(/^\w/,c=>c.toUpperCase()) || 'Protocol', v]);
+    });
+    layers.push({
+      name: 'SSH Protocol',
+      summary: pkt.info,
+      color: 'var(--accent-amber)',
+      fields: sshFields
+    });
+  } else if (pkt.proto === 'HTTP') {
+    const httpFields = [];
+    Object.entries(pkt.headers).forEach(([k,v]) => {
+      const label = k.replace(/^http_?/,'').replace(/_/g,'-').replace(/^\w/,c=>c.toUpperCase()) || 'Request/Status';
+      httpFields.push([label === '' ? 'HTTP' : label, v]);
+    });
+    const isReq = pkt.info.match(/^(GET|POST|PUT|DELETE|PATCH|HEAD|OPTIONS)/);
+    layers.push({
+      name: 'Hypertext Transfer Protocol',
+      summary: isReq ? `${isReq[1]} request` : pkt.info,
+      color: 'var(--accent-green)',
+      fields: httpFields
+    });
+  } else if (pkt.proto === 'FTP') {
+    const ftpFields = [];
+    Object.entries(pkt.headers).forEach(([k,v]) => {
+      const label = k.replace(/^ftp_?/,'').replace(/_/g,' ').replace(/^\w/,c=>c.toUpperCase()) || 'FTP';
+      ftpFields.push([label, v]);
+    });
+    layers.push({
+      name: 'File Transfer Protocol',
+      summary: pkt.info,
+      color: 'var(--accent-amber)',
+      fields: ftpFields
+    });
+  }
+
+  return layers;
+}
+
+function showDetailView(pkt, view) {
+  currentView = view;
+  const content = document.getElementById('detailContent');
+
+  // Update tab styles
+  document.querySelectorAll('.detail-tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.view === view);
+  });
+
+  if (view === 'headers') {
+    const layers = dissectPacket(pkt);
+    content.innerHTML = layers.map((layer, i) => {
+      const fieldsHtml = layer.fields.map(([name, val]) => {
+        const isSusp = /nmap|p@ssw0rd|password=|exfil|evil\.com|PASS |USER |shadow/i.test(val);
+        return `<div class="proto-field"><span class="pf-name">${escHtml(name)}:</span><span class="pf-val${isSusp?' suspicious':''}">${escHtml(val)}</span></div>`;
+      }).join('');
+      return `<div class="proto-layer">
+        <div class="proto-layer-header${i >= layers.length - 1 ? ' open' : ''}" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open');">
+          <span class="arrow">&#9654;</span>
+          <span class="layer-name" style="color:${layer.color}">${escHtml(layer.name)}</span>
+          <span class="layer-summary">${escHtml(layer.summary)}</span>
+        </div>
+        <div class="proto-layer-fields${i >= layers.length - 1 ? ' open' : ''}">${fieldsHtml}</div>
+      </div>`;
+    }).join('');
+  } else if (view === 'payload') {
+    content.innerHTML = pkt.payload ?
+      `<div style="padding:0.75rem;"><pre>${escHtml(pkt.payload.replace(/\\r\\n/g, '\r\n'))}</pre></div>` :
+      '<div style="padding:0.75rem;"><span style="color:var(--text-muted);">No payload data</span></div>';
+  } else if (view === 'hex') {
+    const bytes = (pkt.hex || '').split(' ').filter(Boolean);
+    let html = '<div class="hex-dump">';
+    for (let offset = 0; offset < bytes.length; offset += 16) {
+      const chunk = bytes.slice(offset, offset + 16);
+      const offsetStr = offset.toString(16).padStart(4, '0');
+      // Hex bytes with gap at byte 8
+      let hexPart = '';
+      for (let j = 0; j < 16; j++) {
+        if (j === 8) hexPart += '<span class="gap"></span>';
+        if (j < chunk.length) {
+          hexPart += `<span class="hb">${chunk[j]}</span>`;
+        } else {
+          hexPart += `<span class="hb">  </span>`;
+        }
+      }
+      // ASCII
+      let asciiPart = '';
+      for (let j = 0; j < chunk.length; j++) {
+        const c = parseInt(chunk[j], 16);
+        const ch = (c >= 32 && c <= 126) ? String.fromCharCode(c) : '.';
+        asciiPart += `<span class="ha">${escHtml(ch)}</span>`;
+      }
+      html += `<div class="hex-row"><span class="hex-offset">${offsetStr}</span><span class="hex-bytes">${hexPart}</span><span class="hex-ascii">${asciiPart}</span></div>`;
+    }
+    if (bytes.length === 0) {
+      html += '<div style="padding:0.75rem;color:var(--text-muted);">No hex data available</div>';
+    }
+    html += '</div>';
+    content.innerHTML = html;
+  }
+}
+
+function escHtml(s) {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+// Detail tab switching
+document.querySelectorAll('.detail-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    if (selectedPacket === null) return;
+    const pkt = SCENARIOS[currentScenario].packets.find(p => p.no === selectedPacket);
+    if (pkt) showDetailView(pkt, tab.dataset.view);
+  });
+});
+
+// Filter
+document.getElementById('filterBtn').addEventListener('click', applyFilter);
+document.getElementById('filterInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') applyFilter();
+});
+document.getElementById('clearFilter').addEventListener('click', () => {
+  document.getElementById('filterInput').value = '';
+  filteredPackets = null;
+  document.getElementById('filterCount').textContent = '';
+  renderPackets();
+});
+
+function applyFilter() {
+  const filter = document.getElementById('filterInput').value.trim().toLowerCase();
+  if (!filter) {
+    filteredPackets = null;
+    renderPackets();
+    document.getElementById('filterCount').textContent = '';
+    return;
+  }
+
+  const s = SCENARIOS[currentScenario];
+  filteredPackets = s.packets.filter(p => {
+    const text = [p.src, p.dst, p.proto, p.info, JSON.stringify(p.headers), p.payload].join(' ').toLowerCase();
+
+    // Support common Wireshark-style filters
+    if (filter.startsWith('ip.src==') || filter.startsWith('ip.src =='))
+      return p.src === filter.replace(/ip\.src\s*==\s*/, '').trim();
+    if (filter.startsWith('ip.dst==') || filter.startsWith('ip.dst =='))
+      return p.dst === filter.replace(/ip\.dst\s*==\s*/, '').trim();
+    if (filter.startsWith('tcp.port==') || filter.startsWith('tcp.port ==')) {
+      const port = filter.replace(/tcp\.port\s*==\s*/, '').trim();
+      const re = new RegExp('(^|\\D)' + port.replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + '(\\D|$)');
+      return p.info.includes('→') && (p.info.match(/(\d+)\s*→\s*(\d+)/) || []).slice(1).includes(port);
+    }
+    if (filter === 'http') return p.proto === 'HTTP';
+    if (filter === 'dns') return p.proto === 'DNS';
+    if (filter === 'tcp') return ['TCP', 'HTTP', 'FTP', 'SSH'].includes(p.proto);
+    if (filter === 'ftp') return p.proto === 'FTP';
+    if (filter === 'ssh') return p.proto === 'SSH';
+    if (filter === 'arp') return p.proto === 'ARP';
+    if (filter.startsWith('tcp.flags.syn==1') || filter === 'syn')
+      return p.info.includes('[SYN]') && !p.info.includes('ACK');
+
+    return text.includes(filter);
+  });
+
+  renderPackets(filteredPackets);
+  document.getElementById('filterCount').textContent = `${filteredPackets.length}/${s.packets.length} packets`;
+}
+
+// Submit answer
+document.getElementById('submitBtn').addEventListener('click', submitAnswer);
+document.getElementById('answerInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') submitAnswer();
+});
+
+function submitAnswer() {
+  const input = document.getElementById('answerInput').value.trim().toLowerCase();
+  const fb = document.getElementById('feedbackMsg');
+  if (!input) return;
+
+  const s = SCENARIOS[currentScenario];
+  let matched = false;
+
+  for (const f of s.findings) {
+    if (foundItems[f.id]) continue;
+    const keywordMatch = f.keywords.some(k => input.includes(k.toLowerCase()));
+    const matchAllMatch = f.matchAll && f.matchAll.every(k => input.includes(k.toLowerCase()));
+    if (keywordMatch || matchAllMatch) {
+      foundItems[f.id] = true;
+      score += f.points;
+      matched = true;
+      fb.textContent = `FOUND: ${f.label} (+${f.points} pts)`;
+      fb.className = 'feedback-msg correct';
+      break;
+    }
+  }
+
+  if (!matched) {
+    fb.textContent = 'Not a match. Keep investigating!';
+    fb.className = 'feedback-msg wrong';
+  }
+
+  document.getElementById('answerInput').value = '';
+  updateScoreDisplay();
+  renderChecklist();
+
+  // Check victory
+  const allFound = s.findings.every(f => foundItems[f.id]);
+  if (allFound) {
+    completedScenarios.add(currentScenario);
+    setTimeout(() => {
+      document.getElementById('victoryScreen').classList.add('visible');
+      document.getElementById('victoryStats').textContent =
+        `Score: ${score} points | Hints used: ${hintsUsed} | Scenario ${currentScenario + 1} of ${SCENARIOS.length}`;
+      renderScenarioSelect();
+    }, 500);
+  }
+}
+
+// Hint
+document.getElementById('hintBtn').addEventListener('click', () => {
+  const s = SCENARIOS[currentScenario];
+  const fb = document.getElementById('feedbackMsg');
+  const remaining = s.findings.filter(f => !foundItems[f.id]);
+  if (remaining.length === 0) return;
+  hintsUsed++;
+  const hint = remaining[0];
+  fb.textContent = `HINT: ${hint.hint}`;
+  fb.className = 'feedback-msg hint';
+  updateScoreDisplay();
+});
+
+// Next scenario
+document.getElementById('nextScenarioBtn').addEventListener('click', () => {
+  currentScenario = (currentScenario + 1) % SCENARIOS.length;
+  loadScenario(currentScenario);
+});
+
+// Follow TCP Stream
+function getStreamKey(pkt) {
+  // Extract ports from info like "49152 → 22 [SYN]"
+  const m = pkt.info.match(/(\d+)\s*→\s*(\d+)/);
+  if (!m) return null;
+  const port1 = m[1], port2 = m[2];
+  // Normalize: sort IP:port pairs so both directions get the same key
+  const a = pkt.src + ':' + port1, b = pkt.dst + ':' + port2;
+  return a < b ? a + '|' + b : b + '|' + a;
+}
+
+function showFollowStreamBtn() {
+  const btn = document.getElementById('followStream');
+  if (selectedPacket === null) { btn.style.display = 'none'; return; }
+  const s = SCENARIOS[currentScenario];
+  const pkt = s.packets.find(p => p.no === selectedPacket);
+  if (!pkt || !['TCP','HTTP','FTP','SSH'].includes(pkt.proto)) { btn.style.display = 'none'; return; }
+  const key = getStreamKey(pkt);
+  btn.style.display = key ? '' : 'none';
+}
+
+document.getElementById('followStream').addEventListener('click', () => {
+  if (selectedPacket === null) return;
+  const s = SCENARIOS[currentScenario];
+  const pkt = s.packets.find(p => p.no === selectedPacket);
+  if (!pkt) return;
+  const key = getStreamKey(pkt);
+  if (!key) return;
+
+  // Collect all packets in this stream
+  const streamPkts = s.packets.filter(p => getStreamKey(p) === key);
+
+  // Determine client (initiator) = first packet's src
+  const client = streamPkts[0].src;
+  const clientPort = (streamPkts[0].info.match(/(\d+)\s*→/) || [])[1] || '?';
+  const serverPort = (streamPkts[0].info.match(/→\s*(\d+)/) || [])[1] || '?';
+  const server = streamPkts[0].dst;
+
+  // Build stream content
+  let html = '';
+  for (const sp of streamPkts) {
+    const isClient = sp.src === client;
+    const cls = isClient ? 'stream-client' : 'stream-server';
+    const arrow = isClient ? '→' : '←';
+    html += `<div class="stream-meta">#${sp.no} ${sp.time}s  ${sp.src}:${(sp.info.match(/(\d+)\s*→/) || [])[1] || '?'} ${arrow} ${sp.dst}:${(sp.info.match(/→\s*(\d+)/) || [])[1] || '?'}  [${sp.proto}] ${sp.len}b</div>`;
+    if (sp.payload) {
+      html += `<pre class="${cls}">${escHtml(sp.payload.replace(/\\r\\n/g, '\r\n'))}</pre>`;
+    } else {
+      html += `<div class="${cls}" style="opacity:0.5;font-size:0.65rem;">${escHtml(sp.info)}</div>`;
+    }
+  }
+
+  document.getElementById('streamInfo').textContent = `${client}:${clientPort} ↔ ${server}:${serverPort} (${streamPkts.length} packets)`;
+  document.getElementById('streamBody').innerHTML = html;
+  document.getElementById('streamOverlay').style.display = 'flex';
+});
+
+document.getElementById('streamClose').addEventListener('click', () => {
+  document.getElementById('streamOverlay').style.display = 'none';
+});
+document.getElementById('streamOverlay').addEventListener('click', (e) => {
+  if (e.target === e.currentTarget) document.getElementById('streamOverlay').style.display = 'none';
+});
+
+function updateScoreDisplay() {
+  const s = SCENARIOS[currentScenario];
+  const found = s.findings.filter(f => foundItems[f.id]).length;
+  document.getElementById('foundCount').textContent = found;
+  document.getElementById('totalScore').textContent = score;
+  document.getElementById('hintsUsed').textContent = hintsUsed;
+}
+
+init();
+</script>
+</body>
+</html>
