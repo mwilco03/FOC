@@ -99,6 +99,18 @@ body::before{content:'';position:fixed;inset:0;background:linear-gradient(rgba(5
 .scenario-btn.active{background:var(--accent-red);border-color:var(--accent-red);color:#fff;}
 .scenario-btn.completed{background:rgba(16,185,129,0.1);border-color:var(--accent-green);color:var(--accent-green);}
 
+.stream-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:100;display:flex;align-items:center;justify-content:center;}
+.stream-modal{background:var(--bg-card);border:1px solid var(--border);border-radius:8px;width:90%;max-width:800px;max-height:80vh;display:flex;flex-direction:column;overflow:hidden;}
+.stream-modal-header{display:flex;justify-content:space-between;align-items:center;padding:0.75rem 1rem;border-bottom:1px solid var(--border);font-size:0.75rem;}
+.stream-modal-header h3{font-family:'Press Start 2P',monospace;font-size:0.55rem;color:var(--accent-cyan);}
+.stream-modal-close{background:none;border:none;color:var(--text-muted);font-size:1.2rem;cursor:pointer;}
+.stream-modal-close:hover{color:var(--accent-red);}
+.stream-body{padding:1rem;overflow-y:auto;flex:1;font-size:0.72rem;line-height:1.7;}
+.stream-body pre{white-space:pre-wrap;word-break:break-all;}
+.stream-client{color:var(--accent-cyan);}
+.stream-server{color:var(--accent-red);}
+.stream-meta{color:var(--text-muted);font-size:0.6rem;margin:0.5rem 0 0.15rem 0;border-top:1px dashed var(--border);padding-top:0.3rem;}
+
 @media(max-width:800px){
   .pcap-header,.pkt-row{grid-template-columns:40px 60px 120px 120px 50px 45px auto;font-size:0.6rem;}
   .checklist{grid-template-columns:1fr;}
@@ -136,6 +148,7 @@ body::before{content:'';position:fixed;inset:0;background:linear-gradient(rgba(5
       <input type="text" id="filterInput" placeholder="Filter: ip.src, tcp.port, http, dns, etc.">
       <button id="filterBtn">Apply</button>
       <button id="clearFilter">Clear</button>
+      <button id="followStream" style="display:none;">Follow TCP Stream</button>
       <span class="filter-count" id="filterCount"></span>
     </div>
     <div class="pcap-header">
@@ -159,6 +172,17 @@ body::before{content:'';position:fixed;inset:0;background:linear-gradient(rgba(5
     <button id="submitBtn">SUBMIT</button>
     <button class="hint-btn" id="hintBtn">HINT</button>
     <div class="feedback-msg" id="feedbackMsg"></div>
+  </div>
+
+  <div class="stream-overlay" id="streamOverlay" style="display:none;">
+    <div class="stream-modal">
+      <div class="stream-modal-header">
+        <h3>TCP STREAM</h3>
+        <span id="streamInfo" style="color:var(--text-muted);font-size:0.65rem;"></span>
+        <button class="stream-modal-close" id="streamClose">&times;</button>
+      </div>
+      <div class="stream-body" id="streamBody"></div>
+    </div>
   </div>
 
   <div class="victory" id="victoryScreen">
@@ -353,6 +377,7 @@ function selectPacket(no) {
   const panel = document.getElementById('detailPanel');
   panel.classList.add('visible');
   showDetailView(pkt, currentView);
+  showFollowStreamBtn();
 }
 
 function showDetailView(pkt, view) {
@@ -519,6 +544,70 @@ document.getElementById('hintBtn').addEventListener('click', () => {
 document.getElementById('nextScenarioBtn').addEventListener('click', () => {
   currentScenario = (currentScenario + 1) % SCENARIOS.length;
   loadScenario(currentScenario);
+});
+
+// Follow TCP Stream
+function getStreamKey(pkt) {
+  // Extract ports from info like "49152 → 22 [SYN]"
+  const m = pkt.info.match(/(\d+)\s*→\s*(\d+)/);
+  if (!m) return null;
+  const port1 = m[1], port2 = m[2];
+  // Normalize: sort IP:port pairs so both directions get the same key
+  const a = pkt.src + ':' + port1, b = pkt.dst + ':' + port2;
+  return a < b ? a + '|' + b : b + '|' + a;
+}
+
+function showFollowStreamBtn() {
+  const btn = document.getElementById('followStream');
+  if (selectedPacket === null) { btn.style.display = 'none'; return; }
+  const s = SCENARIOS[currentScenario];
+  const pkt = s.packets.find(p => p.no === selectedPacket);
+  if (!pkt || !['TCP','HTTP','FTP','SSH'].includes(pkt.proto)) { btn.style.display = 'none'; return; }
+  const key = getStreamKey(pkt);
+  btn.style.display = key ? '' : 'none';
+}
+
+document.getElementById('followStream').addEventListener('click', () => {
+  if (selectedPacket === null) return;
+  const s = SCENARIOS[currentScenario];
+  const pkt = s.packets.find(p => p.no === selectedPacket);
+  if (!pkt) return;
+  const key = getStreamKey(pkt);
+  if (!key) return;
+
+  // Collect all packets in this stream
+  const streamPkts = s.packets.filter(p => getStreamKey(p) === key);
+
+  // Determine client (initiator) = first packet's src
+  const client = streamPkts[0].src;
+  const clientPort = (streamPkts[0].info.match(/(\d+)\s*→/) || [])[1] || '?';
+  const serverPort = (streamPkts[0].info.match(/→\s*(\d+)/) || [])[1] || '?';
+  const server = streamPkts[0].dst;
+
+  // Build stream content
+  let html = '';
+  for (const sp of streamPkts) {
+    const isClient = sp.src === client;
+    const cls = isClient ? 'stream-client' : 'stream-server';
+    const arrow = isClient ? '→' : '←';
+    html += `<div class="stream-meta">#${sp.no} ${sp.time}s  ${sp.src}:${(sp.info.match(/(\d+)\s*→/) || [])[1] || '?'} ${arrow} ${sp.dst}:${(sp.info.match(/→\s*(\d+)/) || [])[1] || '?'}  [${sp.proto}] ${sp.len}b</div>`;
+    if (sp.payload) {
+      html += `<pre class="${cls}">${escHtml(sp.payload.replace(/\\r\\n/g, '\r\n'))}</pre>`;
+    } else {
+      html += `<div class="${cls}" style="opacity:0.5;font-size:0.65rem;">${escHtml(sp.info)}</div>`;
+    }
+  }
+
+  document.getElementById('streamInfo').textContent = `${client}:${clientPort} ↔ ${server}:${serverPort} (${streamPkts.length} packets)`;
+  document.getElementById('streamBody').innerHTML = html;
+  document.getElementById('streamOverlay').style.display = 'flex';
+});
+
+document.getElementById('streamClose').addEventListener('click', () => {
+  document.getElementById('streamOverlay').style.display = 'none';
+});
+document.getElementById('streamOverlay').addEventListener('click', (e) => {
+  if (e.target === e.currentTarget) document.getElementById('streamOverlay').style.display = 'none';
 });
 
 function updateScoreDisplay() {
