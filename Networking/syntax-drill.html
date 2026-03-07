@@ -654,6 +654,57 @@ function esc(s) {
   return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
+// =====================================================================
+// RESILIENCE: localStorage high scores, error boundary, offline detect
+// =====================================================================
+const STORAGE_KEY = 'foc-syntax-drill';
+
+function saveHighScores() {
+  try {
+    const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+    const modeKey = mode;
+    if (!data[modeKey] || score > (data[modeKey].bestScore || 0)) {
+      data[modeKey] = { bestScore: score, bestStreak: maxStreak, timestamp: Date.now() };
+    }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  } catch (e) { /* localStorage unavailable */ }
+}
+
+function loadHighScores() {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+  } catch (e) { return {}; }
+}
+
+// Patch showVictory to save and display high scores
+const _origShowVictory = showVictory;
+showVictory = function() {
+  saveHighScores();
+  _origShowVictory();
+  const data = loadHighScores();
+  const best = data[mode];
+  if (best) {
+    document.getElementById('victoryStats').innerHTML +=
+      `<br><span style="color:var(--accent-amber);">Best: ${best.bestScore} | Streak: ${best.bestStreak}</span>`;
+  }
+};
+
+// Global error boundary
+window.onerror = function(msg, src, line) {
+  console.error('Game error:', msg, src, line);
+  const fb = document.getElementById('feedback');
+  if (fb) { fb.innerHTML = 'An error occurred. Try refreshing the page.'; fb.className = 'feedback visible wrong'; }
+  return true;
+};
+
+// Offline detection
+window.addEventListener('offline', () => {
+  document.title = '(Offline) Syntax Notation Drill';
+});
+window.addEventListener('online', () => {
+  document.title = 'Syntax Notation Drill - Future Operators Course';
+});
+
 init();
 </script>
 </body>

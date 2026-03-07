@@ -424,6 +424,51 @@ document.querySelectorAll('.mode-tab').forEach(tab => {
   });
 });
 
+// =====================================================================
+// RESILIENCE: localStorage high scores, error boundary, offline detect
+// =====================================================================
+const STORAGE_KEY = 'foc-hex-trainer';
+
+function saveHighScore() {
+  try {
+    const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+    if (sc > (data.bestScore || 0)) {
+      data.bestScore = sc;
+      data.bestStreak = streak;
+      data.timestamp = Date.now();
+    }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  } catch (e) {}
+}
+
+function loadHighScore() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch (e) { return {}; }
+}
+
+// Patch updateStats to auto-save
+const _origUpdateStats = updateStats;
+updateStats = function() {
+  _origUpdateStats();
+  saveHighScore();
+  const best = loadHighScore();
+  if (best.bestScore) {
+    const el = document.querySelector('.stats');
+    if (el && !document.getElementById('bestDisplay')) {
+      el.insertAdjacentHTML('beforeend', `<div id="bestDisplay">BEST: <span class="sv">${best.bestScore}</span></div>`);
+    } else if (document.getElementById('bestDisplay')) {
+      document.getElementById('bestDisplay').innerHTML = `BEST: <span class="sv">${best.bestScore}</span>`;
+    }
+  }
+};
+
+window.onerror = function(msg, src, line) {
+  console.error('Game error:', msg, src, line);
+  return true;
+};
+
+window.addEventListener('offline', () => { document.title = '(Offline) ' + document.title; });
+window.addEventListener('online', () => { document.title = document.title.replace('(Offline) ', ''); });
+
 newGuided();
 </script>
 </body>

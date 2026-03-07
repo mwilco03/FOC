@@ -368,6 +368,40 @@ $('#btnPlayAgain').addEventListener('click', () => {
   renderStage();
 });
 
+// =====================================================================
+// RESILIENCE: localStorage progress, error boundary, offline detect
+// =====================================================================
+const STORAGE_KEY = 'foc-osi-tower';
+
+function saveProgress() {
+  try {
+    const data = { bestAttempts: totalAttempts, completions: 0, timestamp: Date.now() };
+    const prev = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+    data.completions = (prev.completions || 0);
+    if (stageResults.every(r => r === true)) data.completions++;
+    if (!prev.bestAttempts || totalAttempts < prev.bestAttempts) data.bestAttempts = totalAttempts;
+    else data.bestAttempts = prev.bestAttempts;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  } catch (e) {}
+}
+
+// Patch showVictory to save and display stats
+const _origShowVictory = showVictory;
+showVictory = function() {
+  saveProgress();
+  _origShowVictory();
+  try {
+    const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+    if (data.completions > 1 || data.bestAttempts) {
+      $('#victoryStats').textContent += ` | Best: ${data.bestAttempts} checks | Completions: ${data.completions}`;
+    }
+  } catch (e) {}
+};
+
+window.onerror = function(msg) { console.error('Game error:', msg); return true; };
+window.addEventListener('offline', () => { document.title = '(Offline) ' + document.title; });
+window.addEventListener('online', () => { document.title = document.title.replace('(Offline) ', ''); });
+
 renderStage();
 </script>
 </body>

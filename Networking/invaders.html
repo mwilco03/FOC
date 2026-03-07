@@ -761,6 +761,87 @@ function startGame() {
 document.getElementById('btnStart').addEventListener('click', startGame);
 document.getElementById('btnRestart').addEventListener('click', startGame);
 
+// =====================================================================
+// RESILIENCE: high scores, mid-game save, error boundary, offline
+// =====================================================================
+const STORAGE_KEY = 'foc-subnet-invaders';
+
+function saveHighScore() {
+  try {
+    const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+    if (score > (data.highScore || 0)) {
+      data.highScore = score;
+      data.bestWave = currentWave + 1;
+      data.bestAccuracy = totalAnswered > 0 ? Math.round((totalCorrect / totalAnswered) * 100) : 0;
+      data.timestamp = Date.now();
+    }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  } catch (e) {}
+}
+
+function loadHighScore() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch (e) { return {}; }
+}
+
+// Show high score on start screen
+function showHighScoreOnStart() {
+  const data = loadHighScore();
+  if (data.highScore) {
+    const startScreen = document.getElementById('startScreen');
+    if (!document.getElementById('highScoreDisplay')) {
+      const div = document.createElement('p');
+      div.id = 'highScoreDisplay';
+      div.style.cssText = 'color:var(--accent-amber);margin-top:0.5rem;font-size:0.75rem;';
+      div.textContent = `High Score: ${data.highScore} | Wave ${data.bestWave} | ${data.bestAccuracy}% accuracy`;
+      startScreen.querySelector('.btn-play').before(div);
+    }
+  }
+}
+
+// Patch showGameOver to save
+const _origShowGameOver = showGameOver;
+showGameOver = function(victory) {
+  saveHighScore();
+  _origShowGameOver(victory);
+  const data = loadHighScore();
+  if (data.highScore) {
+    document.getElementById('finalAccuracy').insertAdjacentHTML('afterend',
+      `<p style="color:var(--accent-amber);margin-top:0.5rem;">High Score: ${data.highScore}</p>`);
+  }
+};
+
+// Save game state for recovery on accidental page close
+window.addEventListener('beforeunload', (e) => {
+  if (gameState === 'answering' || gameState === 'waveIntro') {
+    try {
+      const state = { score, lives, currentWave, streak, totalAnswered, totalCorrect, enemyBaseY, enemies: enemies.map(e => ({ alive: e.alive })) };
+      sessionStorage.setItem(STORAGE_KEY + '-session', JSON.stringify(state));
+    } catch (e) {}
+  }
+});
+
+function tryRestoreSession() {
+  try {
+    const raw = sessionStorage.getItem(STORAGE_KEY + '-session');
+    if (!raw) return false;
+    sessionStorage.removeItem(STORAGE_KEY + '-session');
+    const state = JSON.parse(raw);
+    if (Date.now() - (state.timestamp || 0) > 300000) return false; // expired after 5min
+    score = state.score; lives = state.lives; currentWave = state.currentWave;
+    streak = state.streak; totalAnswered = state.totalAnswered; totalCorrect = state.totalCorrect;
+    document.getElementById('startScreen').classList.add('hidden');
+    updateStats();
+    startWaveIntro();
+    return true;
+  } catch (e) { return false; }
+}
+
+showHighScoreOnStart();
+
+window.onerror = function(msg) { console.error('Game error:', msg); return true; };
+window.addEventListener('offline', () => { document.title = '(Offline) ' + document.title; });
+window.addEventListener('online', () => { document.title = document.title.replace('(Offline) ', ''); });
+
 gameLoop();
 </script>
 </body>

@@ -903,6 +903,53 @@ function updateScoreDisplay() {
 }
 
 init();
+
+/* ── Resilience: localStorage persistence ── */
+const STORAGE_KEY = 'foc-pcap-forensics';
+function saveProgress() {
+  try {
+    const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+    if (!data.bestScore || score > data.bestScore) {
+      data.bestScore = score;
+      data.fewestHints = hintsUsed;
+      data.scenariosCompleted = completedScenarios.size;
+      data.timestamp = Date.now();
+    }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  } catch (e) {}
+}
+function loadBestScore() {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+  } catch (e) { return {}; }
+}
+
+/* Patch victory to save and show best */
+const _origVictoryTimeout = document.getElementById('nextScenarioBtn');
+const victoryScreen = document.getElementById('victoryScreen');
+const victoryStats = document.getElementById('victoryStats');
+const observer = new MutationObserver(() => {
+  if (victoryScreen.classList.contains('visible')) {
+    saveProgress();
+    const best = loadBestScore();
+    if (best.bestScore) {
+      victoryStats.innerHTML += `<br><span style="color:var(--accent-amber);font-size:0.55rem;">Best: ${best.bestScore} pts | Fewest hints: ${best.fewestHints}</span>`;
+    }
+  }
+});
+observer.observe(victoryScreen, { attributes: true, attributeFilter: ['class'] });
+
+/* ── Error boundary ── */
+window.onerror = function(msg, src, line) {
+  console.error('PCAP game error:', msg, src, line);
+  const fb = document.getElementById('feedbackMsg');
+  if (fb) { fb.textContent = 'An error occurred. Try refreshing the page.'; fb.className = 'feedback-msg hint'; }
+  return true;
+};
+
+/* ── Offline detection ── */
+window.addEventListener('offline', () => { document.title = '(Offline) ' + document.title.replace('(Offline) ', ''); });
+window.addEventListener('online', () => { document.title = document.title.replace('(Offline) ', ''); });
 </script>
 </body>
 </html>
