@@ -744,8 +744,9 @@ function gameLoop() {
     }
   }
 
-  requestAnimationFrame(gameLoop);
+  animFrameId = requestAnimationFrame(gameLoop);
 }
+let animFrameId;
 
 // =====================================================================
 // START / RESTART
@@ -803,6 +804,7 @@ function showHighScoreOnStart() {
 // Patch showGameOver to save
 const _origShowGameOver = showGameOver;
 showGameOver = function(victory) {
+  if (animFrameId) { cancelAnimationFrame(animFrameId); animFrameId = null; }
   saveHighScore();
   _origShowGameOver(victory);
   const data = loadHighScore();

@@ -265,18 +265,25 @@ h1 {
 <script>
 (function() {
   const modules = [
-    { key: 'foc-syntax-drill', name: 'Syntax Drill', fields: ['bestScore', 'bestStreak'] },
+    { key: 'foc-syntax-drill', name: 'Syntax Drill', extract: d => {
+      let best = 0, streak = 0;
+      for (const k in d) { if (d[k].bestScore > best) { best = d[k].bestScore; streak = d[k].bestStreak || 0; } }
+      return best ? { 'Best Score': best, 'Best Streak': streak } : null;
+    }},
     { key: 'foc-hex-trainer', name: 'Hex Trainer', fields: ['bestScore', 'bestStreak'] },
     { key: 'foc-bitflip', name: 'Bit Flip', fields: ['bestStreak'] },
-    { key: 'foc-subnet-invaders', name: 'Subnet Invaders', fields: ['bestScore', 'bestWave'] },
+    { key: 'foc-subnet-invaders', name: 'Subnet Invaders', fields: ['highScore', 'bestWave'] },
     { key: 'foc-osi-tower', name: 'OSI Tower', fields: ['completions', 'bestAttempts'] },
     { key: 'foc-pcap-forensics', name: 'PCAP Forensics', fields: ['bestScore', 'fewestHints'] },
-    { key: 'subnetquest-save', name: 'Subnet Quest', fields: ['zone'] },
-    { key: 'challenges1-progress', name: 'Python Lab', fields: ['dScore', 'qScore'] },
-    { key: 'challenges2-progress', name: 'PowerShell Lab', fields: ['dScore', 'qScore'] },
-    { key: 'challenges3-progress', name: 'Batch Lab', fields: ['dScore', 'qScore'] },
-    { key: 'challenges4-progress', name: 'Bash Lab', fields: ['dScore', 'qScore'] },
-    { key: 'challenges5-progress', name: 'Data & APIs Lab', fields: ['dScore', 'qScore'] },
+    { key: 'subnetquest-save', name: 'Subnet Quest', extract: d => {
+      if (!d.player) return null;
+      return { 'Level': d.player.level || 1, 'Zones Cleared': (d.zonesCleared || []).length };
+    }},
+    { key: 'foc-python-progress', name: 'Python Lab', fields: ['dScore', 'qScore'] },
+    { key: 'foc-powershell-progress', name: 'PowerShell Lab', fields: ['dScore', 'qScore'] },
+    { key: 'foc-batch-progress', name: 'Batch Lab', fields: ['dScore', 'qScore'] },
+    { key: 'foc-bash-progress', name: 'Bash Lab', fields: ['dScore', 'qScore'] },
+    { key: 'foc-dataapi-progress', name: 'Data & APIs Lab', fields: ['dScore', 'qScore'] },
   ];
 
   function renderProgress() {
@@ -289,17 +296,24 @@ h1 {
       let data;
       try { data = JSON.parse(localStorage.getItem(m.key)); } catch(e) {}
       if (!data) return;
-      hasData = true;
       let stats = '';
-      for (const f of m.fields) {
-        if (data[f] !== undefined) {
-          const label = f.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase());
-          stats += `<span class="pg-stat"><strong>${data[f]}</strong> ${label}</span> `;
+      if (m.extract) {
+        const vals = m.extract(data);
+        if (!vals) return;
+        for (const [label, val] of Object.entries(vals)) {
+          stats += `<span class="pg-stat"><strong>${val}</strong> ${label}</span> `;
+        }
+      } else {
+        for (const f of m.fields) {
+          if (data[f] !== undefined) {
+            const label = f.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase());
+            stats += `<span class="pg-stat"><strong>${data[f]}</strong> ${label}</span> `;
+          }
         }
       }
-      if (stats) {
-        cards += `<div class="progress-card"><div class="pg-name">${m.name}</div><div>${stats}</div></div>`;
-      }
+      if (!stats) return;
+      hasData = true;
+      cards += `<div class="progress-card"><div class="pg-name">${m.name}</div><div>${stats}</div></div>`;
     });
 
     if (hasData) {

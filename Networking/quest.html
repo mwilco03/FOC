@@ -698,12 +698,12 @@ function showBossQuestion() {
   container.innerHTML = `
     <div class="bq-text">SUBNET: ${boss.ip} /${boss.cidr}</div>
     <div class="boss-fields">
-      <div class="boss-field"><label>Network</label><input type="text" id="bf-net" placeholder="?.?.?.?"></div>
-      <div class="boss-field"><label>Broadcast</label><input type="text" id="bf-bcast" placeholder="?.?.?.?"></div>
-      <div class="boss-field"><label>Mask</label><input type="text" id="bf-mask" placeholder="?.?.?.?"></div>
-      <div class="boss-field"><label>Hosts</label><input type="text" id="bf-hosts" placeholder="?"></div>
-      <div class="boss-field"><label>First Usable</label><input type="text" id="bf-first" placeholder="?.?.?.?"></div>
-      <div class="boss-field"><label>Last Usable</label><input type="text" id="bf-last" placeholder="?.?.?.?"></div>
+      <div class="boss-field"><label>Network</label><input type="text" id="bf-net" placeholder="e.g. 192.168.1.0" autocomplete="off"></div>
+      <div class="boss-field"><label>Broadcast</label><input type="text" id="bf-bcast" placeholder="e.g. 192.168.1.255" autocomplete="off"></div>
+      <div class="boss-field"><label>Mask</label><input type="text" id="bf-mask" placeholder="e.g. 255.255.255.0" autocomplete="off"></div>
+      <div class="boss-field"><label>Hosts</label><input type="text" id="bf-hosts" placeholder="e.g. 254" inputmode="numeric" autocomplete="off"></div>
+      <div class="boss-field"><label>First Usable</label><input type="text" id="bf-first" placeholder="e.g. 192.168.1.1" autocomplete="off"></div>
+      <div class="boss-field"><label>Last Usable</label><input type="text" id="bf-last" placeholder="e.g. 192.168.1.254" autocomplete="off"></div>
     </div>
     <div style="text-align:center;margin-top:0.75rem;">
       <button class="btn-action" id="bossSubmit">ATTACK!</button>
