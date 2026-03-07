@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Subnet Invaders - NetDrill</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Press+Start+2P&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -742,8 +744,9 @@ function gameLoop() {
     }
   }
 
-  requestAnimationFrame(gameLoop);
+  animFrameId = requestAnimationFrame(gameLoop);
 }
+let animFrameId;
 
 // =====================================================================
 // START / RESTART
@@ -801,6 +804,7 @@ function showHighScoreOnStart() {
 // Patch showGameOver to save
 const _origShowGameOver = showGameOver;
 showGameOver = function(victory) {
+  if (animFrameId) { cancelAnimationFrame(animFrameId); animFrameId = null; }
   saveHighScore();
   _origShowGameOver(victory);
   const data = loadHighScore();
