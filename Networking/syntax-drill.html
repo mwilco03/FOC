@@ -351,6 +351,7 @@ let streak = 0;
 let maxStreak = 0;
 let answered = false;
 let buildPieces = [];
+let buildChips = []; // persisted shuffled chip order for build mode
 
 function shuffle(arr) {
   const a = [...arr];
@@ -526,9 +527,9 @@ function showBuild(q) {
   document.getElementById('optionsArea').style.display = 'none';
 
   buildPieces = [];
-  const chips = shuffle(q.chips);
+  buildChips = shuffle(q.chips);
 
-  renderBuild(chips, q);
+  renderBuild(buildChips, q);
 }
 
 function renderBuild(chips, q) {
@@ -540,6 +541,7 @@ function renderBuild(chips, q) {
     if (used) cls += ' used';
     if (/^\[/.test(c)) cls += ' opt';
     else if (/^[{(]/.test(c)) cls += ' sym';
+    else if (c === '...') cls += ' sym';
     else if (/^<|^[A-Z]/.test(c)) cls += ' meta';
     else cls += ' lit';
     return `<button class="${cls}" data-ci="${i}">${esc(c)}</button>`;
@@ -557,56 +559,21 @@ function renderBuild(chips, q) {
 }
 
 function buildUndo() {
+  if (answered) return;
   buildPieces.pop();
-  renderBuild(shuffle(questions[currentQ].chips).length ? null : null);
-  // Re-render with same chip order — we need to store it
-  const q = questions[currentQ];
-  // Chips are shuffled once at start; for simplicity re-render from buildArea data
-  const chips = Array.from(document.querySelectorAll('#buildParts .build-chip')).map(el => {
-    // Get chip text from existing DOM order
-    return el.textContent;
-  });
-  // Actually, let's just re-trigger showBuild logic cleanly
-  renderBuildFromState();
+  renderBuild(buildChips, questions[currentQ]);
 }
 
 function buildClear() {
+  if (answered) return;
   buildPieces = [];
-  renderBuildFromState();
-}
-
-function renderBuildFromState() {
-  const q = questions[currentQ];
-  // Reconstruct chips from DOM
-  const chipEls = document.querySelectorAll('#buildParts .build-chip');
-  const chips = Array.from(chipEls).map(el => el.textContent);
-  if (chips.length === 0) {
-    showBuild(q);
-    return;
-  }
-
-  const partsEl = document.getElementById('buildParts');
-  chipEls.forEach((btn, i) => {
-    const used = buildPieces.includes(i);
-    if (used) {
-      btn.classList.add('used');
-      btn.style.pointerEvents = 'none';
-    } else {
-      btn.classList.remove('used');
-      btn.style.pointerEvents = '';
-    }
-  });
-
-  const result = buildPieces.map(i => chips[i]).join(' ');
-  document.getElementById('buildResult').textContent = result || '(click parts to build)';
+  renderBuild(buildChips, questions[currentQ]);
 }
 
 function buildCheck() {
   if (answered) return;
   const q = questions[currentQ];
-  const chipEls = document.querySelectorAll('#buildParts .build-chip');
-  const chips = Array.from(chipEls).map(el => el.textContent);
-  const result = buildPieces.map(i => chips[i]).join(' ');
+  const result = buildPieces.map(i => buildChips[i]).join(' ');
   const isCorrect = result === q.answerStr;
   answered = true;
   showFeedback(isCorrect, isCorrect ? 'Perfect synopsis!' : `Expected: <code>${esc(q.answerStr)}</code>`);
