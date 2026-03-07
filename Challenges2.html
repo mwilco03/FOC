@@ -436,7 +436,7 @@ function nextQuiz(){
   qIdx++;
   if(qIdx>=QUIZ.length){
     const area=document.getElementById('quiz-area');
-    area.innerHTML=`<div class="drill-card" style="text-align:center;"><div class="quiz-q" style="color:var(--accent-green);">Quiz Complete!</div><p style="margin:.75rem 0;color:var(--text-secondary);">Final Score: ${qScore} / ${QUIZ.length*10}</p><button class="btn btn-check" onclick="qIdx=0;qScore=0;qStreak=0;document.getElementById('q-score').textContent=0;document.getElementById('q-streak').textContent=0;showQuiz()">Restart Quiz</button></div>`;
+    area.innerHTML=`<div class="drill-card" style="text-align:center;"><div class="quiz-q" style="color:var(--green);">Quiz Complete!</div><p style="margin:.75rem 0;color:var(--muted);">Final Score: ${qScore} / ${QUIZ.length*10}</p><button class="btn btn-check" onclick="qIdx=0;qScore=0;qStreak=0;document.getElementById('q-score').textContent=0;document.getElementById('q-streak').textContent=0;showQuiz()">Restart Quiz</button></div>`;
     return;
   }
   showQuiz();
