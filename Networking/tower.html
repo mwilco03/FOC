@@ -36,7 +36,12 @@ body::before{content:'';position:fixed;inset:0;background:linear-gradient(rgba(5
 
 /* Tower layout */
 .tower-layout{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;align-items:start;}
-@media(max-width:650px){.tower-layout{grid-template-columns:1fr;}}
+@media(max-width:650px){
+  .tower-layout{grid-template-columns:1fr;}
+  .pool-chip{font-size:0.85rem;padding:0.55rem 1rem;min-height:44px;display:inline-flex;align-items:center;}
+  .tower-row{min-height:52px;padding:0.65rem 0.85rem;}
+  .pool-items{gap:0.5rem;}
+}
 
 .tower-stack{display:flex;flex-direction:column;gap:4px;}
 .tower-row{display:flex;align-items:center;gap:0.5rem;padding:0.55rem 0.75rem;border:2px dashed var(--border);border-radius:6px;min-height:48px;transition:all 0.2s;position:relative;}

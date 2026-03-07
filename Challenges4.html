@@ -825,6 +825,18 @@ document.getElementById('live-input').addEventListener('keydown',e=>{
   const _aq=answerQuiz;answerQuiz=function(i){_aq(i);save()};
   load();if(dIdx>0)showDrill();if(qIdx>0)showQuiz();
 })();
+/* ── Keyboard shortcuts: press 1-4 to select quiz answer, N for next ── */
+document.addEventListener('keydown', (e) => {
+  const num = parseInt(e.key);
+  if (num >= 1 && num <= 4) {
+    const btns = document.querySelectorAll('.quiz-opt:not(.disabled)');
+    if (btns.length >= num) btns[num - 1].click();
+  }
+  if (e.key === 'n' || e.key === 'N') {
+    const nb = document.getElementById('quiz-next');
+    if (nb && nb.style.display !== 'none') nb.click();
+  }
+});
 </script>
 </body>
 </html>

@@ -144,6 +144,14 @@ body::before{content:'';position:fixed;inset:0;background:linear-gradient(rgba(5
   .pcap-header,.pkt-row{grid-template-columns:40px 60px 120px 120px 50px 45px auto;font-size:0.6rem;}
   .checklist{grid-template-columns:1fr;}
 }
+@media(max-width:600px){
+  .pcap-viewer{overflow-x:auto;}
+  .pcap-header,.pkt-row{grid-template-columns:35px 55px 100px 100px 45px 40px minmax(80px,1fr);font-size:0.55rem;min-width:480px;}
+  .scenario-bar{flex-direction:column;align-items:flex-start;}
+  .top-bar h1{font-size:0.7rem;}
+  .mission-panel p{font-size:0.72rem;}
+  .container{padding:0.5rem;}
+}
 </style>
 </head>
 <body>
