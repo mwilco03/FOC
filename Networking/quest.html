@@ -882,6 +882,15 @@ loadProgress();
 renderWorldMap();
 updatePlayerStats();
 drawPixelArt(document.getElementById('heroCanvas'), HERO_PATTERN, HERO_PALETTE);
+
+/* ── Keyboard shortcuts: press 1-4 to select answer ── */
+document.addEventListener('keydown', (e) => {
+  const num = parseInt(e.key);
+  if (num >= 1 && num <= 4) {
+    const btns = document.querySelectorAll('.battle-opt:not(.disabled)');
+    if (btns.length >= num) btns[num - 1].click();
+  }
+});
 </script>
 </body>
 </html>

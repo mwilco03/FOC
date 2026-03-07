@@ -77,6 +77,27 @@
     color: var(--border);
     font-style: italic;
   }
+
+  /* Print-friendly styles */
+  @media print {
+    :root, :root[data-theme="dark"], :root[data-theme="light"] {
+      --bg: #fff;
+      --bg-table: #fff;
+      --bg-th: #e8e8e8;
+      --text: #000;
+      --border: #666;
+      --highlight-yellow: #8b6914;
+      --highlight-red: #cc0000;
+      --highlight-green: #006600;
+      --red-cell-bg: rgba(231, 76, 60, 0.1);
+      --yellow-cell-bg: rgba(200, 180, 50, 0.08);
+    }
+    body { padding: 0; font-size: 12px; }
+    .theme-toggle { display: none; }
+    .page { max-width: 100%; }
+    table { page-break-inside: avoid; }
+    a[href="../index.html"] { display: none; }
+  }
 </style>
 </head>
 <body>

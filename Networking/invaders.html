@@ -842,6 +842,16 @@ window.onerror = function(msg) { console.error('Game error:', msg); return true;
 window.addEventListener('offline', () => { document.title = '(Offline) ' + document.title; });
 window.addEventListener('online', () => { document.title = document.title.replace('(Offline) ', ''); });
 
+/* ── Keyboard shortcuts: press 1-4 to select answer ── */
+document.addEventListener('keydown', (e) => {
+  if (answered) return;
+  const num = parseInt(e.key);
+  if (num >= 1 && num <= 4) {
+    const cards = document.querySelectorAll('.answer-card:not(.disabled)');
+    if (cards.length >= num) cards[num - 1].click();
+  }
+});
+
 gameLoop();
 </script>
 </body>

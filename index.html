@@ -109,6 +109,55 @@ h1 {
   background: linear-gradient(135deg, rgba(59,130,246,0.08), rgba(139,92,246,0.08));
   border-color: rgba(59,130,246,0.3);
 }
+
+/* Progress Dashboard */
+.progress-section { margin-top: 3rem; text-align: left; }
+.progress-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85rem;
+  color: var(--accent-cyan);
+  margin-bottom: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.progress-title button {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  padding: 0.3rem 0.8rem;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.progress-title button:hover { border-color: #ef4444; color: #ef4444; }
+.progress-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.6rem;
+}
+.progress-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.75rem;
+}
+.progress-card .pg-name {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  color: var(--text-primary);
+  margin-bottom: 0.3rem;
+}
+.progress-card .pg-stat { color: var(--text-muted); font-size: 0.68rem; }
+.progress-card .pg-stat strong { color: var(--accent-cyan); }
+.progress-empty {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  text-align: center;
+  padding: 1.5rem;
+}
 </style>
 </head>
 <body>
@@ -202,6 +251,76 @@ h1 {
       <p>Learn to read man pages, synopses, and CLI help. 4 game modes: identify symbols, valid/invalid, build synopses, and parse real commands.</p>
     </a>
   </div>
+
+  <div class="progress-section" id="progressSection" style="display:none;">
+    <div class="progress-title">
+      <span>Your Progress</span>
+      <button id="resetProgress">Reset All</button>
+    </div>
+    <div class="progress-grid" id="progressGrid"></div>
+  </div>
 </div>
+<script>
+(function() {
+  const modules = [
+    { key: 'foc-syntax-drill', name: 'Syntax Drill', fields: ['bestScore', 'bestStreak'] },
+    { key: 'foc-hex-trainer', name: 'Hex Trainer', fields: ['bestScore', 'bestStreak'] },
+    { key: 'foc-bitflip', name: 'Bit Flip', fields: ['bestStreak'] },
+    { key: 'foc-subnet-invaders', name: 'Subnet Invaders', fields: ['bestScore', 'bestWave'] },
+    { key: 'foc-osi-tower', name: 'OSI Tower', fields: ['completions', 'bestAttempts'] },
+    { key: 'foc-pcap-forensics', name: 'PCAP Forensics', fields: ['bestScore', 'fewestHints'] },
+    { key: 'subnetquest-save', name: 'Subnet Quest', fields: ['zone'] },
+    { key: 'challenges1-progress', name: 'Python Lab', fields: ['dScore', 'qScore'] },
+    { key: 'challenges2-progress', name: 'PowerShell Lab', fields: ['dScore', 'qScore'] },
+    { key: 'challenges3-progress', name: 'Batch Lab', fields: ['dScore', 'qScore'] },
+    { key: 'challenges4-progress', name: 'Bash Lab', fields: ['dScore', 'qScore'] },
+    { key: 'challenges5-progress', name: 'Data & APIs Lab', fields: ['dScore', 'qScore'] },
+  ];
+
+  function renderProgress() {
+    const grid = document.getElementById('progressGrid');
+    const section = document.getElementById('progressSection');
+    let cards = '';
+    let hasData = false;
+
+    modules.forEach(m => {
+      let data;
+      try { data = JSON.parse(localStorage.getItem(m.key)); } catch(e) {}
+      if (!data) return;
+      hasData = true;
+      let stats = '';
+      for (const f of m.fields) {
+        if (data[f] !== undefined) {
+          const label = f.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase());
+          stats += `<span class="pg-stat"><strong>${data[f]}</strong> ${label}</span> `;
+        }
+      }
+      if (stats) {
+        cards += `<div class="progress-card"><div class="pg-name">${m.name}</div><div>${stats}</div></div>`;
+      }
+    });
+
+    if (hasData) {
+      section.style.display = '';
+      grid.innerHTML = cards;
+    } else {
+      section.style.display = 'none';
+    }
+  }
+
+  document.getElementById('resetProgress').addEventListener('click', () => {
+    if (!confirm('Reset all saved progress and high scores? This cannot be undone.')) return;
+    modules.forEach(m => { try { localStorage.removeItem(m.key); } catch(e) {} });
+    renderProgress();
+  });
+
+  renderProgress();
+})();
+
+/* Register Service Worker for offline support */
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(() => {});
+}
+</script>
 </body>
 </html>
