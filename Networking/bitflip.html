@@ -323,7 +323,44 @@ $('#btnHint').addEventListener('click', showHint);
 $('#btnClear').addEventListener('click', () => { bits = new Array(32).fill(0); updateDisplay(); });
 $('#btnNext').addEventListener('click', newProblem);
 
+// =====================================================================
+// RESILIENCE: localStorage best score, error boundary, offline detect
+// =====================================================================
+const STORAGE_KEY = 'foc-bitflip';
+
+function saveBest() {
+  try {
+    const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+    if (best > (data.bestStreak || 0)) {
+      data.bestStreak = best;
+      data.totalCorrect = (data.totalCorrect || 0) + 1;
+      data.timestamp = Date.now();
+    }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  } catch (e) {}
+}
+
+function loadBest() {
+  try {
+    const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+    if (data.bestStreak) best = data.bestStreak;
+  } catch (e) {}
+}
+
+// Patch updateStats to persist
+const _origUpdateStats = updateStats;
+updateStats = function() {
+  _origUpdateStats();
+  saveBest();
+};
+
+loadBest();
+updateStats();
 newProblem();
+
+window.onerror = function(msg) { console.error('Game error:', msg); return true; };
+window.addEventListener('offline', () => { document.title = '(Offline) ' + document.title; });
+window.addEventListener('online', () => { document.title = document.title.replace('(Offline) ', ''); });
 </script>
 </body>
 </html>

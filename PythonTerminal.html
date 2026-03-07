@@ -580,9 +580,23 @@ function setMode(mode) {
 }
 
 // ============ INIT ============
-updateChallengePanel();
-initTerminal();
-initPyodide();
+function showLoadError(msg) {
+  const el = document.getElementById('loading');
+  el.innerHTML = `<h2 style="color:var(--red);">Failed to Load</h2>
+    <p style="color:var(--muted);max-width:400px;line-height:1.6;">${msg}</p>
+    <p style="color:var(--muted);margin-top:1rem;font-size:.75rem;">Check the browser console (F12) for details.</p>
+    <a href="index.html" style="margin-top:1rem;padding:.5rem 1rem;background:var(--cyan);color:#000;border-radius:6px;text-decoration:none;font-size:.82rem;">&larr; Back to Home</a>`;
+}
+
+if (typeof Terminal === 'undefined') {
+  showLoadError('Could not load the terminal library (xterm.js) from CDN. This may be caused by a network issue, ad blocker, or firewall. Try disabling extensions or using a different network.');
+} else if (typeof loadPyodide === 'undefined') {
+  showLoadError('Could not load the Python runtime (Pyodide) from CDN. This is a ~30MB download. Try a faster connection or check if cdn.jsdelivr.net is accessible.');
+} else {
+  updateChallengePanel();
+  initTerminal();
+  initPyodide();
+}
 </script>
 </body>
 </html>
