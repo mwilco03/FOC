@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FOC - Instructor-Led Labs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-primary: #0a0e17;
+  --bg-card: #1a2235;
+  --bg-code: #0f1520;
+  --border: #2a3650;
+  --text-primary: #e2e8f0;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --accent-blue: #3b82f6;
+  --accent-cyan: #06b6d4;
+  --accent-purple: #8b5cf6;
+  --accent-green: #22c55e;
+  --accent-amber: #f59e0b;
+  --accent-red: #ef4444;
+  --radius-lg: 12px;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  min-height: 100vh;
+}
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    linear-gradient(rgba(59,130,246,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(59,130,246,0.03) 1px, transparent 1px);
+  background-size: 60px 60px;
+  pointer-events: none;
+}
+.container {
+  position: relative;
+  z-index: 1;
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 3rem 2rem 4rem;
+}
+.back-link {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-decoration: none;
+  display: inline-block;
+  margin-bottom: 2rem;
+  transition: color 0.2s;
+}
+.back-link:hover { color: var(--accent-cyan); }
+.page-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  color: var(--accent-cyan);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 0.5rem;
+}
+h1 {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 2rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue), var(--accent-purple));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 0.5rem;
+}
+.subtitle {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  margin-bottom: 2.5rem;
+  line-height: 1.6;
+}
+
+/* Sections */
+.section {
+  margin-bottom: 2.5rem;
+}
+.section h2 {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--accent-cyan);
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border);
+}
+.section h3 {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 1.2rem 0 0.6rem;
+}
+.section p, .section li {
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+.section ul, .section ol {
+  padding-left: 1.5rem;
+  margin: 0.5rem 0;
+}
+.section li { margin-bottom: 0.3rem; }
+
+/* Code blocks */
+pre {
+  background: var(--bg-code);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem 1.2rem;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.82rem;
+  background: var(--bg-code);
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  color: var(--accent-cyan);
+}
+pre code {
+  background: none;
+  padding: 0;
+  color: inherit;
+}
+
+/* Cards */
+.card-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin: 1rem 0;
+}
+@media (max-width: 600px) {
+  .card-grid { grid-template-columns: 1fr; }
+}
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.2rem;
+}
+.card h3 {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 0.3rem;
+  color: var(--text-primary);
+}
+.card p {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+.card.featured {
+  grid-column: 1 / -1;
+  background: linear-gradient(135deg, rgba(59,130,246,0.08), rgba(139,92,246,0.08));
+  border-color: rgba(59,130,246,0.3);
+}
+
+/* Architecture diagram */
+.arch-diagram {
+  background: var(--bg-code);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin: 1rem 0;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  overflow-x: auto;
+  white-space: pre;
+}
+
+/* Checklist table */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.8rem 0;
+  font-size: 0.82rem;
+}
+th {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  text-align: left;
+  padding: 0.6rem 0.8rem;
+  background: var(--bg-code);
+  border: 1px solid var(--border);
+  color: var(--accent-cyan);
+}
+td {
+  padding: 0.5rem 0.8rem;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+}
+tr:hover td { background: rgba(59,130,246,0.04); }
+
+/* Status badges */
+.badge {
+  display: inline-block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  font-weight: 600;
+}
+.badge-green { background: rgba(34,197,94,0.15); color: var(--accent-green); }
+.badge-amber { background: rgba(245,158,11,0.15); color: var(--accent-amber); }
+.badge-red { background: rgba(239,68,68,0.15); color: var(--accent-red); }
+</style>
+</head>
+<body>
+<div class="container">
+  <a href="index.html" class="back-link">&larr; Back to FOC</a>
+  <div class="page-label">Instructor-Led Content</div>
+  <h1>&gt; deploy_lab_</h1>
+  <p class="subtitle">Build and deploy hands-on training labs from any topic. Students get a browser, a live terminal, and real targets. You get a scoreboard, auto-unlocking challenges, and a single-command deploy.</p>
+
+  <!-- ELEVATOR PITCH -->
+  <div class="section">
+    <h2>How It Works</h2>
+    <p>Students walk in, open a browser, and get dropped into a live terminal. Their first instinct: scan the network. They find hosts, but everything's locked down &mdash; filtered ports, hidden challenges. They can see the scoreboard but can't touch it. Curiosity is lit.</p>
+    <p style="margin-top:0.6rem">The instructor walks through the presentation &mdash; slides are live on everyone's phone. As each section wraps, the next set of challenges auto-unlocks based on what the class has already solved. No awkward "okay now try this" transitions &mdash; the lab progresses itself.</p>
+    <p style="margin-top:0.6rem">First blood gets confetti on the scoreboard. Teams race through challenges with real targets and real tools. Everything runs from a single command. Tear it down in one command. Redeploy in five minutes. Zero install on student machines. Just a browser.</p>
+  </div>
+
+  <!-- ARCHITECTURE -->
+  <div class="section">
+    <h2>Platform Architecture</h2>
+    <div class="arch-diagram">
+platform/                         The engine &mdash; courses opt in, never forced
+  terminal/                       Shell-in-a-Box web terminal (student workstation)
+  scoreboard/                     Flask progress tracker + tiered hint system
+  init/                           Flag generation (randomized per session)
+  seccomp/                        Security profiles for container hardening
+  scripts/
+    preflight.sh                  Resource check (memory, CPU, disk, Docker)
+    start.sh                      IP randomization + docker compose up
+    reset.sh                      Tear down + regenerate
+    install.sh                    Bootstrap installer
+
+courses/
+  pivoting/                       Example: 9-hop network traversal CTF
+    compose.yml                   References ../../platform/ for shared infra
+    targets/                      Course-specific containers
+    hints/                        Tiered hint JSONs
+    tools/                        Static binaries
+    Design.md                     Full walkthrough</div>
+
+    <div class="card-grid">
+      <div class="card">
+        <h3>Student Terminal</h3>
+        <p>Shell-in-a-Box: each student gets their own isolated container with a web terminal. No SSH keys, no client install. One tab per student.</p>
+      </div>
+      <div class="card">
+        <h3>Scoreboard</h3>
+        <p>Flask-based progress tracker. Flag submission, 3-tier hints (Nudge/Guide/Walkthrough), auto-unlock by progression. First blood confetti.</p>
+      </div>
+      <div class="card">
+        <h3>Target Network</h3>
+        <p>Isolated Docker networks. Each target bridges two subnets, forcing lateral movement. Decoy services on every host.</p>
+      </div>
+      <div class="card">
+        <h3>Preflight Check</h3>
+        <p>Validates Docker, Compose, ports, disk, memory. Calculates resource budget per student count. Constructive failure messages.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- DEPLOY -->
+  <div class="section">
+    <h2>Deploy a Lab</h2>
+
+    <h3>Prerequisites</h3>
+    <ul>
+      <li>Docker + Docker Compose v2</li>
+      <li>4GB RAM minimum (8GB recommended for 10 students)</li>
+      <li>Linux, macOS, or Windows with WSL2</li>
+    </ul>
+
+    <h3>Quick Start</h3>
+<pre>git clone https://github.com/mwilco03/FOC.git
+cd FOC
+
+# Run preflight
+./platform/scripts/preflight.sh
+
+# Deploy the pivoting lab
+cd courses/pivoting
+docker compose -f compose.yml up -d
+
+# Access:
+#   Student Terminal:  http://localhost:4200
+#   Scoreboard:        http://localhost:8080</pre>
+
+    <h3>Tear Down</h3>
+<pre># From courses/pivoting/
+docker compose -f compose.yml down -v</pre>
+
+    <h3>Full Reset (new flags, new IPs)</h3>
+<pre>../../platform/scripts/reset.sh</pre>
+  </div>
+
+  <!-- COURSE STRUCTURE -->
+  <div class="section">
+    <h2>Build Your Own Course</h2>
+    <p>A course is a directory under <code>courses/</code>. It must be independently deployable with no dependency on sibling courses.</p>
+
+    <h3>Course Directory Structure</h3>
+<pre>courses/your-course/
+  compose.yml          # References ../../platform/ for shared infra
+  .env.template        # Environment variable template
+  targets/             # Course-specific Docker containers
+    service-a/
+      Dockerfile
+      entrypoint.sh
+    service-b/
+      Dockerfile
+      entrypoint.sh
+  hints/               # 3-tier hint files per challenge
+    challenge-01.json   # { "nudge": "...", "guide": "...", "walkthrough": "..." }
+  tools/               # Static binaries students may need
+  slides/              # Instructor presentation content
+  instructor/          # Solution guide (password-locked)
+  README.md            # What this course covers, how to run it</pre>
+
+    <h3>The Skill: Topic In, Lab Out</h3>
+    <p>Give the platform a topic &mdash; it derives the curriculum, generates challenges, builds slide content, and emits the Docker infrastructure. No pre-made PowerPoint required.</p>
+
+<pre># Input:  a topic
+Topic: "Network Reconnaissance with Nmap"
+
+# Output: everything
+courses/nmap-recon/
+  compose.yml           # 13 target services + student terminals + scoreboard
+  targets/              # Dockerfiles for each vulnerable service
+  hints/                # 3-tier hints per challenge
+  slides/               # Reveal.js slide deck (maps 1:1 to challenge categories)
+  instructor/           # Solution guide + pace guide
+  .env.template         # Flags, passwords, student count</pre>
+
+    <p style="margin-top:0.8rem">The <code>.pptx</code> is an <em>output</em>, not an input. Slides and challenges are co-derived from the same topic outline, so they stay in sync automatically.</p>
+  </div>
+
+  <!-- TERMINAL MODES -->
+  <div class="section">
+    <h2>Terminal Modes</h2>
+
+    <table>
+      <tr>
+        <th>Mode</th>
+        <th>Use Case</th>
+        <th>Resource Cost</th>
+        <th>Attack Surface</th>
+      </tr>
+      <tr>
+        <td><code>shellinabox</code></td>
+        <td>Terminal-only labs (default)</td>
+        <td>~128MB/student</td>
+        <td>Minimal</td>
+      </tr>
+      <tr>
+        <td><code>guacamole</code></td>
+        <td>Labs needing GUI (Wireshark, browser, forensics desktop)</td>
+        <td>~576MB/student</td>
+        <td>Slightly larger</td>
+      </tr>
+    </table>
+
+    <p style="margin-top:0.6rem">Guacamole runs one <code>guacd</code> per student (not shared), matching Shell-in-a-Box's isolation model. Decision rule: does the lab need a GUI? If no, use Shell-in-a-Box.</p>
+
+<pre># Set in .env or compose override
+LAB_TERMINAL_MODE=shellinabox   # default
+LAB_TERMINAL_MODE=guacamole     # opt-in when GUI needed</pre>
+  </div>
+
+  <!-- SECURITY -->
+  <div class="section">
+    <h2>Security Hardening</h2>
+    <p>Students have passwordless sudo inside containers. The container itself must be a well-sealed box. Defense in depth &mdash; each layer is independent.</p>
+
+    <table>
+      <tr><th>Control</th><th>What It Prevents</th></tr>
+      <tr><td>Socket proxy (not raw socket mount)</td><td>Host takeover via Docker API</td></tr>
+      <tr><td><code>cap_drop: ALL</code> + explicit allowlist</td><td>Capability-based escapes</td></tr>
+      <tr><td>Custom seccomp profile</td><td>Dangerous syscalls (unshare, mount, ptrace)</td></tr>
+      <tr><td><code>no-new-privileges: true</code></td><td>SUID/SGID privilege escalation</td></tr>
+      <tr><td><code>read_only: true</code> + tmpfs</td><td>Persistent malicious writes</td></tr>
+      <tr><td><code>pids_limit</code></td><td>Fork bombs</td></tr>
+      <tr><td><code>mem_limit</code> + <code>cpus</code></td><td>Resource exhaustion DoS</td></tr>
+      <tr><td><code>userns-remap</code> on daemon</td><td>Host impact if escape succeeds</td></tr>
+      <tr><td><code>internal: true</code> on isolated nets</td><td>Lateral movement to host/internet</td></tr>
+      <tr><td><code>privileged: false</code> everywhere</td><td>Full host access</td></tr>
+    </table>
+
+    <h3>Student Terminal Hardening</h3>
+<pre># In compose.yml
+student-terminal:
+  cap_drop:
+    - ALL
+  cap_add:
+    - NET_RAW           # nmap SYN scans, ping
+    - NET_BIND_SERVICE  # tools needing ports &lt;1024
+    - SETUID
+    - SETGID
+    - DAC_OVERRIDE      # sudo mechanics
+  security_opt:
+    - no-new-privileges:true
+    - seccomp:../../platform/seccomp/student-terminal.json
+  read_only: true
+  tmpfs:
+    - /tmp:size=64m,noexec
+    - /run:size=16m
+    - /home:size=128m
+  pids_limit: 200
+  mem_limit: 512m
+  cpus: "0.5"</pre>
+
+    <h3>Dedicated Lab User (Recommended)</h3>
+    <p>Run the lab under a dedicated system account. Isolates <code>.env</code> (flags + passwords) from the instructor's home directory. If a student escapes, they land as <code>ctflab</code>, not the instructor.</p>
+
+<pre># Linux
+useradd --system --create-home --shell /bin/bash ctflab
+usermod -aG docker ctflab
+chown -R ctflab:ctflab /path/to/FOC
+sudo -u ctflab ./platform/scripts/start.sh</pre>
+  </div>
+
+  <!-- PREFLIGHT -->
+  <div class="section">
+    <h2>Preflight Resource Calculator</h2>
+    <p>Before any <code>docker build</code>, the preflight script calculates whether the host can handle the lab at the specified student count.</p>
+
+<pre>STUDENT_COUNT=10
+LAB_TERMINAL_MODE=shellinabox
+
+Fixed infrastructure:       ~1,672 MB
+Per-student (x10):          ~1,280 MB
+Estimated total:            ~2,952 MB
+Recommended (30% headroom): ~3,837 MB</pre>
+
+    <p style="margin-top:0.6rem">Three tiers of output:</p>
+    <ul>
+      <li><span class="badge badge-green">PASS</span> &mdash; Resources sufficient, proceed</li>
+      <li><span class="badge badge-amber">WARN</span> &mdash; Below recommended headroom, proceed with acknowledgment</li>
+      <li><span class="badge badge-red">FAIL</span> &mdash; Insufficient resources, prints specific reduction options</li>
+    </ul>
+
+<pre># Example failure output:
+Insufficient resources. Options:
+  1. Reduce student count:  STUDENT_COUNT=6  (saves 512 MB)
+  2. Switch terminal mode:  LAB_TERMINAL_MODE=shellinabox (saves 4,480 MB)
+  3. Use lighter desktop:   DESKTOP=i3 (saves 3,840 MB)
+  4. Reduce target hosts:   TARGET_COUNT=8 (saves 320 MB)</pre>
+  </div>
+
+  <!-- AVAILABLE LABS -->
+  <div class="section">
+    <h2>Available Labs</h2>
+
+    <div class="card-grid">
+      <div class="card featured">
+        <h3>Network Traversal (Pivoting Lab v5.0)</h3>
+        <p>9-hop progressive CTF across 10 isolated networks. SSH tunneling, FTP credential harvesting, DNS zone transfers, Redis RCE, SMB enumeration. 4,050 total points. 3-tier hints. Randomized flags and IPs per session.</p>
+        <p style="margin-top:0.5rem; color: var(--accent-amber); font-size: 0.75rem;">Status: ~65% complete</p>
+      </div>
+    </div>
+    <p style="margin-top:0.8rem; font-size:0.82rem; color:var(--text-muted)">More labs are generated from topics using the skill system. Each lab lands as a new directory under <code>courses/</code>.</p>
+  </div>
+
+</div>
+</body>
+</html>

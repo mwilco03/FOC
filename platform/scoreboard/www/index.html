@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pivot Lab - Scoreboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: #0a0e27;
+            color: #00ff00;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #00ff00;
+            padding-bottom: 20px;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px #00ff00;
+        }
+
+        .score-display {
+            font-size: 1.5em;
+            margin: 20px 0;
+        }
+
+        .flag-submit {
+            background: #1a1f3a;
+            padding: 20px;
+            border: 1px solid #00ff00;
+            border-radius: 5px;
+            margin-bottom: 30px;
+        }
+
+        .flag-submit input {
+            width: 70%;
+            padding: 10px;
+            background: #0a0e27;
+            border: 1px solid #00ff00;
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+            font-size: 1em;
+        }
+
+        .flag-submit button {
+            width: 25%;
+            padding: 10px;
+            background: #00ff00;
+            color: #0a0e27;
+            border: none;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            font-size: 1em;
+            margin-left: 10px;
+        }
+
+        .flag-submit button:hover {
+            background: #00cc00;
+        }
+
+        .message {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 3px;
+            display: none;
+        }
+
+        .message.success {
+            background: #004400;
+            border: 1px solid #00ff00;
+        }
+
+        .message.error {
+            background: #440000;
+            border: 1px solid #ff0000;
+            color: #ff0000;
+        }
+
+        .hops-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .hop-card {
+            background: #1a1f3a;
+            border: 1px solid #444;
+            border-radius: 5px;
+            padding: 20px;
+            transition: all 0.3s;
+        }
+
+        .hop-card.completed {
+            border-color: #00ff00;
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.3);
+        }
+
+        .hop-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .hop-number {
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+
+        .hop-status {
+            font-size: 0.9em;
+            padding: 5px 10px;
+            border-radius: 3px;
+        }
+
+        .hop-status.completed {
+            background: #004400;
+            color: #00ff00;
+        }
+
+        .hop-status.pending {
+            background: #444;
+            color: #888;
+        }
+
+        .hop-container {
+            font-size: 1.2em;
+            margin-bottom: 10px;
+        }
+
+        .hop-points {
+            color: #888;
+            margin-bottom: 10px;
+        }
+
+        .hop-timestamp {
+            font-size: 0.8em;
+            color: #666;
+            font-style: italic;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 50px;
+            padding-top: 20px;
+            border-top: 1px solid #444;
+            color: #666;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 50px;
+            font-size: 1.2em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>╔═══════════════════════════════╗</h1>
+            <h1>║   PIVOT LAB - SCOREBOARD   ║</h1>
+            <h1>╚═══════════════════════════════╝</h1>
+            <div class="score-display">
+                Total Score: <span id="totalScore">0</span> / 4050 points
+            </div>
+            <div class="score-display">
+                Hops Completed: <span id="hopsCompleted">0</span> / 9
+            </div>
+        </header>
+
+        <div class="flag-submit">
+            <h2 style="margin-bottom: 15px;">Submit Flag</h2>
+            <input type="text" id="flagInput" placeholder="PIVOT{container_hexhexhex...}" />
+            <button onclick="submitFlag()">SUBMIT</button>
+            <div id="message" class="message"></div>
+        </div>
+
+        <div id="hopsContainer" class="loading">
+            Loading progress...
+        </div>
+
+        <footer>
+            Pivot Lab v5.0 - Multi-Protocol Network Traversal Training Environment
+        </footer>
+    </div>
+
+    <script>
+        let currentProgress = null;
+
+        // Load progress on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            loadProgress();
+            // Refresh every 10 seconds
+            setInterval(loadProgress, 10000);
+        });
+
+        async function loadProgress() {
+            try {
+                const response = await fetch('/api/progress');
+                const data = await response.json();
+                currentProgress = data;
+                renderProgress(data);
+            } catch (error) {
+                console.error('Failed to load progress:', error);
+            }
+        }
+
+        function renderProgress(data) {
+            document.getElementById('totalScore').textContent = data.total_score;
+            document.getElementById('hopsCompleted').textContent = data.completed_hops;
+
+            const container = document.getElementById('hopsContainer');
+            container.className = 'hops-grid';
+            container.innerHTML = '';
+
+            data.hops.forEach(hop => {
+                const card = document.createElement('div');
+                card.className = 'hop-card' + (hop.completed ? ' completed' : '');
+
+                const statusClass = hop.completed ? 'completed' : 'pending';
+                const statusText = hop.completed ? '✓ COMPROMISED' : '○ PENDING';
+
+                const timestamp = hop.timestamp
+                    ? `<div class="hop-timestamp">Completed: ${new Date(hop.timestamp).toLocaleString()}</div>`
+                    : '';
+
+                card.innerHTML = `
+                    <div class="hop-header">
+                        <div class="hop-number">Hop ${hop.hop}</div>
+                        <div class="hop-status ${statusClass}">${statusText}</div>
+                    </div>
+                    <div class="hop-container">${hop.container}</div>
+                    <div class="hop-points">${hop.points} points</div>
+                    ${timestamp}
+                `;
+
+                container.appendChild(card);
+            });
+        }
+
+        async function submitFlag() {
+            const input = document.getElementById('flagInput');
+            const messageDiv = document.getElementById('message');
+            const flag = input.value.trim();
+
+            if (!flag) {
+                showMessage('Please enter a flag', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/flags', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ flag })
+                });
+
+                const data = await response.json();
+
+                if (data.valid) {
+                    if (data.points_awarded > 0) {
+                        showMessage(
+                            `✓ ${data.message}! +${data.points_awarded} points (Total: ${data.total_score})`,
+                            'success'
+                        );
+                    } else {
+                        showMessage(data.message, 'success');
+                    }
+                    input.value = '';
+                    // Refresh progress immediately
+                    loadProgress();
+                } else {
+                    showMessage(data.message || 'Invalid flag', 'error');
+                }
+            } catch (error) {
+                showMessage('Failed to submit flag: ' + error.message, 'error');
+            }
+        }
+
+        function showMessage(text, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = text;
+            messageDiv.className = 'message ' + type;
+            messageDiv.style.display = 'block';
+
+            setTimeout(() => {
+                messageDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        // Allow Enter key to submit
+        document.getElementById('flagInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                submitFlag();
+            }
+        });
+    </script>
+</body>
+</html>
