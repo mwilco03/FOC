@@ -26,7 +26,7 @@ This will:
 **After installation:**
 ```bash
 cd ~/Piv0t.L4ND
-./start.sh
+./platform/scripts/start.sh
 ```
 
 ### Method 2: Manual Git Clone
@@ -37,10 +37,11 @@ git clone https://github.com/mwilco03/Piv0t.L4ND.git
 cd Piv0t.L4ND
 
 # Run preflight checks (recommended)
-./preflight.sh
+./platform/scripts/preflight.sh
 
-# Start the lab
-./start.sh
+# Start a course
+cd courses/pivoting
+docker compose -f compose.yml up -d
 ```
 
 ### Method 3: Download ZIP
@@ -52,11 +53,11 @@ unzip main.zip
 cd Piv0t.L4ND-main
 
 # Make scripts executable
-chmod +x *.sh
+chmod +x platform/scripts/*.sh
 
 # Run preflight and start
-./preflight.sh
-./start.sh
+./platform/scripts/preflight.sh
+cd courses/pivoting && docker compose -f compose.yml up -d
 ```
 
 ## Docker Installation (If Needed)
@@ -119,7 +120,7 @@ The `preflight.sh` script verifies:
 
 **Run preflight check manually:**
 ```bash
-./preflight.sh
+./platform/scripts/preflight.sh
 ```
 
 **Preflight is automatically run** when you execute `./start.sh`
@@ -142,7 +143,7 @@ sudo systemctl stop <service-name>
 
 **Option 2: Change exposed ports**
 
-Edit `docker-compose.yml`:
+Edit `courses/pivoting/compose.yml`:
 ```yaml
 launchpad:
   ports:
@@ -203,8 +204,8 @@ If you have less than 4GB available:
 After running `./start.sh`, verify the lab is running:
 
 ```bash
-# Check container status
-docker compose ps
+# Check container status (from courses/pivoting/)
+docker compose -f compose.yml ps
 
 # Should see 11 containers running:
 # - init (may be exited - this is normal)
@@ -224,10 +225,10 @@ You should see the shellinabox terminal interface and scoreboard UI.
 ```bash
 # Stop and remove all containers
 cd ~/Piv0t.L4ND
-docker compose down -v
+cd courses/pivoting && docker compose -f compose.yml down -v
 
 # Remove repository
-cd ..
+cd ~/
 rm -rf Piv0t.L4ND
 
 # (Optional) Remove Docker images
@@ -259,14 +260,14 @@ For environments without internet access:
 
 4. **For linpeas.sh (used in LAUNCHPAD):**
    - Pre-download: `wget https://github.com/peass-ng/PEASS-ng/releases/latest/download/linpeas.sh`
-   - Place in `launchpad/` directory
+   - Place in `platform/terminal/` directory
    - Update Dockerfile to `COPY linpeas.sh /home/player/` instead of `wget`
 
 ## Getting Help
 
-- **Documentation:** See `Design.md` for complete lab details
+- **Documentation:** See `courses/pivoting/Design.md` for complete lab details
 - **Issues:** https://github.com/mwilco03/Piv0t.L4ND/issues
-- **Preflight:** Run `./preflight.sh` for diagnostics
+- **Preflight:** Run `./platform/scripts/preflight.sh` for diagnostics
 
 ---
 
@@ -274,7 +275,8 @@ For environments without internet access:
 
 ```bash
 cd ~/Piv0t.L4ND
-./start.sh
+./platform/scripts/preflight.sh
+cd courses/pivoting && docker compose -f compose.yml up -d
 ```
 
-Then open http://localhost:4200 in your browser and begin hacking! 🎯
+Then open http://localhost:4200 in your browser and begin hacking!

@@ -1,16 +1,18 @@
-version: '3.8'
+# Pivot Lab v5.0 - Course Compose File
+# Run from repo root: docker compose -f courses/pivoting/compose.yml up -d
+# Or use: platform/scripts/deploy.sh courses/pivoting
 
 services:
   # Init container - generates randomized flags
   init:
-    build: ./init
+    build: ../../platform/init
     volumes:
       - flags:/flags
     restart: "no"
 
   # LAUNCHPAD - Player's attack platform with web terminal
   launchpad:
-    build: ./launchpad
+    build: ../../platform/terminal
     hostname: launchpad
     networks:
       net-launchpad:
@@ -26,7 +28,7 @@ services:
 
   # SCOREBOARD - Progress tracking and hint system
   scoreboard:
-    build: ./scoreboard
+    build: ../../platform/scoreboard
     hostname: scoreboard
     networks:
       net-launchpad:
@@ -41,7 +43,7 @@ services:
 
   # Hop 1: GATE
   gate:
-    build: ./containers/gate
+    build: ./targets/gate
     hostname: gate
     networks:
       net-entry:
@@ -55,7 +57,7 @@ services:
 
   # Hop 2: TUNNEL
   tunnel:
-    build: ./containers/tunnel
+    build: ./targets/tunnel
     hostname: tunnel
     networks:
       net-alpha:
@@ -68,7 +70,7 @@ services:
 
   # Hop 3: FILESERV
   fileserv:
-    build: ./containers/fileserv
+    build: ./targets/fileserv
     hostname: fileserv
     networks:
       net-bravo:
@@ -81,7 +83,7 @@ services:
 
   # Hop 4: WEBSHELL
   webshell:
-    build: ./containers/webshell
+    build: ./targets/webshell
     hostname: webshell
     networks:
       net-charlie:
@@ -94,7 +96,7 @@ services:
 
   # Hop 5: DROPZONE
   dropzone:
-    build: ./containers/dropzone
+    build: ./targets/dropzone
     hostname: dropzone
     networks:
       net-delta:
@@ -107,7 +109,7 @@ services:
 
   # Hop 6: DEPOT
   depot:
-    build: ./containers/depot
+    build: ./targets/depot
     hostname: depot
     networks:
       net-echo:
@@ -120,7 +122,7 @@ services:
 
   # Hop 7: RESOLVER
   resolver:
-    build: ./containers/resolver
+    build: ./targets/resolver
     hostname: resolver
     networks:
       net-foxtrot:
@@ -133,7 +135,7 @@ services:
 
   # Hop 8: CACHE
   cache:
-    build: ./containers/cache
+    build: ./targets/cache
     hostname: cache
     networks:
       net-golf:
@@ -146,7 +148,7 @@ services:
 
   # Hop 9: VAULT
   vault:
-    build: ./containers/vault
+    build: ./targets/vault
     hostname: vault
     networks:
       net-hotel:
