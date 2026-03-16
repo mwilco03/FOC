@@ -207,9 +207,32 @@ if ($elkReady) { Write-Info "Elasticsearch ready" }
 else { Write-Warn "Elasticsearch may still be starting" }
 
 # ===========================================================================
-# STEP 8: CTFd Setup
+# STEP 8: Import Kibana Dashboards
 # ===========================================================================
-Write-Step 8 "Configuring CTFd"
+Write-Step 8 "Importing Kibana dashboards"
+
+$kibanaReady = $false
+for ($i = 1; $i -le 30; $i++) {
+    try {
+        $resp = Invoke-WebRequest -Uri "http://localhost:5601/api/status" -UseBasicParsing -TimeoutSec 3 -ErrorAction SilentlyContinue
+        if ($resp.StatusCode -eq 200) { $kibanaReady = $true; break }
+    } catch {}
+    Start-Sleep -Seconds 5
+}
+if ($kibanaReady) {
+    $gitBash = "C:\Program Files\Git\bin\bash.exe"
+    if (Test-Path $gitBash) {
+        & $gitBash --login -c "cd '$($PSScriptRoot -replace '\\','/')' && bash elk/import-dashboards.sh http://localhost:5601"
+    }
+    Write-Info "Dashboards imported"
+} else {
+    Write-Warn "Kibana not ready — import dashboards manually: bash elk/import-dashboards.sh"
+}
+
+# ===========================================================================
+# STEP 9: CTFd Setup
+# ===========================================================================
+Write-Step 9 "Configuring CTFd"
 
 $gitBash = "C:\Program Files\Git\bin\bash.exe"
 if (Test-Path $gitBash) {

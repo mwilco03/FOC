@@ -202,6 +202,10 @@ services:
     volumes:
       - pcap-data:/opt/arkime/raw
       - ./pcap:/pcap:ro
+      - ./arkime/config.ini:/opt/arkime/etc/config.ini:ro
+      - ./arkime/init.sh:/init.sh:ro
+    entrypoint: /bin/bash
+    command: /init.sh
     ports:
       - "8005:8005"
     depends_on:
@@ -216,21 +220,10 @@ services:
   # ZEEK (Offline PCAP Processing)
   # ===========================================================================
   zeek:
-    image: zeek/zeek:latest
+    build: ./zeek
     volumes:
       - ./pcap:/pcap:ro
       - zeek-logs:/zeek-logs
-    entrypoint: /bin/bash
-    command: >
-      -c "if [ -f /pcap/attack.pcap ]; then
-        cd /zeek-logs &&
-        zeek -r /pcap/attack.pcap LogAscii::use_json=T &&
-        echo 'Zeek processing complete' &&
-        ls -la /zeek-logs/;
-      else
-        echo 'No PCAP found at /pcap/attack.pcap — skipping Zeek processing';
-      fi &&
-      sleep infinity"
     depends_on:
       elasticsearch:
         condition: service_healthy

