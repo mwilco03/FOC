@@ -46,6 +46,7 @@ COPY bash_notes.txt /opt/bash_notes.txt
 
 # Entrypoint
 COPY entrypoint.sh /entrypoint.sh
+RUN sed -i 's/\r$//' /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
 EXPOSE 4200

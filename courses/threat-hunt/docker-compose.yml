@@ -205,7 +205,7 @@ services:
       - ./arkime/config.ini:/opt/arkime/etc/config.ini:ro
       - ./arkime/init.sh:/init.sh:ro
     entrypoint: /bin/bash
-    command: /init.sh
+    command: -c "sed 's/\x0D$//' /init.sh > /tmp/init.sh && chmod +x /tmp/init.sh && /tmp/init.sh"
     ports:
       - "8005:8005"
     depends_on:

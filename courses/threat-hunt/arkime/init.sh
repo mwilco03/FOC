@@ -6,12 +6,12 @@ ES_HOST="${ARKIME_ELASTICSEARCH:-http://elasticsearch:9200}"
 PCAP="/pcap/attack.pcap"
 
 echo "[arkime] Waiting for Elasticsearch..."
-until curl -sf "$ES_HOST/_cluster/health" > /dev/null 2>&1; do
+until wget -qO- "$ES_HOST/_cluster/health" > /dev/null 2>&1; do
     sleep 5
 done
 echo "[arkime] Elasticsearch ready"
 
-# Initialize DB (idempotent — safe to re-run)
+# Initialize DB (idempotent)
 echo "[arkime] Initializing database..."
 /opt/arkime/db/db.pl --insecure "$ES_HOST" init --ifneeded 2>/dev/null || true
 
@@ -21,13 +21,13 @@ echo "[arkime] Initializing database..."
 # Import PCAP if present
 if [ -f "$PCAP" ]; then
     echo "[arkime] Importing $PCAP..."
-    /opt/arkime/bin/capture --insecure -c /opt/arkime/etc/config.ini -r "$PCAP" 2>/dev/null || \
-        echo "[arkime] Capture import may have had issues — check viewer"
+    /opt/arkime/bin/capture --insecure -c /opt/arkime/etc/config.ini -r "$PCAP" 2>/dev/null || echo "[arkime] Capture import may have had issues"
     echo "[arkime] PCAP imported"
 else
-    echo "[arkime] No PCAP at $PCAP — skipping import"
+    echo "[arkime] No PCAP at $PCAP"
 fi
 
 # Start viewer
 echo "[arkime] Starting viewer on port 8005..."
-exec /opt/arkime/bin/viewer --insecure -c /opt/arkime/etc/config.ini
+cd /opt/arkime/viewer
+exec /opt/arkime/bin/node viewer.js --insecure -c /opt/arkime/etc/config.ini
