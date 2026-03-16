@@ -707,17 +707,19 @@ window.addEventListener('online', () => {
   document.title = 'Syntax Notation Drill - Future Operators Course';
 });
 
-/* ── Keyboard shortcuts: press 1-4 to select answer ── */
+/* ── Keyboard shortcuts: press 1-4 to select answer, N for next ── */
 document.addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  if (e.key === 'n' || e.key === 'N') {
+    const nb = document.getElementById('nextBtn');
+    if (nb && nb.classList.contains('visible')) nb.click();
+    return;
+  }
   if (answered) return;
   const num = parseInt(e.key);
   if (num >= 1 && num <= 9) {
     const btns = document.querySelectorAll('#optionsArea .opt-btn:not(.locked)');
     if (btns.length >= num) btns[num - 1].click();
-  }
-  if (e.key === 'n' || e.key === 'N') {
-    const nb = document.getElementById('nextBtn');
-    if (nb && nb.style.display !== 'none') nb.click();
   }
 });
 
