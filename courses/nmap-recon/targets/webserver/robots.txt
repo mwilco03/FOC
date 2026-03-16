@@ -1,0 +1,7 @@
+User-agent: *
+Disallow: /admin/
+Disallow: /backup/
+Disallow: /api-keys/
+Disallow: /secret/
+Disallow: /.git/
+# FLAG{robots_txt_reveals_all}

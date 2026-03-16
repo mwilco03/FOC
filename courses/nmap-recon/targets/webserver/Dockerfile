@@ -13,10 +13,13 @@ RUN echo "Corporate Web Server - Authorized Access Only" > /etc/ssh/banner
 
 # Nginx on 80 + 8888
 COPY nginx-default.conf /etc/nginx/http.d/default.conf
-RUN mkdir -p /var/www/html/admin /var/www/html/dev /run/nginx
+RUN mkdir -p /var/www/html/admin /var/www/html/dev /var/www/html/backup /var/www/html/api-keys /run/nginx
 COPY index.html /var/www/html/index.html
 COPY admin.html /var/www/html/admin/index.html
 COPY phpinfo.html /var/www/html/dev/index.html
+COPY robots.txt /var/www/html/robots.txt
+COPY backup.html /var/www/html/backup/index.html
+COPY api-keys.html /var/www/html/api-keys/index.html
 
 # MariaDB on 3306 — bind to all interfaces
 RUN mkdir -p /run/mysqld && chown mysql:mysql /run/mysqld && \
