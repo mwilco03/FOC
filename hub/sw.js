@@ -1,24 +1,27 @@
 // Service Worker for FOC - Future Operators Course
 // Caches all self-contained HTML pages for offline use
-const CACHE_NAME = 'foc-v1';
+const CACHE_NAME = 'foc-v2';
 const PAGES = [
   './',
   './index.html',
   './404.html',
-  './Challenges1.html',
-  './Challenges2.html',
-  './Challenges3.html',
-  './Challenges4.html',
-  './Challenges5.html',
-  './Networking/subnetting.html',
-  './Networking/syntax-drill.html',
-  './Networking/hex.html',
-  './Networking/bitflip.html',
-  './Networking/invaders.html',
-  './Networking/quest.html',
-  './Networking/tower.html',
-  './Networking/pcap-challenge.html',
-  './Networking/SubnettingSheet.html',
+  './instructor.html',
+  '../courses/scripting/python/Challenges1.html',
+  '../courses/scripting/powershell/Challenges2.html',
+  '../courses/scripting/batch/Challenges3.html',
+  '../courses/scripting/bash/Challenges4.html',
+  '../courses/scripting/data-apis/Challenges5.html',
+  '../courses/scripting/bash/BashTerminal.html',
+  '../courses/scripting/python/PythonTerminal.html',
+  '../courses/networking-fundamentals/subnetting.html',
+  '../courses/networking-fundamentals/syntax-drill.html',
+  '../courses/networking-fundamentals/hex.html',
+  '../courses/networking-fundamentals/bitflip.html',
+  '../courses/networking-fundamentals/invaders.html',
+  '../courses/networking-fundamentals/quest.html',
+  '../courses/networking-fundamentals/tower.html',
+  '../courses/networking-fundamentals/pcap-challenge.html',
+  '../courses/networking-fundamentals/SubnettingSheet.html',
 ];
 
 // Install: pre-cache all self-contained pages
