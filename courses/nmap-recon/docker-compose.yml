@@ -350,6 +350,8 @@ services:
   fileserver:
     build: ./targets/fileserver
     hostname: files.corp.local
+    cap_add:
+      - SYS_CHROOT
     networks:
       target_net:
         ipv4_address: 172.20.1.30

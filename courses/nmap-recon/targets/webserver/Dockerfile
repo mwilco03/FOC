@@ -18,9 +18,11 @@ COPY index.html /var/www/html/index.html
 COPY admin.html /var/www/html/admin/index.html
 COPY phpinfo.html /var/www/html/dev/index.html
 
-# MariaDB on 3306
+# MariaDB on 3306 — bind to all interfaces
 RUN mkdir -p /run/mysqld && chown mysql:mysql /run/mysqld && \
-    mysql_install_db --user=mysql --datadir=/var/lib/mysql > /dev/null 2>&1
+    mysql_install_db --user=mysql --datadir=/var/lib/mysql > /dev/null 2>&1 && \
+    sed -i '/skip-networking/d' /etc/my.cnf.d/mariadb-server.cnf && \
+    printf '[mysqld]\nbind-address=0.0.0.0\n' > /etc/my.cnf.d/bind.cnf
 
 # JWT challenge app on port 3000
 COPY jwt_server.py /app/jwt_server.py

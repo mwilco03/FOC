@@ -216,13 +216,13 @@ create_challenge "Hidden in Plain Sight" "Knowledge Check" \
 # ║ 6 challenges, need 3 to unlock next                          ║
 # ╚═══════════════════════════════════════════════════════════════╝
 create_challenge "Ping Sweep" "Host Discovery" \
-    "How many hosts respond to a ping sweep on 172.20.1.0/24? Submit as FLAG{X}.\n\nHint: nmap -sn 172.20.1.0/24\nNote: not every host responds..." 50 "FLAG{12}"
+    "How many TARGET hosts respond to a ping sweep? Targets live at .1 through .199. Your team terminals are .200+. Exclude the gateway (.1).\n\nSubmit as FLAG{X}\n\nHint: nmap -sn 172.20.1.1-199" 50 "FLAG{13}"
 
 create_challenge "Find the Mail Server" "Host Discovery" \
     "What is the IP of the host running SMTP? Submit as FLAG{IP}.\n\nHint: nmap -p 25 172.20.1.0/24" 50 "FLAG{172.20.1.20}"
 
 create_challenge "Ghost Host" "Host Discovery" \
-    "One host doesn't respond to ping. What is its IP? Submit as FLAG{IP}.\n\nHint: Try nmap -Pn on IPs that don't appear in your ping sweep." 100 "FLAG{172.20.1.60}"
+    "One host blocks ICMP (ping) but nmap -sn still finds it on a local network. Why? And what is its IP?\n\nSubmit as FLAG{IP}\n\nHint: On a local subnet, nmap uses ARP for discovery, not ICMP. Try: ping 172.20.1.60 (fails) then nmap -sn 172.20.1.60 (succeeds). Explain why." 100 "FLAG{172.20.1.60}"
 
 create_challenge "Port Profile: Windows or Linux?" "Host Discovery" \
     "172.20.1.104 has ports 22, 80, 3000, 8080 open. What OS is this most likely?\n\nA) Windows Server\nB) Linux\nC) macOS\nD) Network Appliance\n\n(Think: which OS typically runs SSH on 22 + web services?)" 50 "B"
@@ -272,7 +272,7 @@ create_challenge "FTP Banner" "Service Detection" \
     "Grab the FTP banner from the file server.\n\nnc 172.20.1.30 21" 100 "FLAG{ftp_anonymous_access}"
 
 create_challenge "SSH on Wrong Port" "Service Detection" \
-    "The dev box has SSH on a non-standard port. Find it and grab the banner flag.\n\nHint: It's above port 2000." 150 "FLAG{ssh_version_detected}"
+    "The dev box (172.20.1.50) has SSH on a non-standard port. What port is it on and what OpenSSH version is running?\n\nSubmit as FLAG{PORT:VERSION} e.g. FLAG{22:8.9}\n\nHint: nmap -sV 172.20.1.50" 150 "FLAG{2222:10.2}"
 
 create_challenge "Webmail Portal" "Service Detection" \
     "The mail server has a web interface. Find it and read the HTML source.\n\nHint: Not on port 80. Try other web ports." 150 "FLAG{webmail_portal_found}"
@@ -336,7 +336,7 @@ create_challenge "Patience Rewarded" "Deep Dive" \
     "A service on the hardened host is deliberately slow (3+ second delay before responding). Capture its banner.\n\nnc -w 10 172.20.1.60 65000 (wait for it...)" 250 "FLAG{patience_rewarded_65000}"
 
 create_challenge "DNS Secrets" "Deep Dive" \
-    "The dev box runs a DNS server on a non-standard port. Query flag.corp.local for a TXT record.\n\nFirst: find the DNS port. Then: dig @172.20.1.50 -p PORT flag.corp.local TXT" 250 "FLAG{dns_txt_record_found}"
+    "The dev box (172.20.1.50) is running a DNS server on a non-standard port. What port is it on?\n\nOnce you find it, try querying it from INSIDE the devbox:\nnmap -sV 172.20.1.50 to find the port, then:\ndocker exec into the devbox (or PS remote) and run:\ndig @127.0.0.1 -p PORT flag.corp.local TXT\n\nSubmit the flag from the TXT record." 250 "FLAG{dns_txt_record_found}"
 
 create_challenge "Debug Console" "Deep Dive" \
     "A developer left a debug console exposed on the dev box. Find it and grab the flag.\n\nHint: nc to each open port on 172.20.1.50" 200 "FLAG{debug_console_exposed}"

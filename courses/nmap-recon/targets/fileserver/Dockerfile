@@ -12,7 +12,7 @@ RUN mkdir -p /var/ftp/pub /var/ftp/confidential /var/run/vsftpd/empty && \
     echo "FLAG{ftp_anonymous_access}" > /var/ftp/pub/flag.txt && \
     echo "CONFIDENTIAL: FLAG{sensitive_data_exposed}" > /var/ftp/confidential/passwords.txt
 
-COPY vsftpd.conf /etc/vsftpd/vsftpd.conf
+COPY ftp_server.py /app/ftp_server.py
 
 # Samba on 139/445
 RUN mkdir -p /srv/share && \

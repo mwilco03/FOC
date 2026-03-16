@@ -6,9 +6,11 @@ RUN apk add --no-cache openssh mariadb mariadb-client postgresql redis bash net-
 RUN ssh-keygen -A && \
     adduser -D dbadmin && echo "dbadmin:Db@dmin2024" | chpasswd
 
-# MariaDB on 3306
+# MariaDB on 3306 — bind to all interfaces
 RUN mkdir -p /run/mysqld && chown mysql:mysql /run/mysqld && \
-    mysql_install_db --user=mysql --datadir=/var/lib/mysql > /dev/null 2>&1
+    mysql_install_db --user=mysql --datadir=/var/lib/mysql > /dev/null 2>&1 && \
+    sed -i '/skip-networking/d' /etc/my.cnf.d/mariadb-server.cnf && \
+    printf '[mysqld]\nbind-address=0.0.0.0\n' > /etc/my.cnf.d/bind.cnf
 
 # PostgreSQL on 5432
 RUN mkdir -p /run/postgresql /var/lib/postgresql/data && \

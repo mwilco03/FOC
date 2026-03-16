@@ -59,7 +59,7 @@ class JWTHandler(BaseHTTPRequestHandler):
 <!-- JWT secret is 'secret' — but students should figure this out -->
 </body></html>""".encode())
 
-        elif self.path == "/admin":
+        elif self.path.startswith("/admin"):
             auth = self.headers.get("Authorization", "")
             cookie = self.headers.get("Cookie", "")
             token = None

@@ -2,5 +2,5 @@
 /usr/sbin/sshd
 smbd -D
 nmbd -D
-vsftpd /etc/vsftpd/vsftpd.conf &
+python3 /app/ftp_server.py &
 sleep infinity
