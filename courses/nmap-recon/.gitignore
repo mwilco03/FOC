@@ -1,0 +1,14 @@
+# Secrets
+.env
+
+# Docker
+*.tar
+*.log
+
+# CTFd runtime
+ctfd/footer_payload.json
+ctfd/credentials.txt
+
+# OS
+.DS_Store
+Thumbs.db

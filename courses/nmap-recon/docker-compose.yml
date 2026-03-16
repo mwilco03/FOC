@@ -1,0 +1,546 @@
+# =============================================================================
+# Nmap Training Lab - Docker Compose
+# =============================================================================
+
+networks:
+  student_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/24
+  target_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.1.0/24
+  ctfd_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.2.0/24
+
+# =============================================================================
+# TRAEFIK - Load Balancer with Sticky Sessions
+# =============================================================================
+services:
+  traefik:
+    image: traefik:v2.11
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      # Direct per-student ports
+      - "--entrypoints.s1.address=:4201"
+      - "--entrypoints.s2.address=:4202"
+      - "--entrypoints.s3.address=:4203"
+      - "--entrypoints.s4.address=:4204"
+      - "--entrypoints.s5.address=:4205"
+      - "--entrypoints.s6.address=:4206"
+      - "--entrypoints.s7.address=:4207"
+      - "--entrypoints.s8.address=:4208"
+      - "--entrypoints.s9.address=:4209"
+      - "--entrypoints.s10.address=:4210"
+    ports:
+      - "80:80"
+      - "8080:8080"
+      - "4201:4201"
+      - "4202:4202"
+      - "4203:4203"
+      - "4204:4204"
+      - "4205:4205"
+      - "4206:4206"
+      - "4207:4207"
+      - "4208:4208"
+      - "4209:4209"
+      - "4210:4210"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      student_net:
+        ipv4_address: 172.20.0.2
+    restart: unless-stopped
+
+  # ===========================================================================
+  # STUDENT TERMINALS (10 instances)
+  # ===========================================================================
+  student-1:
+    build: ./student-terminal
+    hostname: nmap-lab
+    env_file: ./student.env
+    cap_add:
+      - NET_RAW
+      - NET_ADMIN
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.students.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.students.entrypoints=web"
+      - "traefik.http.routers.students.service=student-pool"
+      - "traefik.http.services.student-pool.loadbalancer.sticky.cookie.name=_student_session"
+      - "traefik.http.services.student-pool.loadbalancer.sticky.cookie.httpOnly=true"
+      - "traefik.http.services.student-pool.loadbalancer.server.port=4200"
+      - "traefik.http.routers.student1-direct.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.student1-direct.entrypoints=s1"
+      - "traefik.http.routers.student1-direct.service=student1-svc"
+      - "traefik.http.services.student1-svc.loadbalancer.server.port=4200"
+    networks:
+      student_net:
+        ipv4_address: 172.20.0.11
+      target_net:
+        ipv4_address: 172.20.1.201
+    restart: unless-stopped
+
+  student-2:
+    build: ./student-terminal
+    hostname: nmap-lab
+    env_file: ./student.env
+    cap_add:
+      - NET_RAW
+      - NET_ADMIN
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.students.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.students.entrypoints=web"
+      - "traefik.http.routers.students.service=student-pool"
+      - "traefik.http.services.student-pool.loadbalancer.sticky.cookie.name=_student_session"
+      - "traefik.http.services.student-pool.loadbalancer.sticky.cookie.httpOnly=true"
+      - "traefik.http.services.student-pool.loadbalancer.server.port=4200"
+      - "traefik.http.routers.student2-direct.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.student2-direct.entrypoints=s2"
+      - "traefik.http.routers.student2-direct.service=student2-svc"
+      - "traefik.http.services.student2-svc.loadbalancer.server.port=4200"
+    networks:
+      student_net:
+        ipv4_address: 172.20.0.12
+      target_net:
+        ipv4_address: 172.20.1.202
+    restart: unless-stopped
+
+  student-3:
+    build: ./student-terminal
+    hostname: nmap-lab
+    env_file: ./student.env
+    cap_add:
+      - NET_RAW
+      - NET_ADMIN
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.students.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.students.entrypoints=web"
+      - "traefik.http.routers.students.service=student-pool"
+      - "traefik.http.services.student-pool.loadbalancer.sticky.cookie.name=_student_session"
+      - "traefik.http.services.student-pool.loadbalancer.sticky.cookie.httpOnly=true"
+      - "traefik.http.services.student-pool.loadbalancer.server.port=4200"
+      - "traefik.http.routers.student3-direct.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.student3-direct.entrypoints=s3"
+      - "traefik.http.routers.student3-direct.service=student3-svc"
+      - "traefik.http.services.student3-svc.loadbalancer.server.port=4200"
+    networks:
+      student_net:
+        ipv4_address: 172.20.0.13
+      target_net:
+        ipv4_address: 172.20.1.203
+    restart: unless-stopped
+
+  student-4:
+    build: ./student-terminal
+    hostname: nmap-lab
+    env_file: ./student.env
+    cap_add:
+      - NET_RAW
+      - NET_ADMIN
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.students.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.students.entrypoints=web"
+      - "traefik.http.routers.students.service=student-pool"
+      - "traefik.http.services.student-pool.loadbalancer.sticky.cookie.name=_student_session"
+      - "traefik.http.services.student-pool.loadbalancer.sticky.cookie.httpOnly=true"
+      - "traefik.http.services.student-pool.loadbalancer.server.port=4200"
+      - "traefik.http.routers.student4-direct.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.student4-direct.entrypoints=s4"
+      - "traefik.http.routers.student4-direct.service=student4-svc"
+      - "traefik.http.services.student4-svc.loadbalancer.server.port=4200"
+    networks:
+      student_net:
+        ipv4_address: 172.20.0.14
+      target_net:
+        ipv4_address: 172.20.1.204
+    restart: unless-stopped
+
+  student-5:
+    build: ./student-terminal
+    hostname: nmap-lab
+    env_file: ./student.env
+    cap_add:
+      - NET_RAW
+      - NET_ADMIN
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.students.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.students.entrypoints=web"
+      - "traefik.http.routers.students.service=student-pool"
+      - "traefik.http.services.student-pool.loadbalancer.sticky.cookie.name=_student_session"
+      - "traefik.http.services.student-pool.loadbalancer.sticky.cookie.httpOnly=true"
+      - "traefik.http.services.student-pool.loadbalancer.server.port=4200"
+      - "traefik.http.routers.student5-direct.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.student5-direct.entrypoints=s5"
+      - "traefik.http.routers.student5-direct.service=student5-svc"
+      - "traefik.http.services.student5-svc.loadbalancer.server.port=4200"
+    networks:
+      student_net:
+        ipv4_address: 172.20.0.15
+      target_net:
+        ipv4_address: 172.20.1.205
+    restart: unless-stopped
+
+  student-6:
+    build: ./student-terminal
+    hostname: nmap-lab
+    env_file: ./student.env
+    cap_add:
+      - NET_RAW
+      - NET_ADMIN
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.students.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.students.entrypoints=web"
+      - "traefik.http.routers.students.service=student-pool"
+      - "traefik.http.services.student-pool.loadbalancer.sticky.cookie.name=_student_session"
+      - "traefik.http.services.student-pool.loadbalancer.sticky.cookie.httpOnly=true"
+      - "traefik.http.services.student-pool.loadbalancer.server.port=4200"
+      - "traefik.http.routers.student6-direct.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.student6-direct.entrypoints=s6"
+      - "traefik.http.routers.student6-direct.service=student6-svc"
+      - "traefik.http.services.student6-svc.loadbalancer.server.port=4200"
+    networks:
+      student_net:
+        ipv4_address: 172.20.0.16
+      target_net:
+        ipv4_address: 172.20.1.206
+    restart: unless-stopped
+
+  student-7:
+    build: ./student-terminal
+    hostname: nmap-lab
+    env_file: ./student.env
+    cap_add:
+      - NET_RAW
+      - NET_ADMIN
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.students.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.students.entrypoints=web"
+      - "traefik.http.routers.students.service=student-pool"
+      - "traefik.http.services.student-pool.loadbalancer.sticky.cookie.name=_student_session"
+      - "traefik.http.services.student-pool.loadbalancer.sticky.cookie.httpOnly=true"
+      - "traefik.http.services.student-pool.loadbalancer.server.port=4200"
+      - "traefik.http.routers.student7-direct.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.student7-direct.entrypoints=s7"
+      - "traefik.http.routers.student7-direct.service=student7-svc"
+      - "traefik.http.services.student7-svc.loadbalancer.server.port=4200"
+    networks:
+      student_net:
+        ipv4_address: 172.20.0.17
+      target_net:
+        ipv4_address: 172.20.1.207
+    restart: unless-stopped
+
+  student-8:
+    build: ./student-terminal
+    hostname: nmap-lab
+    env_file: ./student.env
+    cap_add:
+      - NET_RAW
+      - NET_ADMIN
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.students.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.students.entrypoints=web"
+      - "traefik.http.routers.students.service=student-pool"
+      - "traefik.http.services.student-pool.loadbalancer.sticky.cookie.name=_student_session"
+      - "traefik.http.services.student-pool.loadbalancer.sticky.cookie.httpOnly=true"
+      - "traefik.http.services.student-pool.loadbalancer.server.port=4200"
+      - "traefik.http.routers.student8-direct.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.student8-direct.entrypoints=s8"
+      - "traefik.http.routers.student8-direct.service=student8-svc"
+      - "traefik.http.services.student8-svc.loadbalancer.server.port=4200"
+    networks:
+      student_net:
+        ipv4_address: 172.20.0.18
+      target_net:
+        ipv4_address: 172.20.1.208
+    restart: unless-stopped
+
+  student-9:
+    build: ./student-terminal
+    hostname: nmap-lab
+    env_file: ./student.env
+    cap_add:
+      - NET_RAW
+      - NET_ADMIN
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.students.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.students.entrypoints=web"
+      - "traefik.http.routers.students.service=student-pool"
+      - "traefik.http.services.student-pool.loadbalancer.sticky.cookie.name=_student_session"
+      - "traefik.http.services.student-pool.loadbalancer.sticky.cookie.httpOnly=true"
+      - "traefik.http.services.student-pool.loadbalancer.server.port=4200"
+      - "traefik.http.routers.student9-direct.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.student9-direct.entrypoints=s9"
+      - "traefik.http.routers.student9-direct.service=student9-svc"
+      - "traefik.http.services.student9-svc.loadbalancer.server.port=4200"
+    networks:
+      student_net:
+        ipv4_address: 172.20.0.19
+      target_net:
+        ipv4_address: 172.20.1.209
+    restart: unless-stopped
+
+  student-10:
+    build: ./student-terminal
+    hostname: nmap-lab
+    env_file: ./student.env
+    cap_add:
+      - NET_RAW
+      - NET_ADMIN
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.students.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.students.entrypoints=web"
+      - "traefik.http.routers.students.service=student-pool"
+      - "traefik.http.services.student-pool.loadbalancer.sticky.cookie.name=_student_session"
+      - "traefik.http.services.student-pool.loadbalancer.sticky.cookie.httpOnly=true"
+      - "traefik.http.services.student-pool.loadbalancer.server.port=4200"
+      - "traefik.http.routers.student10-direct.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.student10-direct.entrypoints=s10"
+      - "traefik.http.routers.student10-direct.service=student10-svc"
+      - "traefik.http.services.student10-svc.loadbalancer.server.port=4200"
+    networks:
+      student_net:
+        ipv4_address: 172.20.0.20
+      target_net:
+        ipv4_address: 172.20.1.210
+    restart: unless-stopped
+
+  # ===========================================================================
+  # TARGET HOSTS (172.20.1.0/24) - Realistic multi-service machines
+  # ===========================================================================
+
+  # Web Server: SSH(22), HTTP(80), MySQL(3306), Dev Portal(8888)
+  webserver:
+    build: ./targets/webserver
+    hostname: web.corp.local
+    networks:
+      target_net:
+        ipv4_address: 172.20.1.10
+    restart: unless-stopped
+
+  # Mail Server: SSH(22), SMTP(25), POP3(110), IMAP(143), Webmail(443)
+  mailserver:
+    build: ./targets/mailserver
+    hostname: mail.corp.local
+    networks:
+      target_net:
+        ipv4_address: 172.20.1.20
+    restart: unless-stopped
+
+  # File Server: FTP(21), SSH(22), SMB(139,445)
+  fileserver:
+    build: ./targets/fileserver
+    hostname: files.corp.local
+    networks:
+      target_net:
+        ipv4_address: 172.20.1.30
+    restart: unless-stopped
+
+  # Database Server: SSH(22), MySQL(3306), PostgreSQL(5432), Redis(6379)
+  database:
+    build: ./targets/database
+    hostname: db.corp.local
+    networks:
+      target_net:
+        ipv4_address: 172.20.1.40
+    restart: unless-stopped
+
+  # Developer Workstation: SSH(2222), DNS(5353), Apps(4444,5555,6666,9999)
+  devbox:
+    build: ./targets/devbox
+    hostname: dev.corp.local
+    networks:
+      target_net:
+        ipv4_address: 172.20.1.50
+    restart: unless-stopped
+
+  # Hardened Host: Port2, SSH(22222), Elite(31337), Slow(65000), UDP(4444)
+  # ICMP blocked - requires -Pn
+  hardened:
+    build: ./targets/hardened
+    hostname: ghost.corp.local
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    networks:
+      target_net:
+        ipv4_address: 172.20.1.60
+    restart: unless-stopped
+
+  # ===========================================================================
+  # DISTRACTORS - No flags, just noise (realistic network clutter)
+  # ===========================================================================
+  printer:
+    build: ./targets/distractors
+    hostname: printer01.corp.local
+    environment:
+      - ROLE=printer
+    networks:
+      target_net:
+        ipv4_address: 172.20.1.100
+    restart: unless-stopped
+
+  camera:
+    build: ./targets/distractors
+    hostname: cam-lobby.corp.local
+    environment:
+      - ROLE=camera
+    networks:
+      target_net:
+        ipv4_address: 172.20.1.101
+    restart: unless-stopped
+
+  monitoring:
+    build: ./targets/distractors
+    hostname: monitor.corp.local
+    environment:
+      - ROLE=monitoring
+    networks:
+      target_net:
+        ipv4_address: 172.20.1.102
+    restart: unless-stopped
+
+  iot-hvac:
+    build: ./targets/distractors
+    hostname: hvac.corp.local
+    environment:
+      - ROLE=iot
+    networks:
+      target_net:
+        ipv4_address: 172.20.1.103
+    restart: unless-stopped
+
+  testserver:
+    build: ./targets/distractors
+    hostname: test01.corp.local
+    environment:
+      - ROLE=testserver
+    networks:
+      target_net:
+        ipv4_address: 172.20.1.104
+    restart: unless-stopped
+
+  vpn:
+    build: ./targets/distractors
+    hostname: vpn.corp.local
+    environment:
+      - ROLE=vpn
+    networks:
+      target_net:
+        ipv4_address: 172.20.1.105
+    restart: unless-stopped
+
+  voip:
+    build: ./targets/distractors
+    hostname: pbx.corp.local
+    environment:
+      - ROLE=voip
+    networks:
+      target_net:
+        ipv4_address: 172.20.1.106
+    restart: unless-stopped
+
+  # ===========================================================================
+  # CTFd (Scoreboard & Challenges)
+  # ===========================================================================
+
+  ctfd:
+    image: ctfd/ctfd:3.7.0
+    environment:
+      - SECRET_KEY=${CTFD_SECRET_KEY}
+      - DATABASE_URL=mysql+pymysql://${MYSQL_USER}:${MYSQL_PASSWORD}@ctfd-db/${MYSQL_DATABASE}
+      - REDIS_URL=redis://ctfd-redis:6379
+      - REVERSE_PROXY=true
+    ports:
+      - "8000:8000"
+    depends_on:
+      ctfd-db:
+        condition: service_healthy
+      ctfd-redis:
+        condition: service_healthy
+    networks:
+      ctfd_net:
+        ipv4_address: 172.20.2.10
+    restart: unless-stopped
+
+  ctfd-db:
+    image: mariadb:10.11
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - ctfd-db-data:/var/lib/mysql
+    command: >
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+      --wait_timeout=28800
+      --log-warnings=0
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      ctfd_net:
+        ipv4_address: 172.20.2.20
+    restart: unless-stopped
+
+  ctfd-redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      ctfd_net:
+        ipv4_address: 172.20.2.30
+    restart: unless-stopped
+
+  # ===========================================================================
+  # Lab Controller (auto-unlock, slides, solution guide)
+  # ===========================================================================
+  lab-controller:
+    build: ./lab-controller
+    environment:
+      - CTFD_URL=http://ctfd:8000
+      - CTFD_ADMIN_USER=admin
+      - CTFD_ADMIN_PASS=NmapLab2024!
+      - SOLUTION_PASSWORD=${SOLUTION_PASSWORD:-instructor2024}
+      - UNLOCK_THRESHOLD=0.5
+      - START_LOCKED=true
+      - POLL_INTERVAL=10
+      - CTF_DURATION_MINUTES=${CTF_DURATION_MINUTES:-120}
+      - CTF_EXTEND_MINUTES=${CTF_EXTEND_MINUTES:-60}
+    ports:
+      - "8888:8080"
+    depends_on:
+      - ctfd
+    networks:
+      ctfd_net:
+        ipv4_address: 172.20.2.40
+    restart: unless-stopped
+
+volumes:
+  ctfd-db-data:

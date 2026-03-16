@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solution Guide - Nmap Training Lab</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #0a0a14; color: #e8e8f0; font-family: 'Inter', sans-serif; padding: 20px; line-height: 1.6; }
+h1 { font-family: 'JetBrains Mono', monospace; color: #00ff41; text-shadow: 0 0 20px rgba(0,255,65,.3); margin-bottom: 30px; font-size: 1.8em; }
+h2 { font-family: 'JetBrains Mono', monospace; color: #ff6b35; margin: 30px 0 15px; font-size: 1.2em; border-bottom: 1px solid rgba(255,107,53,.2); padding-bottom: 8px; }
+h3 { color: #00ff41; margin: 15px 0 8px; font-size: 1em; }
+.challenge { background: rgba(20,20,40,.8); border: 1px solid rgba(0,255,65,.15); border-radius: 12px; padding: 20px; margin: 15px 0; }
+.challenge-name { font-family: 'JetBrains Mono', monospace; color: #00ff41; font-weight: 700; font-size: 1.05em; }
+.points { color: #8888aa; font-size: .85em; }
+.flag { font-family: 'JetBrains Mono', monospace; color: #ffd93d; background: rgba(255,217,61,.08); padding: 4px 12px; border-radius: 6px; display: inline-block; margin: 8px 0; }
+code, pre { font-family: 'JetBrains Mono', monospace; }
+code { background: rgba(0,255,65,.08); color: #00ff41; padding: 2px 8px; border-radius: 4px; font-size: .9em; }
+pre { background: rgba(15,15,35,.9); border: 1px solid rgba(0,255,65,.15); border-radius: 8px; padding: 12px 16px; margin: 10px 0; overflow-x: auto; color: #e8e8f0; font-size: .85em; }
+.teach { background: rgba(255,107,53,.08); border-left: 3px solid #ff6b35; padding: 10px 16px; margin: 10px 0; border-radius: 0 8px 8px 0; font-size: .9em; }
+@media (max-width: 768px) { body { padding: 10px; font-size: 14px; } h1 { font-size: 1.3em; } pre { font-size: .75em; } }
+</style>
+</head>
+<body>
+<h1>🔓 Instructor Solution Guide</h1>
+
+<h2>Host Discovery (200 pts)</h2>
+
+<div class="challenge">
+<div class="challenge-name">Ping Sweep <span class="points">(50 pts)</span></div>
+<div class="flag">FLAG{13}</div>
+<pre>nmap -sn 172.20.1.0/24</pre>
+<p>Count target hosts only (exclude gateway .1 and student IPs .101-.110)</p>
+</div>
+
+<div class="challenge">
+<div class="challenge-name">Find the Mail Server <span class="points">(50 pts)</span></div>
+<div class="flag">FLAG{172.20.1.30}</div>
+<pre>nmap -p 25 172.20.1.0/24</pre>
+</div>
+
+<div class="challenge">
+<div class="challenge-name">Ghost Host <span class="points">(100 pts)</span></div>
+<div class="flag">FLAG{172.20.1.50}</div>
+<pre>nmap -Pn -p 2222 172.20.1.50</pre>
+<div class="teach"><strong>Teach:</strong> ICMP is blocked on .50, but ARP discovery on local subnet still finds it. The real lesson is -Pn for cross-subnet scanning.</div>
+</div>
+
+<h2>Port Scanning (550 pts)</h2>
+
+<div class="challenge">
+<div class="challenge-name">Non-Standard Web Port <span class="points">(100 pts)</span></div>
+<div class="flag">FLAG{apache_on_8888}</div>
+<pre>nmap -p- 172.20.1.11    # finds 8888
+nmap -sV -p 8888 172.20.1.11</pre>
+</div>
+
+<div class="challenge">
+<div class="challenge-name">Database Count <span class="points">(100 pts)</span></div>
+<div class="flag">FLAG{4}</div>
+<pre>nmap -p 3306,5432,6379,27017 172.20.1.0/24</pre>
+<p>MySQL (.20), Postgres (.21), Redis (.22), MongoDB (.23)</p>
+</div>
+
+<div class="challenge">
+<div class="challenge-name">Custom App Ports <span class="points">(150 pts)</span></div>
+<div class="flag">FLAG{4}</div>
+<pre>nmap -p- 172.20.1.70    # 4444, 5555, 6666, 9999</pre>
+</div>
+
+<div class="challenge">
+<div class="challenge-name">Full Port Scan <span class="points">(200 pts)</span></div>
+<div class="flag">FLAG{2}</div>
+<pre>nmap -p- 172.20.1.80    # 31337 and 65000</pre>
+<div class="teach"><strong>Teach:</strong> 65000 is slow to respond. Students may need <code>--host-timeout</code></div>
+</div>
+
+<h2>Service Detection (600 pts)</h2>
+
+<div class="challenge">
+<div class="challenge-name">MySQL Version <span class="points">(150 pts)</span></div>
+<div class="flag">FLAG{8.0}</div>
+<pre>nmap -sV -p 3306 172.20.1.20</pre>
+</div>
+
+<div class="challenge">
+<div class="challenge-name">SSH Version <span class="points">(150 pts)</span></div>
+<div class="flag">FLAG{ssh_version_detected}</div>
+<pre>nmap -sV -p 2222 172.20.1.50</pre>
+</div>
+
+<div class="challenge">
+<div class="challenge-name">FTP Banner Grab <span class="points">(150 pts)</span></div>
+<div class="flag">FLAG{ftp_anonymous_access}</div>
+<pre>nmap -sV -p 21 172.20.1.40
+# OR: nc 172.20.1.40 21</pre>
+</div>
+
+<div class="challenge">
+<div class="challenge-name">SMTP Banner <span class="points">(150 pts)</span></div>
+<div class="flag">FLAG{smtp_banner_captured}</div>
+<pre>nmap -sV -p 25 172.20.1.30</pre>
+</div>
+
+<h2>Advanced Scanning (1450 pts)</h2>
+
+<div class="challenge">
+<div class="challenge-name">Elite Port <span class="points">(200 pts)</span></div>
+<div class="flag">FLAG{elite_port_31337}</div>
+<pre>nc 172.20.1.80 31337</pre>
+<div class="teach"><strong>Teach:</strong> 31337 = "elite" in leet speak. Classic backdoor port.</div>
+</div>
+
+<div class="challenge">
+<div class="challenge-name">UDP Discovery <span class="points">(250 pts)</span></div>
+<div class="flag">FLAG{udp_service_discovered}</div>
+<pre>nmap -sU -p 4444 172.20.1.80</pre>
+<div class="teach"><strong>Note:</strong> UDP may not work on Docker Desktop Windows. Give partial credit.</div>
+</div>
+
+<div class="challenge">
+<div class="challenge-name">Slow Service <span class="points">(250 pts)</span></div>
+<div class="flag">FLAG{patience_rewarded_65000}</div>
+<pre>nc 172.20.1.80 65000    # wait 3 seconds</pre>
+</div>
+
+<div class="challenge">
+<div class="challenge-name">OS Detection <span class="points">(200 pts)</span></div>
+<div class="flag">FLAG{Linux}</div>
+<pre>sudo nmap -O 172.20.1.10</pre>
+</div>
+
+<div class="challenge">
+<div class="challenge-name">Outside the Top 1000 <span class="points">(300 pts)</span></div>
+<div class="flag">FLAG{port2_not_in_top1000}</div>
+<pre>nmap 172.20.1.90         # nothing!
+nmap -p- 172.20.1.90     # finds port 2
+nmap -sV -p 2 172.20.1.90</pre>
+<div class="teach"><strong>Teach:</strong> This is the biggest aha moment. Default nmap misses it. Always use <code>-p-</code>.</div>
+</div>
+
+<div class="challenge">
+<div class="challenge-name">Hidden in Headers <span class="points">(250 pts)</span></div>
+<div class="flag">FLAG{http_header_hidden}</div>
+<pre>curl -I http://172.20.1.10    # X-Secret-Flag header</pre>
+</div>
+
+<h2>NSE Scripts (1200 pts)</h2>
+
+<div class="challenge">
+<div class="challenge-name">Anonymous FTP <span class="points">(200 pts)</span></div>
+<div class="flag">FLAG{ftp_anonymous_access}</div>
+<pre>nmap --script=ftp-anon -p 21 172.20.1.40</pre>
+</div>
+
+<div class="challenge">
+<div class="challenge-name">Redis Exposed <span class="points">(200 pts)</span></div>
+<div class="flag">FLAG{redis_no_auth_dangerous}</div>
+<pre>nmap --script=redis-info -p 6379 172.20.1.22</pre>
+<div class="teach"><strong>Teach:</strong> Unauthenticated Redis = full server compromise. Real-world critical finding.</div>
+</div>
+
+<div class="challenge">
+<div class="challenge-name">DNS TXT Record <span class="points">(250 pts)</span></div>
+<div class="flag">FLAG{dns_txt_record_found}</div>
+<pre>nmap -sV -p 5353 172.20.1.60</pre>
+</div>
+
+<div class="challenge">
+<div class="challenge-name">Hidden in HTML <span class="points">(200 pts)</span></div>
+<div class="flag">FLAG{nginx_default_page_found}</div>
+<pre>curl http://172.20.1.10    # flag in HTML comment</pre>
+</div>
+
+<div class="challenge">
+<div class="challenge-name">Custom App Admin <span class="points">(150 pts)</span></div>
+<div class="flag">FLAG{custom_app_admin_panel}</div>
+<pre>nc 172.20.1.70 4444</pre>
+</div>
+
+<div class="challenge">
+<div class="challenge-name">Debug Console <span class="points">(200 pts)</span></div>
+<div class="flag">FLAG{debug_console_exposed}</div>
+<pre>nc 172.20.1.70 6666</pre>
+</div>
+
+<h2>Knowledge Check (200 pts)</h2>
+
+<div class="challenge">
+<div class="challenge-name">Multiple Choice Answers</div>
+<pre>Scan Type Knowledge:  B (-sS)
+Default Port Count:   C (1000)
+UDP Scan Flag:        A (-sU)
+OS Detection:         C (-O)
+Well-Known Ports:     B (0-1023)
+Three-Way Handshake:  C (SYN, SYN-ACK, ACK)</pre>
+</div>
+
+<div class="challenge">
+<div class="challenge-name">Hidden in Plain Sight <span class="points">(50 pts)</span></div>
+<div class="flag">FLAG{inspect_element_is_your_friend}</div>
+<p>Right-click challenge modal → Inspect Element → HTML comment in description</p>
+<div class="teach"><strong>Teach:</strong> Always inspect the DOM. Rendered ≠ complete.</div>
+</div>
+
+</body>
+</html>

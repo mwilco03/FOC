@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Nmap: Network Reconnaissance Mastery</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/theme/black.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/highlight/monokai.css">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root { --r-background-color: #0a0a14; --r-main-color: #e8e8f0; --r-heading-color: #00ff41; }
+.reveal { font-family: 'Inter', sans-serif; font-size: 28px; }
+.reveal h1, .reveal h2, .reveal h3 {
+  font-family: 'JetBrains Mono', monospace;
+  color: #00ff41; text-shadow: 0 0 20px rgba(0,255,65,.3);
+  text-transform: none; letter-spacing: 1px;
+}
+.reveal h1 { font-size: 2em; }
+.reveal h2 { font-size: 1.4em; }
+.reveal h3 { font-size: 1.1em; color: #ff6b35; }
+.reveal code, .reveal pre code {
+  font-family: 'JetBrains Mono', monospace;
+  background: rgba(0,255,65,.08); border-radius: 6px;
+  padding: 2px 8px; color: #00ff41; font-size: .85em;
+}
+.reveal pre { background: rgba(15,15,35,.9); border: 1px solid rgba(0,255,65,.2);
+  border-radius: 12px; padding: 16px; box-shadow: 0 4px 20px rgba(0,0,0,.4);
+  width: 90%; margin: 20px auto;
+}
+.reveal pre code { background: none; padding: 0; }
+.reveal ul, .reveal ol { text-align: left; }
+.reveal li { margin: 8px 0; line-height: 1.5; }
+.reveal .highlight { color: #00ff41; font-weight: 600; }
+.reveal .accent { color: #ff6b35; }
+.reveal .dim { color: #8888aa; font-size: .85em; }
+.reveal table { border-collapse: separate; border-spacing: 0; width: 90%; margin: 20px auto;
+  background: rgba(20,20,40,.8); border-radius: 12px; overflow: hidden; }
+.reveal table th { background: rgba(0,255,65,.1); color: #00ff41; padding: 10px 14px;
+  font-family: 'JetBrains Mono', monospace; font-size: .8em; text-transform: uppercase;
+  letter-spacing: 1px; border-bottom: 2px solid rgba(0,255,65,.2); }
+.reveal table td { padding: 8px 14px; border-bottom: 1px solid rgba(255,255,255,.05);
+  font-size: .85em; }
+.reveal .slide-number { font-family: 'JetBrains Mono', monospace; color: #8888aa;
+  background: rgba(15,15,35,.8); border-radius: 6px; padding: 4px 10px; }
+.reveal .progress span { background: #00ff41; }
+.reveal section { text-align: left; }
+.two-col { display: flex; gap: 40px; }
+.two-col > div { flex: 1; }
+@media (max-width: 768px) {
+  .reveal { font-size: 18px; }
+  .reveal h1 { font-size: 1.5em; }
+  .two-col { flex-direction: column; gap: 20px; }
+  .reveal pre { font-size: .75em; padding: 10px; }
+  .reveal table { font-size: .8em; }
+}
+</style>
+</head>
+<body>
+<div class="reveal">
+<div class="slides">
+
+<!-- SLIDE 1: Title -->
+<section data-background-gradient="radial-gradient(circle at 30% 50%, rgba(0,255,65,.08) 0%, #0a0a14 70%)">
+<h1>Nmap</h1>
+<h2 style="color:#e8e8f0;text-shadow:none;font-family:'Inter',sans-serif;font-weight:400;font-size:1em;">Network Reconnaissance Mastery</h2>
+<p class="dim" style="margin-top:40px;">From First Scan to Actionable Intelligence</p>
+<p class="dim">Nmap 7.98 &nbsp;|&nbsp; 2026</p>
+</section>
+
+<!-- SLIDE 2: Agenda -->
+<section>
+<h2>Agenda</h2>
+<div class="two-col">
+<div>
+<ul>
+<li>Nmap Fundamentals</li>
+<li>Network &amp; Protocol Basics</li>
+<li>Scan Types &amp; Core Flags</li>
+<li>Port States &amp; Interpretation</li>
+<li>Service &amp; OS Detection</li>
+<li>NSE Scripting Engine</li>
+</ul>
+</div>
+<div>
+<ul>
+<li>Traceroute &amp; Network Mapping</li>
+<li>Blue Team Detection</li>
+<li>Red Team Evasion</li>
+<li>Output Formats &amp; Reporting</li>
+<li>Legal &amp; Ethical Considerations</li>
+<li class="accent"><strong>Hands-On CTF Lab</strong></li>
+</ul>
+</div>
+</div>
+</section>
+
+<!-- SLIDE 3: What Is Nmap? -->
+<section>
+<h2>What Is Nmap?</h2>
+<ul>
+<li><span class="highlight">Network Mapper</span> &mdash; open-source security scanner since 1997</li>
+<li>Created by Gordon "Fyodor" Lyon</li>
+<li>Host discovery, port scanning, service/version detection, OS fingerprinting</li>
+<li>600+ NSE scripts for extended enumeration</li>
+<li>Cross-platform: Linux, Windows, macOS</li>
+</ul>
+<h3 style="margin-top:30px;">Common Use Cases</h3>
+<div class="two-col">
+<div><ul><li>Asset inventory</li><li>Vulnerability assessment</li><li>Compliance auditing</li></ul></div>
+<div><ul><li>Penetration testing</li><li>Incident response</li><li>Firewall validation</li></ul></div>
+</div>
+</section>
+
+<!-- SLIDE 4: TCP Handshake -->
+<section>
+<h2>TCP Three-Way Handshake</h2>
+<div class="two-col">
+<div>
+<ul>
+<li><code>SYN →</code> Client initiates</li>
+<li><code>SYN-ACK ←</code> Server acknowledges</li>
+<li><code>ACK →</code> Connection established</li>
+</ul>
+<h3>Why It Matters</h3>
+<ul>
+<li><strong>SYN scan</strong> <code>-sS</code>: never completes handshake (stealth)</li>
+<li><strong>Connect scan</strong> <code>-sT</code>: full handshake (logged)</li>
+</ul>
+</div>
+<div>
+<h3>CIDR Notation</h3>
+<ul>
+<li><code>/24</code> = 256 addresses</li>
+<li><code>/16</code> = 65,536 addresses</li>
+<li><code>/32</code> = single host</li>
+</ul>
+<pre><code>nmap -n -sL 10.10.1.0/24
+# List targets without scanning</code></pre>
+</div>
+</div>
+</section>
+
+<!-- SLIDE 5: Host Discovery -->
+<section>
+<h2>Host Discovery</h2>
+<pre><code>nmap -sn 172.20.1.0/24    # Ping sweep — find live hosts</code></pre>
+<ul>
+<li>ARP on local subnet (can't be firewalled)</li>
+<li>ICMP echo, TCP SYN/ACK on remote subnets</li>
+<li><code>-Pn</code> to skip discovery and scan anyway</li>
+</ul>
+<div style="margin-top:20px;padding:16px;background:rgba(255,107,53,.1);border:1px solid rgba(255,107,53,.3);border-radius:10px;">
+<strong class="accent">🔬 Lab Challenge:</strong> How many hosts are alive on 172.20.1.0/24? Can you find the one that doesn't respond to ping?
+</div>
+</section>
+
+<!-- SLIDE 6: Core Scan Flags -->
+<section>
+<h2>Core Scan Flags</h2>
+<table>
+<tr><th>Flag</th><th>Scan Type</th><th>Use Case</th></tr>
+<tr><td><code>-sS</code></td><td>SYN (stealth)</td><td>Default, fast, stealthy</td></tr>
+<tr><td><code>-sT</code></td><td>TCP connect</td><td>When you can't use raw sockets</td></tr>
+<tr><td><code>-sU</code></td><td>UDP</td><td>DNS, SNMP, DHCP services</td></tr>
+<tr><td><code>-sV</code></td><td>Version detection</td><td>Identify software + version</td></tr>
+<tr><td><code>-O</code></td><td>OS detection</td><td>Fingerprint the operating system</td></tr>
+<tr><td><code>-A</code></td><td>Aggressive</td><td>-sV + -O + scripts + traceroute</td></tr>
+<tr><td><code>-p-</code></td><td>All ports</td><td>Scan all 65535 ports</td></tr>
+<tr><td><code>-Pn</code></td><td>No ping</td><td>Skip host discovery</td></tr>
+</table>
+</section>
+
+<!-- SLIDE 7: Port States -->
+<section>
+<h2>Understanding Port States</h2>
+<table>
+<tr><th>State</th><th>Meaning</th><th>Action</th></tr>
+<tr><td class="highlight">open</td><td>Service listening</td><td>Enumerate, assess risk</td></tr>
+<tr><td>closed</td><td>Reachable, no service</td><td>Host is alive, monitor</td></tr>
+<tr><td class="accent">filtered</td><td>Firewall dropping probes</td><td>Try different scan type</td></tr>
+<tr><td>unfiltered</td><td>Reachable, status unknown</td><td>Use SYN/FIN scan</td></tr>
+<tr><td>open|filtered</td><td>Can't determine</td><td>Common with UDP, use -sV</td></tr>
+</table>
+</section>
+
+<!-- SLIDE 8: Service & OS Detection -->
+<section>
+<h2>Service &amp; OS Detection</h2>
+<pre><code>nmap -sV -sC -O --traceroute 172.20.1.0/24</code></pre>
+<div class="two-col">
+<div>
+<h3>Version Detection (-sV)</h3>
+<ul>
+<li>Probes ports with protocol payloads</li>
+<li>Identifies software name + version</li>
+<li><code>--version-intensity 0-9</code></li>
+</ul>
+</div>
+<div>
+<h3>OS Fingerprinting (-O)</h3>
+<ul>
+<li>Sends TCP/UDP/ICMP probes</li>
+<li>6,000+ OS signatures</li>
+<li>Requires open + closed port</li>
+</ul>
+</div>
+</div>
+<div style="margin-top:20px;padding:16px;background:rgba(255,107,53,.1);border:1px solid rgba(255,107,53,.3);border-radius:10px;">
+<strong class="accent">🔬 Lab Challenge:</strong> What MySQL version is running? What's the SSH banner on port 2222?
+</div>
+</section>
+
+<!-- SLIDE 9: NSE -->
+<section>
+<h2>Nmap Scripting Engine (NSE)</h2>
+<ul>
+<li>600+ Lua scripts in <code>/usr/share/nmap/scripts/</code></li>
+<li>Categories: auth, vuln, discovery, exploit, safe</li>
+</ul>
+<pre><code># Specific script
+nmap --script smb-vuln-ms17-010 -p 445 target
+
+# All vuln scripts on web ports
+nmap --script vuln -p 80,443,8080 target
+
+# Browse available scripts
+ls /usr/share/nmap/scripts/ | grep http</code></pre>
+<div style="margin-top:20px;padding:16px;background:rgba(255,107,53,.1);border:1px solid rgba(255,107,53,.3);border-radius:10px;">
+<strong class="accent">🔬 Lab Challenge:</strong> Use ftp-anon to find anonymous FTP. Use redis-info to probe the unauth'd Redis server.
+</div>
+</section>
+
+<!-- SLIDE 10: Timing -->
+<section>
+<h2>Timing &amp; Performance</h2>
+<table>
+<tr><th>Template</th><th>Name</th><th>Use Case</th></tr>
+<tr><td><code>-T0</code></td><td>Paranoid</td><td>IDS evasion (very slow)</td></tr>
+<tr><td><code>-T1</code></td><td>Sneaky</td><td>IDS evasion</td></tr>
+<tr><td><code>-T2</code></td><td>Polite</td><td>Production networks</td></tr>
+<tr><td><code>-T3</code></td><td>Normal</td><td>Default</td></tr>
+<tr><td><code>-T4</code></td><td>Aggressive</td><td>Fast, reliable network</td></tr>
+<tr><td><code>-T5</code></td><td>Insane</td><td>Speed over accuracy</td></tr>
+</table>
+<pre><code>--min-rate 100 --max-rate 500 --max-retries 2 --host-timeout 30m</code></pre>
+</section>
+
+<!-- SLIDE 11: Blue Team -->
+<section>
+<h2>Blue Team: Detection</h2>
+<div class="two-col">
+<div>
+<h3>Detection Strategies</h3>
+<ul>
+<li>Connection-rate thresholds per source IP</li>
+<li>Sequential port access patterns</li>
+<li>SYN-only (half-open) connections</li>
+<li>Unusual service probes (-sV payloads)</li>
+<li>Correlate IDS + NetFlow data</li>
+</ul>
+</div>
+<div>
+<h3>Validation Exercise</h3>
+<pre><code># Simulate slow scan
+nmap -T1 --max-rate 5 target
+
+# Does your SIEM alert?
+# If not, tune.</code></pre>
+<p class="dim">Test your own defenses. Scan yourself with T0-T5 and validate IDS catches all scan types.</p>
+</div>
+</div>
+</section>
+
+<!-- SLIDE 12: Red Team -->
+<section>
+<h2>Red Team: Evasion</h2>
+<pre><code># Decoy scan — mix your IP in with fakes
+nmap -D RND:5,ME target
+
+# Idle (zombie) scan — zero packets from you
+nmap -sI zombie_host:80 target</code></pre>
+<div class="two-col">
+<div>
+<h3>Evasion Techniques</h3>
+<ul>
+<li><code>-f</code> Fragment packets</li>
+<li><code>--data-length &lt;n&gt;</code> Pad packets</li>
+<li><code>--source-port 53</code> Spoof as DNS</li>
+<li><code>--randomize-hosts</code> Avoid sequential patterns</li>
+</ul>
+</div>
+<div>
+<h3 style="color:#ff4757;">⚠️ Authorization Required</h3>
+<p>These techniques are for <em>authorized</em> pentesting only. Always have written scope.</p>
+</div>
+</div>
+</section>
+
+<!-- SLIDE 13: Output -->
+<section>
+<h2>Output Formats</h2>
+<table>
+<tr><th>Flag</th><th>Format</th><th>Use Case</th></tr>
+<tr><td><code>-oN</code></td><td>Normal text</td><td>Human-readable</td></tr>
+<tr><td><code>-oX</code></td><td>XML</td><td>Tool integration, XSLT</td></tr>
+<tr><td><code>-oG</code></td><td>Grepable</td><td>Quick shell parsing</td></tr>
+<tr><td><code>-oA</code></td><td>All formats</td><td>Best practice — always use this</td></tr>
+</table>
+<pre><code># Always save all formats
+nmap -A -oA scan_$(date +%Y%m%d) 172.20.1.0/24</code></pre>
+</section>
+
+<!-- SLIDE 14: Legal -->
+<section>
+<h2>Legal &amp; Ethical Considerations</h2>
+<div style="padding:20px;background:rgba(255,71,87,.1);border:1px solid rgba(255,71,87,.3);border-radius:12px;margin-bottom:20px;">
+<strong style="color:#ff4757;">⚠️ Disclaimer:</strong> Educational content, not legal advice. Always obtain written authorization.
+</div>
+<div class="two-col">
+<div>
+<h3>Legal Landscape</h3>
+<ul>
+<li>No US law explicitly criminalizes port scanning</li>
+<li>But unauthorized scanning → CFAA risk</li>
+<li>ISPs may terminate accounts</li>
+<li>International laws vary widely</li>
+</ul>
+</div>
+<div>
+<h3>Best Practices</h3>
+<ul>
+<li>Written authorization (SOW)</li>
+<li>Define scope: IPs, ports, timing</li>
+<li>Log everything you do</li>
+<li>Report through proper channels</li>
+<li>Respect scope boundaries</li>
+</ul>
+</div>
+</div>
+</section>
+
+<!-- SLIDE 15: Lab Time -->
+<section data-background-gradient="radial-gradient(circle at 70% 50%, rgba(0,255,65,.12) 0%, #0a0a14 70%)">
+<h1 style="font-size:2.5em;">🔬 Lab Time</h1>
+<h2 style="color:#e8e8f0;text-shadow:none;font-family:'Inter',sans-serif;">Challenges unlock as you progress</h2>
+<div style="margin-top:40px;font-size:1.1em;">
+<p>Target Network: <code>172.20.1.0/24</code></p>
+<p>Terminal: <code>http://<span class="dim">&lt;host&gt;</span></code></p>
+<p>Scoreboard: <code>http://<span class="dim">&lt;host&gt;</span>:8000</code></p>
+</div>
+<p style="margin-top:40px;" class="dim">Good luck. May the flags be with you.</p>
+</section>
+
+</div><!-- /slides -->
+</div><!-- /reveal -->
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/highlight/highlight.js"></script>
+<script>
+Reveal.initialize({
+  hash: true, slideNumber: true, progress: true, center: false,
+  transition: 'slide', backgroundTransition: 'fade',
+  plugins: [RevealHighlight],
+  width: 1200, height: 700, margin: 0.08,
+  // Responsive
+  minScale: 0.2, maxScale: 2.0,
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+
+╔══════════════════════════════════════════════════════════════╗
+║              NMAP TRAINING LAB - STUDENT TERMINAL           ║
+╠══════════════════════════════════════════════════════════════╣
+║                                                              ║
+║  Scan the target network 172.20.1.0/24 to discover hosts,   ║
+║  identify services, and capture flags.                       ║
+║                                                              ║
+║  Type 'notes' or 'cheatsheet' for a bash reference guide.   ║
+║  Type 'man nmap' for the full nmap manual.                   ║
+║                                                              ║
+║  RULES:                                                      ║
+║  - Only scan the 172.20.1.0/24 network                      ║
+║  - Do NOT attack other students or the CTFd server           ║
+║                                                              ║
+╚══════════════════════════════════════════════════════════════╝
+

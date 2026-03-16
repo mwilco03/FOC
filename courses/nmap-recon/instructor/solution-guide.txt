@@ -1,0 +1,148 @@
+================================================================================
+              NMAP TRAINING LAB - INSTRUCTOR SOLUTION GUIDE
+================================================================================
+
+ADMIN CREDS:  admin / NmapLab2024!
+CTFD URL:     http://<host>:8000/admin
+
+================================================================================
+HOST DISCOVERY (200 pts)
+================================================================================
+
+Ping Sweep (50 pts)                         FLAG: FLAG{13}
+  nmap -sn 172.20.1.0/24
+  Count IPs that are "Host is up" (exclude gateway .1 and student IPs .101-.110)
+  Answer: 13 target hosts
+
+Find the Mail Server (50 pts)               FLAG: FLAG{172.20.1.30}
+  nmap -sn 172.20.1.0/24                   # find hosts
+  nmap -p 25 172.20.1.0/24                 # find port 25
+  Answer: 172.20.1.30
+
+Ghost Host (100 pts)                        FLAG: FLAG{172.20.1.50}
+  nmap -sn 172.20.1.0/24                   # .50 won't appear (ICMP blocked)
+  nmap -Pn -p 2222 172.20.1.50             # but it has SSH on 2222
+  TEACH: ARP discovery vs ICMP. On local subnet nmap uses ARP so it
+  WILL find .50 via -sn. The real lesson is when scanning across
+  subnets where ARP doesn't work and -Pn is needed.
+
+================================================================================
+PORT SCANNING (550 pts)
+================================================================================
+
+Non-Standard Web Port (100 pts)             FLAG: FLAG{apache_on_8888}
+  nmap -p- 172.20.1.11                     # finds 8888
+  nmap -sV -p 8888 172.20.1.11             # confirms Apache
+
+Database Count (100 pts)                    FLAG: FLAG{4}
+  nmap -p 3306,5432,6379,27017 172.20.1.0/24
+  MySQL (.20), Postgres (.21), Redis (.22), MongoDB (.23)
+
+Custom App Ports (150 pts)                  FLAG: FLAG{4}
+  nmap -p- 172.20.1.70                     # 4444, 5555, 6666, 9999
+
+Full Port Scan (200 pts)                    FLAG: FLAG{2}
+  nmap -p- 172.20.1.80                     # 31337 and 65000
+  NOTE: 65000 is slow to respond. Students may need --host-timeout
+
+================================================================================
+SERVICE DETECTION (600 pts)
+================================================================================
+
+MySQL Version (150 pts)                     FLAG: FLAG{8.0}
+  nmap -sV -p 3306 172.20.1.20
+  Shows: MySQL 8.0.x
+
+SSH Version (150 pts)                       FLAG: FLAG{ssh_version_detected}
+  nmap -sV -p 2222 172.20.1.50
+  Shows: OpenSSH 9.6 + banner with flag
+
+FTP Banner Grab (150 pts)                   FLAG: FLAG{ftp_anonymous_access}
+  nmap -sV -p 21 172.20.1.40
+  OR: nc 172.20.1.40 21                    # banner has flag
+
+SMTP Banner (150 pts)                       FLAG: FLAG{smtp_banner_captured}
+  nmap -sV -p 25 172.20.1.30
+  OR: nc 172.20.1.30 25                    # banner has flag
+
+================================================================================
+ADVANCED SCANNING (1450 pts)
+================================================================================
+
+Elite Port (200 pts)                        FLAG: FLAG{elite_port_31337}
+  nmap -p 31337 172.20.1.80
+  OR: nc 172.20.1.80 31337
+  TEACH: 31337 = "elite" in leet speak. Well-known backdoor port.
+
+UDP Discovery (250 pts)                     FLAG: FLAG{udp_service_discovered}
+  nmap -sU -p 4444 172.20.1.80
+  NOTE: UDP scanning is slow. Docker Desktop on Windows has UDP issues.
+  If UDP doesn't work, give partial credit for knowing the flag.
+
+Slow Service (250 pts)                      FLAG: FLAG{patience_rewarded_65000}
+  nmap -sV -p 65000 172.20.1.80 --host-timeout 30s
+  OR: nc 172.20.1.80 65000                 # wait 3 seconds for banner
+  TEACH: Default nmap timeouts may miss slow services.
+
+OS Detection (200 pts)                      FLAG: FLAG{Linux}
+  sudo nmap -O 172.20.1.10
+  TEACH: Requires root/sudo. Needs open+closed ports on target.
+
+Outside the Top 1000 (300 pts)              FLAG: FLAG{port2_not_in_top1000}
+  nmap 172.20.1.90                         # finds nothing!
+  nmap -p- 172.20.1.90                     # finds port 2
+  nmap -sV -p 2 172.20.1.90               # banner has flag
+  TEACH: Default nmap only scans top 1000 ports. Port 2 (compressnet)
+  is not in that list. Always use -p- for thorough scans.
+
+Hidden in Headers (250 pts)                 FLAG: FLAG{http_header_hidden}
+  curl -I http://172.20.1.10               # X-Secret-Flag header
+  nmap --script=http-headers -p 80 172.20.1.10
+  TEACH: Not everything is in the page body. Check headers.
+
+================================================================================
+NSE SCRIPTS (1200 pts)
+================================================================================
+
+Anonymous FTP (200 pts)                     FLAG: FLAG{ftp_anonymous_access}
+  nmap --script=ftp-anon -p 21 172.20.1.40
+  TEACH: ftp-anon is one of the most useful NSE scripts in the real world.
+
+Redis Exposed (200 pts)                     FLAG: FLAG{redis_no_auth_dangerous}
+  nmap --script=redis-info -p 6379 172.20.1.22
+  TEACH: Unauthenticated Redis = full server compromise. Real-world issue.
+
+DNS TXT Record (250 pts)                    FLAG: FLAG{dns_txt_record_found}
+  nmap -sV -p- 172.20.1.60                # finds port 5353
+  nmap -sV -p 5353 172.20.1.60            # banner has flag
+  TEACH: DNS on non-standard port. Always enumerate all ports.
+
+Hidden in HTML (200 pts)                    FLAG: FLAG{nginx_default_page_found}
+  curl http://172.20.1.10                  # view source, flag in comment
+  nmap --script=http-grep -p 80 172.20.1.10
+  TEACH: View source is step 1 of web recon.
+
+Custom App Admin (150 pts)                  FLAG: FLAG{custom_app_admin_panel}
+  nmap -sV -p 4444 172.20.1.70
+  OR: nc 172.20.1.70 4444
+
+Debug Console (200 pts)                     FLAG: FLAG{debug_console_exposed}
+  nmap -sV -p 6666 172.20.1.70
+  OR: nc 172.20.1.70 6666
+  TEACH: Exposed debug interfaces are a common finding in pentests.
+
+================================================================================
+KNOWLEDGE CHECK (200 pts)
+================================================================================
+
+Scan Type Knowledge (25 pts)     Answer: B  (-sS is SYN scan)
+Default Port Count (25 pts)      Answer: C  (1000 ports)
+UDP Scan Flag (25 pts)           Answer: A  (-sU)
+OS Detection (25 pts)            Answer: C  (-O)
+Well-Known Ports (25 pts)        Answer: B  (0-1023)
+Three-Way Handshake (25 pts)     Answer: C  (SYN, SYN-ACK, ACK)
+Hidden in Plain Sight (50 pts)   FLAG: FLAG{inspect_element_is_your_friend}
+  Right-click challenge modal > Inspect Element > HTML comment in description
+  TEACH: Always inspect the DOM. Things hidden from render != hidden from you.
+
+================================================================================

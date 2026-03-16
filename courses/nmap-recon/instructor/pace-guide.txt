@@ -1,0 +1,114 @@
+================================================================================
+              NMAP TRAINING LAB - INSTRUCTOR PACE GUIDE
+================================================================================
+Maps PowerPoint slides to lab challenges. Unlock categories as you teach.
+
+BEFORE CLASS
+  1. Run deploy.ps1 (or deploy.sh)
+  2. Print handout.txt (one per student)
+  3. Open CTFd admin: http://<host>:8000/admin
+  4. Set all challenges to "hidden" state initially
+  5. Open scoreboard on projector: http://<host>:8000/scoreboard
+
+================================================================================
+PHASE 1: INTRO + HOST DISCOVERY (Slides 1-5)         ~20 min
+================================================================================
+  Teach: What is nmap, TCP basics, CIDR, ping sweeps
+
+  UNLOCK: "Host Discovery" category + "Knowledge Check" category
+    Admin > Challenges > click each > State: Visible
+    Or use the unlock script: bash instructor/unlock.sh "Host Discovery"
+
+  Students work on:
+    - Ping Sweep (50 pts)
+    - Find the Mail Server (50 pts)
+    - Ghost Host (100 pts)
+    - Knowledge check questions (multi-choice)
+
+  COMMON STUCK POINT: Ghost Host - hint that -sn uses ARP on local net
+  TIMER: Give 10-15 min for this phase
+
+================================================================================
+PHASE 2: PORT SCANNING (Slides 6-8)                  ~25 min
+================================================================================
+  Teach: Scan types, port states, SYN vs Connect, filtered vs closed
+
+  UNLOCK: "Port Scanning" category
+
+  Students work on:
+    - Non-Standard Web Port (100 pts)
+    - Database Count (100 pts)
+    - Custom App Ports (150 pts)
+    - Full Port Scan (200 pts)
+
+  COMMON STUCK POINT: Full Port Scan - takes time with -p-
+  TIP: Let fast students start on earlier categories they missed
+  TIMER: 15-20 min
+
+================================================================================
+PHASE 3: SERVICE DETECTION (Slides 9-10)              ~20 min
+================================================================================
+  Teach: -sV, -O, version intensity, banner grabbing
+
+  UNLOCK: "Service Detection" category
+
+  Students work on:
+    - MySQL Version (150 pts)
+    - SSH Version (150 pts)
+    - FTP Banner Grab (150 pts)
+    - SMTP Banner (150 pts)
+
+  COMMON STUCK POINT: SSH on port 2222 - remind them to scan all ports
+  TIP: Show nc/netcat as alternative to nmap for banner grabbing
+  TIMER: 15 min
+
+================================================================================
+PHASE 4: ADVANCED + NSE (Slides 11-16)               ~30 min
+================================================================================
+  Teach: NSE scripts, timing, evasion, traceroute
+
+  UNLOCK: "Advanced Scanning" + "NSE Scripts" categories
+
+  Students work on all remaining challenges (17 challenges)
+
+  COMMON STUCK POINTS:
+    - Outside the Top 1000: biggest aha moment. Let them struggle.
+    - UDP Discovery: may not work on Docker Desktop Windows. Give flag.
+    - Hidden in Headers: many forget to check HTTP headers
+    - Hidden in Plain Sight: inspect element challenge
+
+  TIP: This is the competitive phase. Put scoreboard on projector.
+  TIMER: 25-30 min free hunt
+
+================================================================================
+PHASE 5: WRAP-UP (Slides 17-22)                      ~15 min
+================================================================================
+  Teach: Output formats, NetIntel, legal considerations
+
+  - Review scoreboard, announce winner
+  - Walk through any unsolved challenges (use solution guide)
+  - Show how nmap output feeds into real tools (NetIntel demo)
+  - Legal/ethical discussion
+
+  TOTAL CLASS TIME: ~2 hours
+
+================================================================================
+QUICK ADMIN COMMANDS
+================================================================================
+
+  Unlock a category:
+    bash instructor/unlock.sh "Host Discovery"
+
+  Reset a student's terminal:
+    docker restart nmap-lab-student-3-1
+
+  Check who's scanning what (live):
+    docker exec nmap-lab-student-1-1 ps aux | grep nmap
+
+  Push a hint to CTFd challenge:
+    Use admin panel > Challenges > click challenge > Hints > Add
+
+  Scoreboard on projector:
+    http://<host>:8000/scoreboard  (no login required)
+
+================================================================================

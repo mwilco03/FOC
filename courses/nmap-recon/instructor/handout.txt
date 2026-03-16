@@ -1,0 +1,51 @@
++------------------------------------------------------------------+
+|              NMAP TRAINING LAB - STUDENT HANDOUT                 |
++------------------------------------------------------------------+
+
+  TERMINAL:  http://___________________________
+  CTFD:      http://___________________________:8000
+
+  USERNAME:  team____    PASSWORD: _______________
+
++------------------------------------------------------------------+
+|  QUICK REFERENCE                                                 |
++------------------------------------------------------------------+
+
+  SCAN TYPES
+  nmap -sn <target>         Ping sweep (host discovery)
+  nmap <target>             Top 1000 ports
+  nmap -p- <target>         All 65535 ports
+  nmap -p 22,80 <target>    Specific ports
+  nmap -sV <target>         Service/version detection
+  nmap -O <target>          OS detection (needs sudo)
+  nmap -sU <target>         UDP scan
+  nmap -A <target>          Aggressive (sV + O + scripts)
+  nmap -Pn <target>         Skip host discovery
+
+  NSE SCRIPTS
+  nmap --script=ftp-anon <target>
+  nmap --script=redis-info <target>
+  nmap --script=http-headers <target>
+  nmap --script=banner <target>
+
+  OTHER TOOLS
+  nc <host> <port>          Connect to a port (banner grab)
+  curl -I http://<host>     HTTP headers only
+  curl http://<host>        HTTP page source
+  dig @<dns> <name> TXT     DNS TXT record lookup
+  sudo nmap ...             Run as root (no password needed)
+
+  TARGET NETWORK: 172.20.1.0/24
+
+  FLAG FORMAT:    FLAG{some_text_here}
+
+  Type 'notes' for the full bash cheatsheet.
+  Type 'man nmap' for the complete nmap manual.
+
++------------------------------------------------------------------+
+|  RULES                                                           |
++------------------------------------------------------------------+
+  - Only scan 172.20.1.0/24
+  - Do NOT attack other students or CTFd
+  - Ask the instructor if you're stuck
++------------------------------------------------------------------+
