@@ -552,6 +552,7 @@ function loadQuestionPool() {
 }
 
 function nextQuestion() {
+  if (gameState === 'gameover' || gameState === 'victory') return;
   if (enemies.every(e => !e.alive)) {
     // Wave complete
     currentWave++;
@@ -809,8 +810,10 @@ showGameOver = function(victory) {
   _origShowGameOver(victory);
   const data = loadHighScore();
   if (data.highScore) {
+    const existing = document.getElementById('gameOverHighScore');
+    if (existing) existing.remove();
     document.getElementById('finalAccuracy').insertAdjacentHTML('afterend',
-      `<p style="color:var(--accent-amber);margin-top:0.5rem;">High Score: ${data.highScore}</p>`);
+      `<p id="gameOverHighScore" style="color:var(--accent-amber);margin-top:0.5rem;">High Score: ${data.highScore}</p>`);
   }
 };
 
@@ -818,7 +821,7 @@ showGameOver = function(victory) {
 window.addEventListener('beforeunload', (e) => {
   if (gameState === 'answering' || gameState === 'waveIntro') {
     try {
-      const state = { score, lives, currentWave, streak, totalAnswered, totalCorrect, enemyBaseY, enemies: enemies.map(e => ({ alive: e.alive })) };
+      const state = { score, lives, currentWave, streak, totalAnswered, totalCorrect, enemyBaseY, enemies: enemies.map(e => ({ alive: e.alive })), timestamp: Date.now() };
       sessionStorage.setItem(STORAGE_KEY + '-session', JSON.stringify(state));
     } catch (e) {}
   }

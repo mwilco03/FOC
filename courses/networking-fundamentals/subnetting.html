@@ -2058,6 +2058,7 @@ function checkNumDrill() {
 }
 
 function showNumDrill() {
+  numDrillChecked = true;
   numDrillAnswer.targets.forEach((t, i) => {
     const inp = $(`#numDrillIn${i}`);
     inp.value = t.answer;
@@ -2135,6 +2136,7 @@ function checkCidrDrill() {
 
 $('#cidrCheck').addEventListener('click', checkCidrDrill);
 $('#cidrShow').addEventListener('click', () => {
+  cidrDrillChecked = true;
   $('#cidrAnswer').value = cidrDrillData.answer;
   $('#cidrAnswer').classList.add('correct-input');
   const fb = $('#cidrFeedback');
@@ -2198,6 +2200,7 @@ function checkHostDrill() {
 
 $('#hostCheck').addEventListener('click', checkHostDrill);
 $('#hostShow').addEventListener('click', () => {
+  hostDrillChecked = true;
   $('#hostAnswerHosts').value = hostDrillData.usableHosts;
   $('#hostAnswerBlock').value = hostDrillData.blockSize;
   $('#hostAnswerHosts').classList.add('correct-input');
@@ -2257,6 +2260,7 @@ function checkWcDrill() {
 
 $('#wcCheck').addEventListener('click', checkWcDrill);
 $('#wcShow').addEventListener('click', () => {
+  wcDrillChecked = true;
   $('#wcAnswer').value = wcDrillData.answer;
   $('#wcAnswer').classList.add('correct-input');
   const fb = $('#wcFeedback');
@@ -2308,6 +2312,7 @@ function checkAndDrill() {
 
 $('#andCheck').addEventListener('click', checkAndDrill);
 $('#andShow').addEventListener('click', () => {
+  andDrillChecked = true;
   $('#andAnswer').value = andDrillData.answer;
   $('#andAnswer').classList.add('correct-input');
   const fb = $('#andFeedback');
