@@ -1,0 +1,119 @@
+name: Validate GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check required files exist
+        run: |
+          missing=0
+          for f in \
+            index.html \
+            .nojekyll \
+            hub/index.html \
+            hub/404.html \
+            hub/sw.js \
+            hub/instructor.html \
+            courses/networking-fundamentals/subnetting.html \
+            courses/networking-fundamentals/invaders.html \
+            courses/networking-fundamentals/quest.html \
+            courses/networking-fundamentals/tower.html \
+            courses/networking-fundamentals/bitflip.html \
+            courses/networking-fundamentals/hex.html \
+            courses/networking-fundamentals/pcap-challenge.html \
+            courses/networking-fundamentals/SubnettingSheet.html \
+            courses/networking-fundamentals/syntax-drill.html \
+            courses/scripting/python/Challenges1.html \
+            courses/scripting/python/PythonTerminal.html \
+            courses/scripting/powershell/Challenges2.html \
+            courses/scripting/batch/Challenges3.html \
+            courses/scripting/bash/Challenges4.html \
+            courses/scripting/bash/BashTerminal.html \
+            courses/scripting/data-apis/Challenges5.html; do
+            if [ ! -f "$f" ]; then
+              echo "MISSING: $f"
+              missing=$((missing + 1))
+            else
+              echo "OK: $f"
+            fi
+          done
+          if [ $missing -gt 0 ]; then
+            echo "::error::$missing required file(s) missing"
+            exit 1
+          fi
+          echo "All $((22 - missing)) required files present."
+
+      - name: Validate HTML files are well-formed
+        run: |
+          errors=0
+          for f in index.html hub/index.html hub/404.html hub/instructor.html; do
+            if ! head -1 "$f" | grep -qi "<!doctype html>"; then
+              echo "::warning file=$f::Missing DOCTYPE declaration"
+              errors=$((errors + 1))
+            fi
+            if ! grep -qi "</html>" "$f"; then
+              echo "::warning file=$f::Missing closing </html> tag"
+              errors=$((errors + 1))
+            fi
+          done
+          if [ $errors -gt 0 ]; then
+            echo "::warning::$errors HTML issue(s) found"
+          else
+            echo "All HTML files pass basic validation."
+          fi
+
+      - name: Validate internal links in hub/index.html
+        run: |
+          broken=0
+          # Extract href values from hub/index.html
+          grep -oP 'href="\K[^"]+' hub/index.html | while read -r link; do
+            # Skip external links and anchors
+            case "$link" in
+              http*|#*|mailto:*) continue ;;
+            esac
+            # Resolve relative to hub/
+            resolved="hub/$link"
+            if [ ! -f "$resolved" ]; then
+              echo "BROKEN LINK: $link (resolved to $resolved)"
+              echo "broken" >> /tmp/broken_links
+            else
+              echo "OK: $link"
+            fi
+          done
+          if [ -f /tmp/broken_links ]; then
+            count=$(wc -l < /tmp/broken_links)
+            echo "::error::$count broken internal link(s) in hub/index.html"
+            exit 1
+          fi
+          echo "All internal links valid."
+
+      - name: Validate service worker cache paths
+        run: |
+          broken=0
+          # Extract paths from sw.js PAGES array
+          grep -oP "'\.\.?/[^']+'" hub/sw.js | tr -d "'" | while read -r path; do
+            case "$path" in
+              ./) continue ;;  # skip relative root
+            esac
+            resolved="hub/$path"
+            if [ ! -f "$resolved" ]; then
+              echo "BROKEN SW CACHE: $path (resolved to $resolved)"
+              echo "broken" >> /tmp/broken_sw
+            else
+              echo "OK: $path"
+            fi
+          done
+          if [ -f /tmp/broken_sw ]; then
+            count=$(wc -l < /tmp/broken_sw)
+            echo "::error::$count broken path(s) in service worker cache"
+            exit 1
+          fi
+          echo "All service worker cache paths valid."
