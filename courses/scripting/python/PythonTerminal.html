@@ -331,7 +331,8 @@ def _test_challenge(func_name, test_calls):
     import json
     tests = json.loads(test_calls)
     results = []
-    for call_str, expected in tests:
+    for item in tests:
+        call_str, expected = item[0], item[1]
         buf = StringIO()
         old_stdout = sys.stdout
         sys.stdout = buf
@@ -340,7 +341,8 @@ def _test_challenge(func_name, test_calls):
             actual = repr(result)
             sys.stdout = old_stdout
             stdout = buf.getvalue()
-            passed = (actual == expected)
+            # Normalize quote style for dict/string comparison
+            passed = (actual == expected) or (actual.replace("'", '"') == expected.replace("'", '"'))
             results.append({"call": call_str, "expected": expected, "actual": actual, "passed": passed, "error": None})
         except Exception as e:
             sys.stdout = old_stdout
