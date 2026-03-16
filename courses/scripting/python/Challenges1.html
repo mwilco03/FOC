@@ -358,13 +358,17 @@ showQuiz();
 (function(){
   const KEY='foc-python-progress';
   function save(){try{localStorage.setItem(KEY,JSON.stringify({dIdx,dScore,qIdx,qScore}));}catch(e){}}
-  function load(){try{const d=JSON.parse(localStorage.getItem(KEY));if(d){dIdx=d.dIdx||0;dScore=d.dScore||0;qIdx=d.qIdx||0;qScore=d.qScore||0;}}catch(e){}}
+  function load(){try{const d=JSON.parse(localStorage.getItem(KEY));if(d){dIdx=Math.min(d.dIdx||0,DRILLS.length-1);dScore=d.dScore||0;qIdx=Math.min(d.qIdx||0,QUIZ.length-1);qScore=d.qScore||0;}}catch(e){}}
   const _cd=checkDrill;checkDrill=function(){_cd();save()};
   const _aq=answerQuiz;answerQuiz=function(i){_aq(i);save()};
-  load();if(dIdx>0)showDrill();if(qIdx>0)showQuiz();
+  load();
+  document.getElementById('d-score').textContent=dScore;
+  document.getElementById('q-score').textContent=qScore;
+  if(dIdx>0)showDrill();if(qIdx>0)showQuiz();
 })();
 /* ── Keyboard shortcuts: press 1-4 to select quiz answer, N for next ── */
 document.addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
   const num = parseInt(e.key);
   if (num >= 1 && num <= 4) {
     const btns = document.querySelectorAll('.quiz-opt:not(.disabled)');

@@ -312,18 +312,21 @@ document.querySelectorAll('.mode-tab').forEach(tab => {
   });
 });
 
+let answerChecked = false;
 $('#btnCheck').addEventListener('click', () => {
   if(mode === 'speed' && timeLeft <= 0) return;
+  if(answerChecked) return;
+  answerChecked = true;
   checkAnswer();
   if(mode === 'speed'){
     setTimeout(() => {
-      if(timeLeft > 0) newProblem();
+      if(timeLeft > 0){ answerChecked = false; newProblem(); }
     }, 1200);
   }
 });
 $('#btnHint').addEventListener('click', showHint);
 $('#btnClear').addEventListener('click', () => { bits = new Array(32).fill(0); updateDisplay(); });
-$('#btnNext').addEventListener('click', newProblem);
+$('#btnNext').addEventListener('click', () => { answerChecked = false; newProblem(); });
 
 // =====================================================================
 // RESILIENCE: localStorage best score, error boundary, offline detect

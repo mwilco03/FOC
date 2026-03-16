@@ -275,6 +275,7 @@ function addTouchDragSupport(){
   document.querySelectorAll('.pool-chip').forEach(chip => {
     chip.addEventListener('touchstart', (e) => {
       if(chip.classList.contains('placed')) return;
+      e.preventDefault();
       dragChip = chip;
       dragGhost = chip.cloneNode(true);
       dragGhost.style.cssText = 'position:fixed;pointer-events:none;opacity:0.8;z-index:1000;';
@@ -282,11 +283,12 @@ function addTouchDragSupport(){
       const t = e.touches[0];
       dragGhost.style.left = t.clientX - 30 + 'px';
       dragGhost.style.top = t.clientY - 15 + 'px';
-    }, {passive:true});
+    }, {passive:false});
   });
 
   document.addEventListener('touchmove', (e) => {
     if(!dragGhost) return;
+    e.preventDefault();
     const t = e.touches[0];
     dragGhost.style.left = t.clientX - 30 + 'px';
     dragGhost.style.top = t.clientY - 15 + 'px';
@@ -295,7 +297,7 @@ function addTouchDragSupport(){
     const el = document.elementFromPoint(t.clientX, t.clientY);
     const row = el?.closest('.tower-row');
     if(row) row.classList.add('drag-over');
-  }, {passive:true});
+  }, {passive:false});
 
   document.addEventListener('touchend', (e) => {
     if(!dragChip || !dragGhost) return;

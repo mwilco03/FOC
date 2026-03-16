@@ -126,7 +126,7 @@ let guidedNum = 0;
 let guidedSteps = [];
 
 function newGuided(){
-  skippedGuided = false;
+  skippedGuided = false; guidedChecked = false;
   guidedNum = randInt(100, 65535);
   guidedSteps = [];
   let n = guidedNum;
@@ -188,8 +188,9 @@ function newGuided(){
   $('#guidedNext').addEventListener('click', newGuided);
 }
 
+let guidedChecked = false;
 function checkGuided(){
-  if(skippedGuided) return; // Steps replaced by skip input
+  if(skippedGuided || guidedChecked) return;
   let allCorrect = true;
   guidedSteps.forEach((s,i) => {
     const qInp = $(`#gq-${i}`), rInp = $(`#gr-${i}`), hInp = $(`#gh-${i}`);
@@ -211,6 +212,7 @@ function checkGuided(){
   if(allCorrect){
     fb.textContent='CORRECT!';fb.className='feedback correct';
     sc++;streak++;
+    guidedChecked = true;
     $('#guidedAnswer').style.display='';
     $('#guidedResult').textContent = `0x${correctHex}`;
   } else {
@@ -263,6 +265,7 @@ let reverseHex = '';
 let reverseDigits = [];
 
 function newReverse(){
+  reverseChecked = false;
   const dec = randInt(100, 65535);
   reverseHex = dec.toString(16).toUpperCase();
   reverseDigits = reverseHex.split('').map((d,i) => {
@@ -315,7 +318,9 @@ function newReverse(){
   $('#revNext').addEventListener('click', newReverse);
 }
 
+let reverseChecked = false;
 function checkReverse(){
+  if(reverseChecked) return;
   let allCorrect = true;
   const correctTotal = parseInt(reverseHex, 16);
 
@@ -335,7 +340,7 @@ function checkReverse(){
 
   const fb = $('#revFb');
   if(allCorrect){
-    fb.textContent='CORRECT!';fb.className='feedback correct';sc++;streak++;
+    fb.textContent='CORRECT!';fb.className='feedback correct';sc++;streak++;reverseChecked=true;
   } else {
     fb.textContent=`Answer: ${correctTotal.toLocaleString()}`;fb.className='feedback wrong';streak=0;
   }
@@ -349,6 +354,7 @@ let speedDirection = '';
 let speedAnswer = '';
 
 function newSpeed(){
+  speedChecked = false;
   const dir = Math.random() < 0.5 ? 'toHex' : 'toDec';
   speedDirection = dir;
 
@@ -391,7 +397,9 @@ function newSpeed(){
   $('#speedNext').addEventListener('click', newSpeed);
 }
 
+let speedChecked = false;
 function checkSpeed(){
+  if(speedChecked) return;
   const inp = $('#speedInput');
   const val = inp.value.trim().toUpperCase().replace(/^0X/,'');
   const answer = speedAnswer.replace(/^0X/,'');
@@ -400,13 +408,13 @@ function checkSpeed(){
 
   if(val === answer){
     inp.classList.add('correct');
-    fb.textContent='CORRECT!';fb.className='feedback correct';sc++;streak++;
+    fb.textContent='CORRECT!';fb.className='feedback correct';sc++;streak++;speedChecked=true;
     updateStats();
     setTimeout(newSpeed, 500);
   } else {
     inp.classList.add('wrong');
     fb.textContent=`Answer: ${speedDirection==='toHex'?'0x':''}${speedAnswer}`;
-    fb.className='feedback wrong';streak=0;
+    fb.className='feedback wrong';streak=0;speedChecked=true;
     updateStats();
     setTimeout(newSpeed, 1500);
   }

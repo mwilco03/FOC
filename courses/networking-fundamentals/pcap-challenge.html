@@ -535,7 +535,7 @@ function dissectPacket(pkt) {
       ['Version', '4'],
       ['Header Length', '20 bytes (5)'],
       ['Total Length', `${pkt.len - 14}`],
-      ['Identification', ipId ? ipId[1] : '0x' + (Math.floor(Math.random()*65535)).toString(16).padStart(4,'0')],
+      ['Identification', ipId ? ipId[1] : '0x' + ((pkt.no * 2654435761 >>> 0) % 65535).toString(16).padStart(4,'0')],
       ['Flags', '0x40, Don\'t fragment'],
       ['Time to Live', ttl ? ttl[1] : '64'],
       ['Protocol', ipProto],
@@ -556,7 +556,7 @@ function dissectPacket(pkt) {
         ['Source Port', udpSrc ? udpSrc[1] : '?'],
         ['Destination Port', udpDst ? udpDst[1] : '?'],
         ['Length', `${pkt.len - 34}`],
-        ['Checksum', '0x' + (Math.floor(Math.random()*65535)).toString(16).padStart(4,'0') + ' [valid]'],
+        ['Checksum', '0x' + ((pkt.no * 2246822519 >>> 0) % 65535).toString(16).padStart(4,'0') + ' [valid]'],
       ]
     });
   } else if (srcPort) {
@@ -787,8 +787,8 @@ function submitAnswer() {
 
   for (const f of s.findings) {
     if (foundItems[f.id]) continue;
-    const keywordMatch = f.keywords.some(k => input.includes(k.toLowerCase()));
-    const matchAllMatch = f.matchAll && f.matchAll.every(k => input.includes(k.toLowerCase()));
+    const keywordMatch = f.keywords.some(k => { const kl = k.toLowerCase(); return input === kl || input.includes(kl) && new RegExp('(?:^|[\\s,;|/])' + kl.replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + '(?:$|[\\s,;|/])').test(input); });
+    const matchAllMatch = f.matchAll && f.matchAll.every(k => { const kl = k.toLowerCase(); return new RegExp('(?:^|[\\s,;|/])' + kl.replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + '(?:$|[\\s,;|/])').test(input); });
     if (keywordMatch || matchAllMatch) {
       foundItems[f.id] = true;
       score += f.points;
