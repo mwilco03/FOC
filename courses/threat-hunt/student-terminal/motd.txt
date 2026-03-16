@@ -1,0 +1,21 @@
+
+  ╔══════════════════════════════════════════════════════════════╗
+  ║              THREAT HUNT LAB — Investigator Terminal        ║
+  ╠══════════════════════════════════════════════════════════════╣
+  ║                                                            ║
+  ║  SCENARIO: A public internet cafe terminal was compromised ║
+  ║  48 hours ago during a disaster relief operation.          ║
+  ║  Your MSSP flagged anomalous DNS traffic.                  ║
+  ║  You are the threat hunting team. Find the kill chain.     ║
+  ║                                                            ║
+  ║  TOOLS:                                                    ║
+  ║    pwsh        PowerShell (PS Remote to victim)            ║
+  ║    tshark      PCAP analysis                               ║
+  ║    jq          JSON parsing (Sysmon events)                ║
+  ║    yara        Write detection rules                       ║
+  ║    victim      Alias: PS Remote to your victim box         ║
+  ║    notes       Cheatsheet                                  ║
+  ║                                                            ║
+  ║  Type 'notes' for the full reference.                      ║
+  ╚══════════════════════════════════════════════════════════════╝
+

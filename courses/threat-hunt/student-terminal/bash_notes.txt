@@ -1,0 +1,89 @@
+================================================================================
+              THREAT HUNT LAB — QUICK REFERENCE
+================================================================================
+
+CONNECT TO YOUR VICTIM
+  pwsh -c 'Enter-PSSession -ComputerName host.docker.internal -Port 59851 -Credential team1'
+  OR: type 'victim' (alias)
+
+KIBANA QUERIES (KQL syntax)
+  event.code: 1                           Process Create
+  event.code: 1 AND process.parent.name: "chrome.exe"
+  event.code: 3 AND NOT destination.ip: 172.20.*
+  event.code: 10 AND winlog.event_data.TargetImage: *lsass*
+  event.code: 11 AND file.extension: "lnk"
+  event.code: 12 AND registry.path: *CurrentVersion\\Run*
+  event.code: 22 AND dns.question.name: *update-service*
+
+SYSMON EVENT IDS
+  1   Process Create          8   CreateRemoteThread
+  2   File Creation Time      10  ProcessAccess (lsass!)
+  3   Network Connection      11  FileCreate
+  4   Service State Change    12  RegistryEvent (Create/Delete)
+  5   Process Terminated      13  RegistryEvent (Value Set)
+  6   Driver Loaded           15  FileCreateStreamHash (ADS)
+  7   Image Loaded            22  DNSEvent (query)
+                              25  ProcessTampering
+
+ZEEK LOG FILES
+  conn.log    Connection records (src, dst, port, duration, bytes)
+  dns.log     DNS queries + responses
+  http.log    HTTP transactions (method, host, URI, status, user-agent)
+  ssl.log     TLS handshakes (JA3, server_name, issuer)
+  smb.log     SMB file/share access
+  files.log   File transfers (hash, size, mime_type)
+
+TSHARK (PCAP analysis from terminal)
+  tshark -r attack.pcap -Y "dns" -T fields -e dns.qry.name
+  tshark -r attack.pcap -Y "smb2" -T fields -e smb2.filename
+  tshark -r attack.pcap -Y "ip.addr==172.20.1.50" | less
+  tshark -r attack.pcap -qz io,stat,30       Traffic over time
+  tshark -r attack.pcap -qz endpoints,ip     Talkers
+
+JQ (JSON parsing)
+  cat sysmon.json | jq '.[] | select(.EventID==1)'
+  cat sysmon.json | jq '.[] | select(.ParentImage | contains("chrome"))'
+  cat sysmon.json | jq '.[] | select(.EventID==22) | .QueryName' | sort | uniq -c | sort -rn
+
+POWERSHELL FORENSICS (on victim VM)
+  Get-WinEvent -LogName Microsoft-Windows-Sysmon/Operational -MaxEvents 50
+  Get-WinEvent -FilterHashtable @{LogName='Security';ID=4698}    Scheduled tasks
+  Get-ScheduledTask | Where-Object {$_.State -eq 'Ready'}
+  Get-ItemProperty HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Run
+  Get-CimInstance Win32_Process | Select Name,ProcessId,ParentProcessId,CommandLine
+  Get-NetFirewallRule -DisplayName "CONTAIN*"
+
+KANSA MODULES (on victim via WinRM)
+  Get-Autorunsc.ps1     Persistence (Run keys, services, scheduled tasks)
+  Get-DNSCache.ps1      DNS resolver cache
+  Get-PrefetchListing.ps1   Prefetch files (evidence of execution)
+  Get-SchTasks.ps1      Scheduled tasks detail
+  Get-WMIEvtConsumer.ps1    WMI event subscriptions
+
+CONTAINMENT
+  # On victim VM:
+  C:\cafe-tools\Invoke-Contain.ps1 -JumpBoxIP 10.10.1.1 -ELKHost 10.10.1.1
+  C:\cafe-tools\Invoke-Decontain.ps1
+  # Verify:
+  Get-NetFirewallRule -DisplayName "CONTAIN*" | Select DisplayName,Action
+
+YARA RULE TEMPLATE
+  rule suspicious_svchost {
+    meta:
+      description = "svchost.exe outside System32"
+    strings:
+      $mz = "MZ"
+    condition:
+      $mz at 0
+  }
+  # Run: yara rule.yar /path/to/suspect/file
+
+MITRE ATT&CK PHASES
+  TA0001  Initial Access      TA0005  Defense Evasion
+  TA0002  Execution           TA0007  Discovery
+  TA0003  Persistence         TA0008  Lateral Movement
+  TA0004  Privilege Escalation TA0010  Exfiltration
+                               TA0011  Command and Control
+
+FLAG FORMAT:  FLAG{some_text_here}
+================================================================================

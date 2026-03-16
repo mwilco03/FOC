@@ -1,0 +1,5 @@
+cluster.name: threat-hunt-lab
+network.host: 0.0.0.0
+discovery.type: single-node
+xpack.security.enabled: false
+xpack.license.self_generated.type: basic

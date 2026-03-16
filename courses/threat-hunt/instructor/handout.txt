@@ -1,0 +1,59 @@
++------------------------------------------------------------------+
+|           THREAT HUNT LAB — STUDENT HANDOUT                      |
++------------------------------------------------------------------+
+
+  TERMINAL:  http://___________________________
+  KIBANA:    http://___________________________:5601
+  ARKIME:    http://___________________________:8005
+  CTFD:      http://___________________________:8000
+
+  USERNAME:  team____    PASSWORD: _______________
+
++------------------------------------------------------------------+
+|  CONNECT TO YOUR VICTIM                                          |
++------------------------------------------------------------------+
+
+  From your terminal:
+  pwsh -c 'Enter-PSSession -ComputerName host.docker.internal -Port 5985X -Credential teamX'
+  OR: type 'victim' (alias)
+
++------------------------------------------------------------------+
+|  QUICK REFERENCE                                                 |
++------------------------------------------------------------------+
+
+  SYSMON EVENT IDS
+  1  Process Create       10  Process Access (lsass!)
+  3  Network Connect      11  File Create
+  6  Driver Loaded        12  Registry Create/Delete
+  7  Image Loaded         13  Registry Value Set
+  8  CreateRemoteThread   22  DNS Query
+
+  KIBANA (KQL)
+  event.code: 1                              Process Create
+  event.code: 1 AND process.parent.name: "chrome.exe"
+  event.code: 10 AND winlog.event_data.TargetImage: *lsass*
+  event.code: 22 AND dns.question.name: *update-service*
+
+  ZEEK LOGS
+  conn.log   dns.log   http.log   ssl.log   smb.log
+
+  POWERSHELL (on victim)
+  Get-WinEvent -LogName Microsoft-Windows-Sysmon/Operational
+  Get-ScheduledTask
+  Get-ItemProperty HKLM:\...\CurrentVersion\Run
+  Get-NetFirewallRule -DisplayName "CONTAIN*"
+
+  CONTAINMENT
+  C:\cafe-tools\Invoke-Contain.ps1 -JumpBoxIP 10.10.1.1
+  C:\cafe-tools\Invoke-Decontain.ps1
+
+  FLAG FORMAT: FLAG{some_text_here}
+  Type 'notes' for the full cheatsheet.
+
++------------------------------------------------------------------+
+|  RULES                                                           |
++------------------------------------------------------------------+
+  - Investigate, don't attack
+  - Don't modify evidence on shared resources
+  - Ask the instructor if stuck
++------------------------------------------------------------------+

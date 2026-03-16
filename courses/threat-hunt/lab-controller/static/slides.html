@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Threat Hunting: From Alert to Action</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/theme/black.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/highlight/monokai.css">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root { --r-background-color: #0a0a14; --r-main-color: #e8e8f0; --r-heading-color: #ff6b35; }
+.reveal { font-family: 'Inter', sans-serif; font-size: 28px; }
+.reveal h1, .reveal h2, .reveal h3 { font-family: 'JetBrains Mono', monospace; color: #ff6b35; text-shadow: 0 0 20px rgba(255,107,53,.3); text-transform: none; }
+.reveal h1 { font-size: 2em; }
+.reveal h2 { font-size: 1.4em; }
+.reveal h3 { font-size: 1.1em; color: #00ff41; }
+.reveal code, .reveal pre code { font-family: 'JetBrains Mono', monospace; background: rgba(255,107,53,.08); border-radius: 6px; padding: 2px 8px; color: #ff6b35; }
+.reveal pre { background: rgba(15,15,35,.9); border: 1px solid rgba(255,107,53,.2); border-radius: 12px; padding: 16px; width: 90%; margin: 20px auto; }
+.reveal pre code { background: none; padding: 0; color: #e8e8f0; }
+.reveal ul, .reveal ol { text-align: left; }
+.reveal li { margin: 8px 0; line-height: 1.5; }
+.reveal table { border-collapse: separate; border-spacing: 0; width: 90%; margin: 20px auto; background: rgba(20,20,40,.8); border-radius: 12px; overflow: hidden; }
+.reveal table th { background: rgba(255,107,53,.1); color: #ff6b35; padding: 10px 14px; font-family: 'JetBrains Mono', monospace; font-size: .8em; }
+.reveal table td { padding: 8px 14px; border-bottom: 1px solid rgba(255,255,255,.05); font-size: .85em; }
+.reveal section { text-align: left; }
+.two-col { display: flex; gap: 40px; }
+.two-col > div { flex: 1; }
+.highlight { color: #00ff41; }
+.accent { color: #ff6b35; }
+.dim { color: #8888aa; font-size: .85em; }
+.alert-box { padding: 16px; background: rgba(255,71,87,.1); border: 1px solid rgba(255,71,87,.3); border-radius: 10px; margin: 15px 0; }
+.lab-box { padding: 16px; background: rgba(0,255,65,.08); border: 1px solid rgba(0,255,65,.3); border-radius: 10px; margin: 15px 0; }
+@media (max-width: 768px) { .reveal { font-size: 18px; } .two-col { flex-direction: column; } }
+</style>
+</head>
+<body>
+<div class="reveal"><div class="slides">
+
+<section data-background-gradient="radial-gradient(circle at 30% 50%, rgba(255,107,53,.08) 0%, #0a0a14 70%)">
+<h1>Threat Hunting</h1>
+<h2 style="color:#e8e8f0;text-shadow:none;font-family:'Inter',sans-serif;font-weight:400;font-size:1em;">From Alert to Action</h2>
+<p class="dim" style="margin-top:40px;">Internet Cafe Security Operations | 2026</p>
+</section>
+
+<section>
+<h2>The Scenario</h2>
+<ul>
+<li>You operate a chain of public internet cafes</li>
+<li>Also used for disaster relief operations</li>
+<li>48 hours ago, your MSSP flagged anomalous DNS traffic from a public kiosk</li>
+<li>You are the <span class="highlight">threat hunting team</span></li>
+<li>Your job: find the kill chain, contain the threat, fix the gaps</li>
+</ul>
+<div class="alert-box"><strong style="color:#ff4757;">This is not a drill.</strong> The evidence is real. The attack already happened.</div>
+</section>
+
+<section>
+<h2>Your Environment</h2>
+<div class="two-col">
+<div>
+<h3>What You Have</h3>
+<ul>
+<li><strong>Kibana</strong> — SIEM dashboards (:5601)</li>
+<li><strong>Arkime</strong> — PCAP session search (:8005)</li>
+<li><strong>Victim VM</strong> — PS Remote into it</li>
+<li><strong>Sysmon logs</strong> — in Elasticsearch</li>
+<li><strong>Zeek logs</strong> — network evidence</li>
+<li><strong>Kansa</strong> — forensic collection</li>
+</ul>
+</div>
+<div>
+<h3>Network Layout</h3>
+<pre><code>VLAN 10: Staff/DC (hardened, smartcard)
+VLAN 20: Public Terminals (zero trust)
+VLAN 30: Relief Ops (time-boxed)
+VLAN 40: Management (OOB)</code></pre>
+</div>
+</div>
+</section>
+
+<section>
+<h2>Sysmon: Your Best Friend</h2>
+<table>
+<tr><th>ID</th><th>Event</th><th>Why It Matters</th></tr>
+<tr><td>1</td><td>Process Create</td><td>WHO ran WHAT. Parent chain = kill chain.</td></tr>
+<tr><td>3</td><td>Network Connect</td><td>What process made that connection?</td></tr>
+<tr><td>10</td><td>Process Access</td><td>lsass.exe access = credential dumping</td></tr>
+<tr><td>11</td><td>File Create</td><td>New .exe, .lnk, .ps1 on disk</td></tr>
+<tr><td>12/13</td><td>Registry</td><td>Run keys, services = persistence</td></tr>
+<tr><td>22</td><td>DNS Query</td><td>C2 beaconing, tunneling</td></tr>
+</table>
+<div class="lab-box"><strong class="highlight">Key insight:</strong> Event 1 with ParentImage is the single most powerful detection. chrome.exe spawning powershell.exe = game over.</div>
+</section>
+
+<section>
+<h2>The Tuning Problem</h2>
+<ul>
+<li>A public kiosk generates <strong>~25,000 Sysmon events per hour</strong></li>
+<li>99% is noise: browser updates, Defender, svchost, telemetry</li>
+<li>The attack is 127 events buried in 47,000</li>
+</ul>
+<h3>The Workflow</h3>
+<ol>
+<li><strong>Week 1:</strong> Collect everything. Drown in noise.</li>
+<li><strong>Week 2:</strong> Exclude top noise sources. 50,000 → 500.</li>
+<li><strong>Week 3:</strong> What remains is worth alerting on.</li>
+</ol>
+<p class="dim">Today you compress 3 weeks into 30 minutes.</p>
+</section>
+
+<section>
+<h2>Zeek: Network Ground Truth</h2>
+<div class="two-col">
+<div>
+<ul>
+<li><code>conn.log</code> — every connection (the backbone)</li>
+<li><code>dns.log</code> — every DNS query</li>
+<li><code>http.log</code> — HTTP transactions</li>
+<li><code>ssl.log</code> — TLS handshakes, JA3</li>
+<li><code>smb.log</code> — file share access</li>
+</ul>
+</div>
+<div>
+<h3>What to Look For</h3>
+<ul>
+<li>Regular-interval DNS queries (C2 beacon)</li>
+<li>Long subdomain labels (DNS tunneling)</li>
+<li>SMB from public → internal VLAN (lateral movement)</li>
+<li>High bytes_out from single host (exfil)</li>
+</ul>
+</div>
+</div>
+</section>
+
+<section>
+<h2>MITRE ATT&CK Kill Chain</h2>
+<table>
+<tr><th>Phase</th><th>What to Hunt</th><th>Where to Look</th></tr>
+<tr><td>Initial Access</td><td>USB, phishing, drive-by</td><td>Sysmon 6 (driver), 11 (file)</td></tr>
+<tr><td>Execution</td><td>cmd/powershell from browser</td><td>Sysmon 1 (process tree)</td></tr>
+<tr><td>Persistence</td><td>Sched tasks, Run keys, WMI</td><td>Sysmon 12/13, WinSec 4698</td></tr>
+<tr><td>Defense Evasion</td><td>Renamed binaries, encoding</td><td>Sysmon 1 (hash mismatch)</td></tr>
+<tr><td>C2</td><td>DNS beaconing, HTTPS tunnels</td><td>Zeek dns.log, Sysmon 22</td></tr>
+<tr><td>Lateral Movement</td><td>SMB, WinRM, RDP</td><td>Zeek conn.log, smb.log</td></tr>
+<tr><td>Exfiltration</td><td>DNS tunneling, HTTP POST</td><td>Zeek dns.log (long queries)</td></tr>
+</table>
+</section>
+
+<section>
+<h2>Containment: When You Find It</h2>
+<pre><code># Default-block architecture (NOT allow-beats-block)
+Set-NetFirewallProfile -All -DefaultInboundAction Block -DefaultOutboundAction Block
+
+# Then punch holes for:
+#   Jump box (your access)
+#   ELK (keep logs flowing)
+#   DNS (to your DC only)
+#   Loopback
+
+# Verify: can you reach ELK? YES. Can you reach internet? NO.</code></pre>
+<div class="alert-box"><strong style="color:#ff4757;">Block wins over Allow</strong> in Windows Firewall. Use default-block + explicit allows. Never rely on allow beating block.</div>
+</section>
+
+<section>
+<h2>Kansa: Remote Forensic Collection</h2>
+<ul>
+<li>PowerShell scripts over WinRM — no agent needed</li>
+<li>Run from your terminal against the victim</li>
+</ul>
+<pre><code>Get-ScheduledTask | Where { $_.Actions.Execute -like '*powershell*' }
+Get-ItemProperty HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Run
+Get-CimInstance -Namespace root/subscription -ClassName __EventConsumer
+Get-WinEvent -FilterHashtable @{LogName='Security';ID=4698}</code></pre>
+<p class="dim">Every one of these commands finds a different piece of this attack.</p>
+</section>
+
+<section>
+<h2>Playbook PB-01: Compromised Terminal</h2>
+<ol>
+<li><strong>Isolate</strong> — Pull network at switch port. Do NOT touch the machine.</li>
+<li><strong>Preserve</strong> — Do NOT reboot (Deep Freeze will destroy evidence).</li>
+<li><strong>Contain</strong> — Run Invoke-Contain.ps1 via PS Remoting.</li>
+<li><strong>Collect</strong> — Kansa triage collection, Winlogbeat still shipping.</li>
+<li><strong>Analyze</strong> — Kibana + Arkime. Build timeline.</li>
+<li><strong>Remediate</strong> — Reimage from golden. Update AppLocker + DNS blocklist.</li>
+<li><strong>Report</strong> — Brief leadership. Document IOCs. Update playbook.</li>
+</ol>
+</section>
+
+<section data-background-gradient="radial-gradient(circle at 70% 50%, rgba(255,107,53,.12) 0%, #0a0a14 70%)">
+<h1>Lab Time</h1>
+<h2 style="color:#e8e8f0;text-shadow:none;font-family:'Inter',sans-serif;">Find the kill chain. Contain the threat. Fix the gaps.</h2>
+<div style="margin-top:40px;font-size:1.1em;">
+<p>Terminal: <code>http://<span class="dim">&lt;host&gt;</span></code></p>
+<p>Kibana: <code>http://<span class="dim">&lt;host&gt;</span>:5601</code></p>
+<p>Arkime: <code>http://<span class="dim">&lt;host&gt;</span>:8005</code></p>
+<p>Scoreboard: <code>http://<span class="dim">&lt;host&gt;</span>:8000</code></p>
+</div>
+<p style="margin-top:40px;" class="dim">The clock is running. Hunt well.</p>
+</section>
+
+</div></div>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/highlight/highlight.js"></script>
+<script>
+Reveal.initialize({ hash: true, slideNumber: true, progress: true, center: false, transition: 'slide', plugins: [RevealHighlight], width: 1200, height: 700, margin: 0.08, minScale: 0.2, maxScale: 2.0 });
+</script>
+</body>
+</html>

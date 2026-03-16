@@ -1,0 +1,139 @@
+================================================================================
+              THREAT HUNT LAB — INSTRUCTOR SOLUTION GUIDE
+================================================================================
+
+ADMIN CREDS:  admin / ThreatHuntLab2024!
+KIBANA:       http://<host>:5601
+ARKIME:       http://<host>:8005
+CTFD:         http://<host>:8000/admin
+
+================================================================================
+KILL CHAIN SUMMARY (what happened)
+================================================================================
+
+14:23 UTC  Attacker plugs USB into KIOSK-PUB-04 (seat 4)
+14:24      AppLocker blocks invoice.exe (Event 8004)
+14:25      Attacker opens invoice.lnk instead (bypasses AppLocker)
+14:25      LNK → cmd.exe → powershell.exe -enc (base64 stager)
+14:26      Stager contacts update-service.xyz (C2 domain)
+14:27      Sysmon service stopped briefly (defense evasion)
+14:30      Sysmon restarted (3-min gap in logs)
+14:31      Scheduled task "WindowsUpdateService" created (persistence)
+14:31      Registry Run key "WindowsUpdateSvc" added (persistence)
+14:32      Renamed binary placed at C:\Windows\Temp\svchost.exe
+14:35      Discovery: ipconfig, net view, arp -a
+14:40      Port scan of 10.10.30.0/24 (relief ops VLAN)
+14:45      SMB connection to 10.10.30.5 (relief ops file share)
+14:46      File accessed: relief-ops.xlsx (credential dump)
+14:50      DNS beaconing begins (30-second intervals to update-service.xyz)
+15:00-15:57  DNS tunneling exfiltration (base64 in subdomain labels)
+15:57:23   Last exfil query
+
+Total attack duration: 94 minutes.
+Total IOCs: 8 (domain, IP, hash, 5 file paths)
+
+================================================================================
+ORIENTATION (200 pts)
+================================================================================
+
+Process Create:           B (Event ID 1)
+DNS Log:                  C (dns.log)
+MITRE Persistence:        D (Both B and C)
+TTL Fingerprint:          B (Windows)
+Parent Process:           C (ParentImage)
+lsass Alert:              B (Credential Dumping)
+KQL Basics:               D (winlog.event_id: "1")
+Conn Log Fields:          B (orig_bytes)
+
+================================================================================
+INITIAL TRIAGE (525 pts)
+================================================================================
+
+Find the Victim:          FLAG{KIOSK-PUB-04}
+USB Insertion:            FLAG{14:23}
+AppLocker Block:          FLAG{invoice.exe}
+Event Volume:             FLAG{47000}
+First and Last:           FLAG{94}
+Source of Truth:           FLAG{1}
+The Attacker's Seat:      FLAG{4}
+Log Gap:                  A (attacker stopped Sysmon)
+
+================================================================================
+SYSMON TUNING (675 pts)
+================================================================================
+
+The Firehose:             C (65% are Event ID 1)
+Noise Floor:              FLAG{28000}
+Browser Spawn:            FLAG{3} (the 3 suspicious spawns)
+  TEACH: This is THE detection for kiosks. 3 hits = the attack.
+Top Talkers:              FLAG{svchost.exe}
+Signal Extraction:        FLAG{127} events after filtering
+DNS Noise:                C (2000-5000 queries to MS domains)
+Config Assessment:        B (everything logged except exclusions)
+PT Plank:                 Instructor provides flag
+
+================================================================================
+KILL CHAIN ANALYSIS (1350 pts)
+================================================================================
+
+Process Tree:             FLAG{explorer.exe>cmd.exe>powershell.exe}
+  TEACH: LNK opens in Explorer, spawns cmd.exe /c, which runs powershell
+Decode the Payload:       FLAG{update-service.xyz}
+  base64 -d the -enc argument: downloads stager from update-service.xyz
+Persistence: Sched Task:  FLAG{WindowsUpdateService}
+Persistence: Registry:    FLAG{WindowsUpdateSvc}
+Defense Evasion:          FLAG{C:\Windows\Temp\svchost.exe}
+  TEACH: Real svchost is in System32. Hash won't match.
+Credential Access:        FLAG{svchost.exe} (the fake one accessed lsass)
+C2 Beacon Interval:       FLAG{30} seconds
+Lateral Movement:         FLAG{10.10.30.5}
+PowerShell History:       FLAG{relief-ops.xlsx}
+Port Profile:             B (network shares on relief ops VLAN)
+
+================================================================================
+ACTIVE RESPONSE (1200 pts)
+================================================================================
+
+Contain the Host:         FLAG{9001}
+  Run: C:\cafe-tools\Invoke-Contain.ps1 -JumpBoxIP 10.10.1.1
+  Check Application event log for EventID 9001
+Verify Isolation:         FLAG{FAIL,PASS}
+  ping 8.8.8.8 → fails (blocked by default-block)
+  ping 10.10.1.1 → succeeds (allowed by containment rule)
+Logs Still Flowing:       FLAG{YES}
+  Winlogbeat ships to ELK via 10.10.1.1:5044 (allowed)
+Decontain:                FLAG{9002}
+Kansa: Autoruns:          FLAG{1} (WindowsUpdateService task)
+Arkime: SMB Session:      FLAG{share}
+Arkime: DNS Exfil:        FLAG{12} queries with base64 subdomains
+PT Sit-ups:               Instructor provides flag
+
+================================================================================
+DETECTION ENGINEERING (1900 pts)
+================================================================================
+
+YARA: Fake svchost:       FLAG{yara_detection_works}
+  Rule: MZ header + not in System32 path
+Kibana Alert:             A (ParentImage + Image is minimum)
+DNS Tunnel Decode:        FLAG{BEGIN_CERTIFICATE}
+  tshark -r attack.pcap -Y "dns.qry.name contains update-service" -T fields -e dns.qry.name
+  Extract subdomain labels, concatenate, base64 decode
+Full Timeline:            FLAG{15:57:23} (last exfil query timestamp)
+Firewall Gap:             A (Block VLAN 20 → VLAN 30 TCP/445)
+Sysmon Config Fix:        D (full path exclusion + include unusual paths)
+IOC Extraction:           FLAG{8}
+  1. update-service.xyz (C2 domain)
+  2. 10.10.30.5 (lateral movement target)
+  3. SHA256 of fake svchost.exe
+  4. C:\Windows\Temp\svchost.exe
+  5. C:\Users\Public\Desktop\invoice.lnk
+  6. WindowsUpdateService (scheduled task)
+  7. WindowsUpdateSvc (registry key)
+  8. HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run\WindowsUpdateSvc
+Brief the Commander:      Instructor provides flag
+Incident Report:          B (pull network at switch port)
+WMI Persistence:          FLAG{WindowsUpdateConsumer}
+  TEACH: WMI persistence is the hardest to find. Most analysts miss it.
+  Get-CimInstance -Namespace root/subscription -ClassName __EventConsumer
+
+================================================================================

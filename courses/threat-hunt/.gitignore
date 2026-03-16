@@ -1,0 +1,21 @@
+# Secrets
+.env
+
+# Hyper-V
+vm-disks/
+golden/iso/
+*.vhdx
+
+# Docker
+*.tar
+*.log
+
+# CTFd runtime
+ctfd/credentials.txt
+
+# PCAP (large, download separately)
+pcap/*.pcap
+
+# OS
+.DS_Store
+Thumbs.db

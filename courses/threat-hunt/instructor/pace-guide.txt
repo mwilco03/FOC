@@ -1,0 +1,141 @@
+================================================================================
+              THREAT HUNT LAB — INSTRUCTOR PACE GUIDE
+================================================================================
+
+TOTAL CLASS TIME: ~2.5 hours
+
+BEFORE CLASS
+  1. Run build-golden.ps1 (one-time, if not done)
+  2. Run deploy.ps1 (creates VMs + Docker stack)
+  3. Verify: Kibana :5601, Arkime :8005, CTFd :8000, terminals :80
+  4. Print handout.txt (one per student)
+  5. Open scoreboard on projector
+
+================================================================================
+PHASE 1: LECTURE + ORIENTATION (30 min)
+================================================================================
+  Slides 1-10 (slides at :8888/slides)
+
+  UNLOCK: "Orientation" category (available from start)
+
+  Students answer multiple choice during lecture.
+  Good engagement check — if they're getting these wrong, slow down.
+
+  KEY CONCEPTS:
+    - Sysmon event IDs (especially 1, 3, 10, 22)
+    - Zeek log types (conn, dns, http, smb)
+    - MITRE ATT&CK phases
+    - The tuning problem (noise vs signal)
+
+================================================================================
+PHASE 2: INITIAL TRIAGE (20 min)
+================================================================================
+  UNLOCKS: When 4/8 Orientation challenges solved
+
+  Students open Kibana for the first time.
+  First reaction: "there are 47,000 events"
+  That's the point. They learn to filter.
+
+  COMMON STUCK POINT: Finding the victim hostname
+  HINT: Look at host.name field in any Sysmon event
+
+  COMMON STUCK POINT: USB insertion event
+  HINT: Sysmon Event 6 (DriverLoaded) for USB drivers
+
+================================================================================
+PHASE 3: SYSMON TUNING (25 min)
+================================================================================
+  UNLOCKS: When 4/8 Initial Triage solved
+
+  THIS IS THE MOST IMPORTANT PHASE.
+  Students learn that raw logs are useless without tuning.
+
+  The "Browser Spawn" challenge (FLAG{3}) is the aha moment.
+  When they filter ParentImage=chrome AND Image!=chrome, they get 3 hits.
+  Those 3 hits ARE the attack. Everything else is noise.
+
+  PT CHALLENGE: Plank (1:30 min) — pulls someone away
+
+  TIMER: This is a good time to start the CTF timer if not auto-started
+
+================================================================================
+PHASE 4: KILL CHAIN ANALYSIS (30 min)
+================================================================================
+  UNLOCKS: When 4/8 Sysmon Tuning solved
+
+  Now they're tracing the actual attack.
+  Have them PS Remote into their victim box.
+
+  COMMON STUCK POINT: Decoding base64 payload
+  HINT: echo "<base64>" | base64 -d  OR CyberChef
+
+  COMMON STUCK POINT: Finding the C2 beacon interval
+  HINT: Sort dns.log by timestamp, look for regular pattern to update-service.xyz
+
+  PROJECTOR: Show scoreboard — competition heats up here
+
+================================================================================
+PHASE 5: ACTIVE RESPONSE (25 min)
+================================================================================
+  UNLOCKS: When 5/10 Kill Chain Analysis solved
+
+  LIVE CONTAINMENT. This is the hands-on highlight.
+
+  Walk the room. Make sure students:
+  1. PS Remote into their victim
+  2. Run Invoke-Contain.ps1 correctly
+  3. Check Kibana for Event 9001
+  4. Verify isolation (ping 8.8.8.8 fails, 10.10.1.1 works)
+  5. Verify logs still flowing
+  6. Decontain
+
+  PT CHALLENGE: Sit-ups (42 in 1 min) — pulls someone away
+
+  ARKIME: Students search for SMB and DNS sessions
+  This is where PCAP analysis skills develop
+
+================================================================================
+PHASE 6: DETECTION ENGINEERING (30 min)
+================================================================================
+  UNLOCKS: When 4/8 Active Response solved
+
+  Time sinks live here. Advanced students chase:
+  - DNS tunnel decoding (hardest technical challenge)
+  - WMI persistence (hardest forensic challenge)
+  - Full timeline reconstruction
+  - YARA rule writing
+
+  "Brief the Commander" (300 pts) — student gives 5-min verbal briefing
+  This is the highest-value learning moment. Listen for:
+  - Did they understand the full kill chain?
+  - Can they explain what failed in defenses?
+  - Do they know the first fix? (VLAN 20 → VLAN 30 block on 445)
+
+================================================================================
+WRAP-UP (10 min)
+================================================================================
+  - Review scoreboard, announce winner
+  - Walk through unsolved challenges (use solution guide)
+  - Key takeaway: the attack was 127 events in 47,000
+  - The Sysmon config fix (full path exclusion)
+  - The firewall gap (VLAN 20 → 30 on 445)
+  - WMI persistence — most analysts miss this
+  - Share solution guide password after class
+
+================================================================================
+QUICK ADMIN
+================================================================================
+
+  Start timer manually:
+    curl -u instructor:instructor2024 http://<host>:8888/api/start
+
+  Extend timer +60 min:
+    curl -u instructor:instructor2024 http://<host>:8888/api/extend
+
+  Unlock a category:
+    curl -u instructor:instructor2024 http://<host>:8888/api/unlock/Initial%20Triage
+
+  Lock everything:
+    curl -u instructor:instructor2024 http://<host>:8888/api/lockall
+
+================================================================================

@@ -1,0 +1,343 @@
+version: "3.8"
+
+services:
+  # ===========================================================================
+  # TRAEFIK (Load Balancer)
+  # ===========================================================================
+  traefik:
+    image: traefik:v2.11
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.s1.address=:4201"
+      - "--entrypoints.s2.address=:4202"
+      - "--entrypoints.s3.address=:4203"
+      - "--entrypoints.s4.address=:4204"
+      - "--entrypoints.s5.address=:4205"
+    ports:
+      - "80:80"
+      - "4201-4205:4201-4205"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      student_net:
+        ipv4_address: 172.20.0.2
+    restart: unless-stopped
+
+  # ===========================================================================
+  # STUDENT TERMINALS (5)
+  # ===========================================================================
+  student-1:
+    build: ./student-terminal
+    hostname: threat-hunt
+    env_file: ./student.env
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.students.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.students.entrypoints=web"
+      - "traefik.http.routers.students.service=student-pool"
+      - "traefik.http.services.student-pool.loadbalancer.sticky.cookie.name=_student_session"
+      - "traefik.http.services.student-pool.loadbalancer.sticky.cookie.httpOnly=true"
+      - "traefik.http.services.student-pool.loadbalancer.server.port=4200"
+      - "traefik.http.routers.student1-direct.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.student1-direct.entrypoints=s1"
+      - "traefik.http.routers.student1-direct.service=student1-svc"
+      - "traefik.http.services.student1-svc.loadbalancer.server.port=4200"
+    networks:
+      student_net:
+        ipv4_address: 172.20.0.11
+    restart: unless-stopped
+
+  student-2:
+    build: ./student-terminal
+    hostname: threat-hunt
+    env_file: ./student.env
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.students.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.students.entrypoints=web"
+      - "traefik.http.routers.students.service=student-pool"
+      - "traefik.http.services.student-pool.loadbalancer.sticky.cookie.name=_student_session"
+      - "traefik.http.services.student-pool.loadbalancer.sticky.cookie.httpOnly=true"
+      - "traefik.http.services.student-pool.loadbalancer.server.port=4200"
+      - "traefik.http.routers.student2-direct.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.student2-direct.entrypoints=s2"
+      - "traefik.http.routers.student2-direct.service=student2-svc"
+      - "traefik.http.services.student2-svc.loadbalancer.server.port=4200"
+    networks:
+      student_net:
+        ipv4_address: 172.20.0.12
+    restart: unless-stopped
+
+  student-3:
+    build: ./student-terminal
+    hostname: threat-hunt
+    env_file: ./student.env
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.students.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.students.entrypoints=web"
+      - "traefik.http.routers.students.service=student-pool"
+      - "traefik.http.services.student-pool.loadbalancer.sticky.cookie.name=_student_session"
+      - "traefik.http.services.student-pool.loadbalancer.sticky.cookie.httpOnly=true"
+      - "traefik.http.services.student-pool.loadbalancer.server.port=4200"
+      - "traefik.http.routers.student3-direct.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.student3-direct.entrypoints=s3"
+      - "traefik.http.routers.student3-direct.service=student3-svc"
+      - "traefik.http.services.student3-svc.loadbalancer.server.port=4200"
+    networks:
+      student_net:
+        ipv4_address: 172.20.0.13
+    restart: unless-stopped
+
+  student-4:
+    build: ./student-terminal
+    hostname: threat-hunt
+    env_file: ./student.env
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.students.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.students.entrypoints=web"
+      - "traefik.http.routers.students.service=student-pool"
+      - "traefik.http.services.student-pool.loadbalancer.sticky.cookie.name=_student_session"
+      - "traefik.http.services.student-pool.loadbalancer.sticky.cookie.httpOnly=true"
+      - "traefik.http.services.student-pool.loadbalancer.server.port=4200"
+      - "traefik.http.routers.student4-direct.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.student4-direct.entrypoints=s4"
+      - "traefik.http.routers.student4-direct.service=student4-svc"
+      - "traefik.http.services.student4-svc.loadbalancer.server.port=4200"
+    networks:
+      student_net:
+        ipv4_address: 172.20.0.14
+    restart: unless-stopped
+
+  student-5:
+    build: ./student-terminal
+    hostname: threat-hunt
+    env_file: ./student.env
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.students.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.students.entrypoints=web"
+      - "traefik.http.routers.students.service=student-pool"
+      - "traefik.http.services.student-pool.loadbalancer.sticky.cookie.name=_student_session"
+      - "traefik.http.services.student-pool.loadbalancer.sticky.cookie.httpOnly=true"
+      - "traefik.http.services.student-pool.loadbalancer.server.port=4200"
+      - "traefik.http.routers.student5-direct.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.student5-direct.entrypoints=s5"
+      - "traefik.http.routers.student5-direct.service=student5-svc"
+      - "traefik.http.services.student5-svc.loadbalancer.server.port=4200"
+    networks:
+      student_net:
+        ipv4_address: 172.20.0.15
+    restart: unless-stopped
+
+  # ===========================================================================
+  # ELK STACK (Shared Backend)
+  # ===========================================================================
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:${ELASTIC_VERSION:-8.15.0}
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - xpack.license.self_generated.type=basic
+      - "ES_JAVA_OPTS=${ES_JAVA_OPTS:--Xms2g -Xmx2g}"
+      - cluster.name=threat-hunt-lab
+    volumes:
+      - es-data:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+    networks:
+      elk_net:
+        ipv4_address: 172.20.3.10
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9200/_cluster/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+    restart: unless-stopped
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:${ELASTIC_VERSION:-8.15.0}
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - XPACK_SECURITY_ENABLED=false
+      - TELEMETRY_ENABLED=false
+    ports:
+      - "5601:5601"
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      elk_net:
+        ipv4_address: 172.20.3.11
+    restart: unless-stopped
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:${ELASTIC_VERSION:-8.15.0}
+    volumes:
+      - ./elk/logstash/pipeline:/usr/share/logstash/pipeline:ro
+      - ./elk/logstash/logstash.yml:/usr/share/logstash/config/logstash.yml:ro
+      - zeek-logs:/zeek-logs:ro
+    ports:
+      - "5044:5044"
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      elk_net:
+        ipv4_address: 172.20.3.12
+    restart: unless-stopped
+
+  # ===========================================================================
+  # ARKIME (PCAP Session Analysis)
+  # ===========================================================================
+  arkime:
+    image: ghcr.io/arkime/arkime/arkime:v5-latest
+    environment:
+      - ARKIME_ELASTICSEARCH=http://elasticsearch:9200
+    volumes:
+      - pcap-data:/opt/arkime/raw
+      - ./pcap:/pcap:ro
+    ports:
+      - "8005:8005"
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      elk_net:
+        ipv4_address: 172.20.3.13
+    restart: unless-stopped
+
+  # ===========================================================================
+  # ZEEK (Offline PCAP Processing)
+  # ===========================================================================
+  zeek:
+    image: zeek/zeek:latest
+    volumes:
+      - ./pcap:/pcap:ro
+      - zeek-logs:/zeek-logs
+    entrypoint: /bin/bash
+    command: >
+      -c "if [ -f /pcap/attack.pcap ]; then
+        cd /zeek-logs &&
+        zeek -r /pcap/attack.pcap LogAscii::use_json=T &&
+        echo 'Zeek processing complete' &&
+        ls -la /zeek-logs/;
+      else
+        echo 'No PCAP found at /pcap/attack.pcap — skipping Zeek processing';
+      fi &&
+      sleep infinity"
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      elk_net:
+        ipv4_address: 172.20.3.14
+    restart: unless-stopped
+
+  # ===========================================================================
+  # CTFd (Scoreboard & Challenges)
+  # ===========================================================================
+  ctfd:
+    image: ctfd/ctfd:3.7.0
+    environment:
+      - SECRET_KEY=${CTFD_SECRET_KEY}
+      - DATABASE_URL=mysql+pymysql://${MYSQL_USER}:${MYSQL_PASSWORD}@ctfd-db/${MYSQL_DATABASE}
+      - REDIS_URL=redis://ctfd-redis:6379
+      - REVERSE_PROXY=true
+    ports:
+      - "8000:8000"
+    depends_on:
+      ctfd-db:
+        condition: service_healthy
+      ctfd-redis:
+        condition: service_healthy
+    networks:
+      ctfd_net:
+        ipv4_address: 172.20.2.10
+    restart: unless-stopped
+
+  ctfd-db:
+    image: mariadb:10.11
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci --wait_timeout=28800 --log_warnings=0
+    volumes:
+      - ctfd-db-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      ctfd_net:
+        ipv4_address: 172.20.2.20
+    restart: unless-stopped
+
+  ctfd-redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      ctfd_net:
+        ipv4_address: 172.20.2.30
+    restart: unless-stopped
+
+  # ===========================================================================
+  # LAB CONTROLLER (Auto-unlock, slides, solutions, timer)
+  # ===========================================================================
+  lab-controller:
+    build: ./lab-controller
+    environment:
+      - CTFD_URL=http://ctfd:8000
+      - CTFD_ADMIN_USER=admin
+      - CTFD_ADMIN_PASS=ThreatHuntLab2024!
+      - SOLUTION_PASSWORD=${SOLUTION_PASSWORD:-instructor2024}
+      - UNLOCK_THRESHOLD=0.5
+      - START_LOCKED=true
+      - POLL_INTERVAL=10
+      - CTF_DURATION_MINUTES=${CTF_DURATION_MINUTES:-120}
+      - CTF_EXTEND_MINUTES=${CTF_EXTEND_MINUTES:-60}
+    ports:
+      - "8888:8080"
+    depends_on:
+      - ctfd
+    networks:
+      ctfd_net:
+        ipv4_address: 172.20.2.40
+    restart: unless-stopped
+
+networks:
+  student_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/24
+
+  elk_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.3.0/24
+
+  ctfd_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.2.0/24
+
+volumes:
+  es-data:
+  pcap-data:
+  zeek-logs:
+  ctfd-db-data:

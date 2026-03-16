@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solution Guide - Threat Hunt Lab</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #0a0a14; color: #e8e8f0; font-family: 'Inter', sans-serif; padding: 20px; line-height: 1.6; }
+h1 { font-family: 'JetBrains Mono', monospace; color: #ff6b35; margin-bottom: 30px; }
+h2 { font-family: 'JetBrains Mono', monospace; color: #ff6b35; margin: 30px 0 15px; border-bottom: 1px solid rgba(255,107,53,.2); padding-bottom: 8px; }
+.challenge { background: rgba(20,20,40,.8); border: 1px solid rgba(255,107,53,.15); border-radius: 12px; padding: 20px; margin: 15px 0; }
+.challenge-name { font-family: 'JetBrains Mono', monospace; color: #ff6b35; font-weight: 700; }
+.flag { font-family: 'JetBrains Mono', monospace; color: #ffd93d; background: rgba(255,217,61,.08); padding: 4px 12px; border-radius: 6px; display: inline-block; margin: 8px 0; }
+code { font-family: 'JetBrains Mono', monospace; background: rgba(255,107,53,.08); color: #ff6b35; padding: 2px 8px; border-radius: 4px; }
+pre { background: rgba(15,15,35,.9); border: 1px solid rgba(255,107,53,.15); border-radius: 8px; padding: 12px; margin: 10px 0; overflow-x: auto; color: #e8e8f0; font-size: .85em; font-family: 'JetBrains Mono', monospace; }
+.teach { background: rgba(0,255,65,.08); border-left: 3px solid #00ff41; padding: 10px 16px; margin: 10px 0; border-radius: 0 8px 8px 0; }
+.timeline { background: rgba(255,107,53,.05); border: 1px solid rgba(255,107,53,.2); border-radius: 12px; padding: 20px; margin: 20px 0; }
+.timeline-entry { display: flex; gap: 15px; margin: 8px 0; }
+.timeline-time { color: #00ff41; font-family: 'JetBrains Mono', monospace; min-width: 80px; }
+@media (max-width: 768px) { body { padding: 10px; font-size: 14px; } }
+</style>
+</head>
+<body>
+<h1>Instructor Solution Guide</h1>
+
+<div class="timeline">
+<h2 style="margin-top:0;">Attack Timeline</h2>
+<div class="timeline-entry"><span class="timeline-time">14:23</span><span>USB plugged into KIOSK-PUB-04</span></div>
+<div class="timeline-entry"><span class="timeline-time">14:24</span><span>AppLocker blocks invoice.exe</span></div>
+<div class="timeline-entry"><span class="timeline-time">14:25</span><span>invoice.lnk executed → cmd.exe → powershell.exe -enc</span></div>
+<div class="timeline-entry"><span class="timeline-time">14:26</span><span>C2 callback to update-service.xyz</span></div>
+<div class="timeline-entry"><span class="timeline-time">14:27</span><span>Sysmon service stopped (3-min gap)</span></div>
+<div class="timeline-entry"><span class="timeline-time">14:31</span><span>Scheduled task + Registry Run key created</span></div>
+<div class="timeline-entry"><span class="timeline-time">14:32</span><span>Fake svchost.exe dropped in C:\Windows\Temp</span></div>
+<div class="timeline-entry"><span class="timeline-time">14:35</span><span>Discovery: ipconfig, net view, arp -a</span></div>
+<div class="timeline-entry"><span class="timeline-time">14:40</span><span>Port scan of relief ops VLAN (10.10.30.0/24)</span></div>
+<div class="timeline-entry"><span class="timeline-time">14:45</span><span>SMB lateral movement to 10.10.30.5</span></div>
+<div class="timeline-entry"><span class="timeline-time">14:50</span><span>DNS beaconing begins (30s intervals)</span></div>
+<div class="timeline-entry"><span class="timeline-time">15:00-15:57</span><span>DNS tunneling exfiltration</span></div>
+</div>
+
+<p>See <code>instructor/solution-guide.txt</code> for complete challenge-by-challenge solutions with commands and teaching notes.</p>
+
+</body>
+</html>
