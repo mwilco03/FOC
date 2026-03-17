@@ -263,8 +263,12 @@ function simulateBash(input) {
 }
 
 function expandVars(str) {
-  // Expand $VAR, ${VAR}, $((expr)), $(cmd)
-  let result = str;
+  // Protect single-quoted sections from expansion
+  const sqParts = [];
+  let result = str.replace(/'([^']*)'/g, (_, content) => {
+    sqParts.push(content);
+    return `\x00SQ${sqParts.length - 1}\x00`;
+  });
 
   // Arithmetic: $((expr))
   result = result.replace(/\$\(\(([^)]+)\)\)/g, (_, expr) => {
@@ -278,7 +282,7 @@ function expandVars(str) {
   });
 
   // ${VAR##pattern} and other parameter expansions
-  result = result.replace(/\$\{(\w+)##\*\./g, (_, v) => {
+  result = result.replace(/\$\{(\w+)##\*\.\}/g, (_, v) => {
     const val = envVars[v] || '';
     const idx = val.lastIndexOf('.');
     return idx >= 0 ? val.substring(idx + 1) : val;
@@ -295,6 +299,9 @@ function expandVars(str) {
   // ${VAR} and $VAR
   result = result.replace(/\$\{(\w+)\}/g, (_, v) => envVars[v] || '');
   result = result.replace(/\$(\w+)/g, (_, v) => envVars[v] || '');
+
+  // Restore single-quoted sections (no expansion applied)
+  result = result.replace(/\x00SQ(\d+)\x00/g, (_, i) => sqParts[parseInt(i)]);
 
   return result;
 }
@@ -652,6 +659,19 @@ function callUserFunction(name, args) {
   for (const line of lines) {
     const trimmed = line.trim();
     if (!trimmed || trimmed.startsWith('#')) continue;
+    // Handle 'local' keyword: strip it and treat as variable assignment
+    if (trimmed.startsWith('local ')) {
+      const assignments = trimmed.slice(6).split(/\s+/);
+      for (const a of assignments) {
+        const eq = a.indexOf('=');
+        if (eq > 0) {
+          const vName = a.slice(0, eq);
+          const vVal = expandVars(a.slice(eq + 1).replace(/^["']|["']$/g, ''));
+          envVars[vName] = vVal;
+        }
+      }
+      continue;
+    }
     output += simulateBash(trimmed);
   }
 

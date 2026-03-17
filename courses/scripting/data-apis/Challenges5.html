@@ -537,6 +537,7 @@ showQuiz();
 })();
 /* ── Keyboard shortcuts: press 1-4 to select quiz answer, N for next ── */
 document.addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
   const num = parseInt(e.key);
   if (num >= 1 && num <= 4) {
     const btns = document.querySelectorAll('.quiz-opt:not(.disabled)');

@@ -573,6 +573,7 @@ function showDamage(targetId, amount, color) {
 // BATTLE LOGIC
 // =====================================================================
 function enterZone(zoneId) {
+  if (battleActive) return;
   currentZone = ZONES[zoneId];
   currentEnemyIdx = 0;
   isBoss = false;
@@ -757,11 +758,20 @@ function showBossQuestion() {
       document.getElementById('battleLog').textContent = `0/6 correct \u2014 Boss hits you for ${eDmg}!`;
     }
 
-    document.getElementById('enemySprite').classList.add('shake');
-    setTimeout(() => document.getElementById('enemySprite').classList.remove('shake'), 400);
+    if (hits > 0) {
+      document.getElementById('enemySprite').classList.add('shake');
+      setTimeout(() => document.getElementById('enemySprite').classList.remove('shake'), 400);
+    }
 
     updateBattleUI();
     updatePlayerStats();
+
+    // Save current input values before potential re-render
+    const savedVals = {};
+    fields.forEach(f => {
+      const inp = document.getElementById(f.id);
+      if (inp.classList.contains('correct-input')) savedVals[f.id] = inp.value.trim();
+    });
 
     setTimeout(() => {
       if (player.hp <= 0) {
@@ -770,6 +780,11 @@ function showBossQuestion() {
         endBattle(true);
       } else {
         showBossQuestion();
+        // Restore correct answers so player doesn't re-type them
+        for (const [id, val] of Object.entries(savedVals)) {
+          const inp = document.getElementById(id);
+          if (inp) { inp.value = val; inp.classList.add('correct-input'); inp.readOnly = true; }
+        }
       }
     }, 1000);
   });
