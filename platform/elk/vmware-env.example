@@ -1,0 +1,38 @@
+# VMware / vSphere connection — copy to vmware-env.sh and fill in
+# These are used by govc and the deploy-vmware.sh script
+
+# ── vCenter / ESXi connection ─────────────────────────────────────
+export GOVC_URL="https://vcenter.lab.local/sdk"
+export GOVC_USERNAME="administrator@vsphere.local"
+export GOVC_PASSWORD="changeme"
+export GOVC_INSECURE=true                    # skip TLS verify (lab use)
+
+# ── Target placement ─────────────────────────────────────────────
+export GOVC_DATACENTER="Datacenter"
+export GOVC_DATASTORE="datastore1"
+export GOVC_RESOURCE_POOL="/Datacenter/host/Cluster/Resources"
+export GOVC_NETWORK="VM Network"
+export GOVC_FOLDER=""                        # optional VM folder
+
+# ── VM settings ──────────────────────────────────────────────────
+export VM_NAME="foc-elk"
+export VM_CPUS=4
+export VM_MEMORY_MB=8192                     # 8 GB minimum for ELK
+export VM_DISK_GB=100                        # thin provisioned
+export VM_GUEST_ID="ubuntu64Guest"           # VMware guest OS type
+
+# ── OVA source (used by deploy-vmware.sh ova-deploy) ─────────────
+# Path to a base Linux OVA — Ubuntu Server 22.04+ recommended
+# Download from: https://cloud-images.ubuntu.com/releases/
+export OVA_PATH="/mnt/usb/ubuntu-22.04-server-cloudimg-amd64.ova"
+
+# ── Network config (applied via cloud-init / OVF properties) ─────
+export VM_IP="192.168.1.50"
+export VM_NETMASK="255.255.255.0"
+export VM_GATEWAY="192.168.1.1"
+export VM_DNS="192.168.1.1"
+export VM_HOSTNAME="foc-elk"
+
+# ── SSH access (for bootstrapping Docker + ELK after VM is up) ───
+export VM_SSH_USER="ubuntu"
+export VM_SSH_KEY="${HOME}/.ssh/id_rsa"      # path to private key

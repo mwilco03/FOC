@@ -84,8 +84,10 @@ phase_save() {
     cp -r "$SCRIPT_DIR"/elasticsearch      "$img_dir/"
     cp -r "$SCRIPT_DIR"/kibana             "$img_dir/"
     cp -r "$SCRIPT_DIR"/logstash           "$img_dir/"
-    cp    "$SCRIPT_DIR"/deploy-elk.sh      "$img_dir/"
-    chmod +x "$img_dir/deploy-elk.sh"
+    cp    "$SCRIPT_DIR"/deploy-elk.sh         "$img_dir/"
+    cp -f "$SCRIPT_DIR"/deploy-vmware.sh     "$img_dir/" 2>/dev/null || true
+    cp -f "$SCRIPT_DIR"/vmware-env.example   "$img_dir/" 2>/dev/null || true
+    chmod +x "$img_dir"/deploy-*.sh
 
     local total
     total=$(du -sh "$img_dir" | cut -f1)
