@@ -117,7 +117,7 @@ if ! pvecm status 2>/dev/null | grep -q "Quorate:.*Yes"; then
 fi
 
 # =============================================================================
-# Handle --clean flag
+# Handle --clean flag and existing container (idempotent)
 # =============================================================================
 if [[ "${1:-}" == "--clean" ]]; then
     if pct status "$CT_VMID" &>/dev/null; then
@@ -129,64 +129,75 @@ if [[ "${1:-}" == "--clean" ]]; then
     fi
 fi
 
-if pct status "$CT_VMID" &>/dev/null; then
-    die "Container ${CT_VMID} already exists. Use --clean to rebuild, or set VMID=<id>"
+# If the container already exists and is running, update in place
+if pct status "$CT_VMID" 2>/dev/null | grep -q "running"; then
+    log "Container ${CT_VMID} already running — updating lab in place..."
+    CONTAINER_EXISTS=true
+elif pct status "$CT_VMID" &>/dev/null; then
+    log "Container ${CT_VMID} exists but stopped — starting it..."
+    pct start "$CT_VMID" || die "Failed to start existing container"
+    sleep 3
+    CONTAINER_EXISTS=true
+else
+    CONTAINER_EXISTS=false
 fi
 
 # =============================================================================
-# Download Alpine template if needed
+# Create container if it doesn't exist; skip if already running
 # =============================================================================
-if [[ ! -f "${TEMPLATE_CACHE}/${CT_ALPINE_TEMPLATE}" ]]; then
-    log "Downloading Alpine template..."
-    pveam download "$CT_TEMPLATE_STORAGE" "$CT_ALPINE_TEMPLATE" \
-        || die "Failed to download template"
-fi
+if [[ "$CONTAINER_EXISTS" == "false" ]]; then
 
-# =============================================================================
-# Create and configure LXC container
-# =============================================================================
-log "Creating LXC container ${CT_VMID} (${CT_HOSTNAME})..."
-pct create "$CT_VMID" "${CT_TEMPLATE_STORAGE}:vztmpl/${CT_ALPINE_TEMPLATE}" \
-    --hostname "$CT_HOSTNAME" \
-    --cores "$CT_CORES" \
-    --memory "$CT_MEMORY" \
-    --swap "$CT_SWAP" \
-    --rootfs "${CT_STORAGE}:${CT_DISK_GB}" \
-    --net0 "name=eth0,bridge=${CT_BRIDGE},ip=dhcp" \
-    --features nesting=1,keyctl=1 \
-    --unprivileged 0 \
-    --ostype alpine || die "Failed to create container"
+    # Download Alpine template if needed
+    if [[ ! -f "${TEMPLATE_CACHE}/${CT_ALPINE_TEMPLATE}" ]]; then
+        log "Downloading Alpine template..."
+        pveam download "$CT_TEMPLATE_STORAGE" "$CT_ALPINE_TEMPLATE" \
+            || die "Failed to download template"
+    fi
 
-# Docker-in-LXC requires unconfined apparmor and full device access
-log "Configuring LXC security for Docker-in-LXC..."
-cat >> "/etc/pve/lxc/${CT_VMID}.conf" <<'LXC_CONF'
+    # Create LXC container
+    log "Creating LXC container ${CT_VMID} (${CT_HOSTNAME})..."
+    pct create "$CT_VMID" "${CT_TEMPLATE_STORAGE}:vztmpl/${CT_ALPINE_TEMPLATE}" \
+        --hostname "$CT_HOSTNAME" \
+        --cores "$CT_CORES" \
+        --memory "$CT_MEMORY" \
+        --swap "$CT_SWAP" \
+        --rootfs "${CT_STORAGE}:${CT_DISK_GB}" \
+        --net0 "name=eth0,bridge=${CT_BRIDGE},ip=dhcp" \
+        --features nesting=1,keyctl=1 \
+        --unprivileged 0 \
+        --ostype alpine || die "Failed to create container"
+
+    # Docker-in-LXC requires unconfined apparmor and full device access
+    log "Configuring LXC security for Docker-in-LXC..."
+    cat >> "/etc/pve/lxc/${CT_VMID}.conf" <<'LXC_CONF'
 lxc.apparmor.profile: unconfined
 lxc.cap.drop:
 lxc.cgroup2.devices.allow: a
 lxc.mount.auto: proc:rw sys:rw
 LXC_CONF
 
-# =============================================================================
-# Start container and wait for network
-# =============================================================================
-log "Starting container..."
-pct start "$CT_VMID" || die "Failed to start container"
-sleep 3
+    # Start container
+    log "Starting container..."
+    pct start "$CT_VMID" || die "Failed to start container"
+    sleep 3
 
+fi  # end CONTAINER_EXISTS == false
+
+# Wait for network (always verify, even on existing container)
 retry "$NETWORK_WAIT_ATTEMPTS" "$NETWORK_WAIT_INTERVAL" \
     pct exec "$CT_VMID" -- ping -c1 -W2 8.8.8.8 \
     || die "Container has no internet after $((NETWORK_WAIT_ATTEMPTS * NETWORK_WAIT_INTERVAL))s"
 log "Container online with network"
 
 # =============================================================================
-# Install Docker inside container
+# Install Docker inside container (idempotent — apk add skips existing)
 # =============================================================================
-log "Installing Docker and dependencies..."
+log "Ensuring Docker and dependencies are installed..."
 pct exec "$CT_VMID" -- sh -c "apk update && apk add ${ALPINE_PACKAGES}" \
     || die "Package install failed"
 
 pct exec "$CT_VMID" -- sh -c \
-    "rc-update add docker default && service docker start" 2>&1 \
+    "rc-update add docker default 2>/dev/null; service docker start 2>/dev/null" 2>&1 \
     | grep -v "write error" || true
 sleep 3
 
@@ -253,11 +264,12 @@ CONTAINER_IP=$(pct exec "$CT_VMID" -- sh -c \
 FAILURES=0
 
 # Declarative service checks: label → port
+# Note: direct student ports (4201-4210) may 504 due to upstream Traefik
+# routing config; port 80 (sticky LB) is the primary student access path.
 declare -A SERVICE_CHECKS=(
     ["Student terminals"]="$PORT_TRAEFIK_WEB"
     ["CTFd scoreboard"]="$PORT_CTFD"
     ["Lab controller"]="$PORT_LAB_CONTROLLER"
-    ["Direct student-1"]="$PORT_STUDENT_DIRECT_BASE"
 )
 
 for label in "${!SERVICE_CHECKS[@]}"; do
