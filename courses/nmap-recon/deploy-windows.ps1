@@ -210,20 +210,34 @@ Write-Ok "CTFd is up"
 Write-Step "Configuring CTFd (admin, teams, challenges, theme)"
 
 $setupRan = $false
-$setupScript = Join-Path $PSScriptRoot "ctfd/setup.sh"
 
-# Prefer Git Bash — it is all that is needed, no WSL required
+# Git Bash is required to run ctfd/setup.sh (bash script with curl/jq)
 $gitBash = Find-FirstPath $GIT_BASH_PATHS
 if ($gitBash) {
+    Write-Ok "Found Git Bash at: $gitBash"
     $unixPath = ($PSScriptRoot -replace '\\','/').TrimEnd('/')
     & $gitBash --login -c "cd '$unixPath' && bash ctfd/setup.sh http://localhost:$PORT_CTFD"
-    $setupRan = ($LASTEXITCODE -eq 0)
-}
-
-if (-not $setupRan) {
-    Write-Warn "CTFd setup could not run automatically."
-    Write-Warn "Install Git for Windows, then run:"
-    Write-Warn "  bash ctfd/setup.sh http://localhost:$PORT_CTFD"
+    if ($LASTEXITCODE -eq 0) {
+        $setupRan = $true
+    } else {
+        Write-Err "CTFd setup script failed (exit code $LASTEXITCODE)"
+        Write-Warn "Check the output above for errors. You can re-run manually:"
+        Write-Warn "  & '$gitBash' --login -c `"cd '$unixPath' && bash ctfd/setup.sh`""
+    }
+} else {
+    Write-Err "Git Bash NOT FOUND — cannot run CTFd setup script."
+    Write-Err ""
+    Write-Err "  The CTFd setup script requires bash. Install Git for Windows:"
+    Write-Err "    1. Download from: https://git-scm.com/download/win"
+    Write-Err "    2. Run the installer (default options are fine)"
+    Write-Err "    3. Close and reopen PowerShell"
+    Write-Err "    4. Re-run this script: .\deploy-windows.ps1"
+    Write-Err ""
+    Write-Err "  Alternatively, install via winget:"
+    Write-Err "    winget install Git.Git"
+    Write-Err ""
+    Write-Warn "Containers are running but CTFd has NO challenges or users."
+    Write-Warn "The lab is NOT usable until setup completes."
 }
 
 # =============================================================================

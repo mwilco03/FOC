@@ -24,6 +24,27 @@ info()  { echo -e "${GREEN}[+]${NC} $1"; }
 warn()  { echo -e "${YELLOW}[!]${NC} $1"; }
 error() { echo -e "${RED}[-]${NC} $1"; exit 1; }
 
+# Mask a password for log output: show first 2 chars + asterisks
+mask_pass() {
+    local pass="$1"
+    local visible="${pass:0:2}"
+    local masked
+    masked=$(printf '%*s' $(( ${#pass} - 2 )) '' | tr ' ' '*')
+    echo "${visible}${masked}"
+}
+
+# Ensure jq is available (needed for safe JSON construction)
+if ! command -v jq &>/dev/null; then
+    if command -v apk &>/dev/null; then
+        apk add --no-cache jq >/dev/null 2>&1
+    elif command -v apt-get &>/dev/null; then
+        apt-get install -y -qq jq >/dev/null 2>&1
+    else
+        warn "jq not found — JSON payloads will use string interpolation (unsafe with special chars)"
+    fi
+fi
+HAS_JQ=$(command -v jq &>/dev/null && echo true || echo false)
+
 # ---------------------------------------------------------------------------
 # Wait for CTFd to be ready
 # ---------------------------------------------------------------------------
@@ -113,19 +134,22 @@ for i in $(seq 1 10); do
     TEAM_NAME="team${i}"
     TEAM_EMAIL="team${i}@training.lab"
 
+    if $HAS_JQ; then
+        USER_JSON=$(jq -n \
+            --arg name "$TEAM_NAME" \
+            --arg email "$TEAM_EMAIL" \
+            --arg pass "$TEAM_PASS" \
+            '{name: $name, email: $email, password: $pass, type: "user", verified: true, hidden: false}')
+    else
+        USER_JSON="{\"name\":\"${TEAM_NAME}\",\"email\":\"${TEAM_EMAIL}\",\"password\":\"${TEAM_PASS}\",\"type\":\"user\",\"verified\":true,\"hidden\":false}"
+    fi
+
     USER_RESP=$(curl -s -X POST "${API}/users" \
         -H "$AUTH" -H "$CT" \
-        -d "{
-            \"name\": \"${TEAM_NAME}\",
-            \"email\": \"${TEAM_EMAIL}\",
-            \"password\": \"${TEAM_PASS}\",
-            \"type\": \"user\",
-            \"verified\": true,
-            \"hidden\": false
-        }")
+        -d "$USER_JSON")
 
     TEAM_PASSWORDS["${TEAM_NAME}"]="${TEAM_PASS}"
-    info "Created ${TEAM_NAME} / ${TEAM_PASS}"
+    info "Created ${TEAM_NAME} / $(mask_pass "$TEAM_PASS")"
 done
 
 # ---------------------------------------------------------------------------
@@ -138,17 +162,22 @@ echo ""
 create_challenge() {
     local name="$1" category="$2" description="$3" value="$4" flag="$5"
 
+    local challenge_json flag_json
+    if $HAS_JQ; then
+        challenge_json=$(jq -n \
+            --arg name "$name" \
+            --arg cat "$category" \
+            --arg desc "$description" \
+            --argjson val "$value" \
+            '{name: $name, category: $cat, description: $desc, value: $val, type: "standard", state: "hidden"}')
+    else
+        challenge_json="{\"name\":\"${name}\",\"category\":\"${category}\",\"description\":\"${description}\",\"value\":${value},\"type\":\"standard\",\"state\":\"hidden\"}"
+    fi
+
     local resp
     resp=$(curl -s -X POST "${API}/challenges" \
         -H "$AUTH" -H "$CT" \
-        -d "{
-            \"name\": \"${name}\",
-            \"category\": \"${category}\",
-            \"description\": \"${description}\",
-            \"value\": ${value},
-            \"type\": \"standard\",
-            \"state\": \"hidden\"
-        }")
+        -d "$challenge_json")
 
     local cid
     cid=$(echo "$resp" | grep -o '"id" *: *[0-9]*' | sed 's/"id" *: *//' | head -1 || echo "")
@@ -158,13 +187,18 @@ create_challenge() {
         return
     fi
 
+    if $HAS_JQ; then
+        flag_json=$(jq -n \
+            --argjson cid "$cid" \
+            --arg content "$flag" \
+            '{challenge_id: $cid, content: $content, type: "static"}')
+    else
+        flag_json="{\"challenge_id\":${cid},\"content\":\"${flag}\",\"type\":\"static\"}"
+    fi
+
     curl -s -X POST "${API}/flags" \
         -H "$AUTH" -H "$CT" \
-        -d "{
-            \"challenge_id\": ${cid},
-            \"content\": \"${flag}\",
-            \"type\": \"static\"
-        }" > /dev/null
+        -d "$flag_json" > /dev/null
 
     info "Created: ${name} (${value} pts) [${category}]"
 }
@@ -859,16 +893,18 @@ echo ""
 echo -e "${CYAN}  ADMIN ACCOUNT${NC}"
 echo "  URL:      ${CTFD_URL}"
 echo "  Username: ${ADMIN_USER}"
-echo "  Password: ${ADMIN_PASS}"
+echo "  Password: $(mask_pass "$ADMIN_PASS")"
 echo ""
 echo -e "${CYAN}  TEAM CREDENTIALS (hand these out to students)${NC}"
-echo "  ┌──────────┬──────────┐"
-echo "  │ Username │ Password │"
-echo "  ├──────────┼──────────┤"
+echo "  ┌──────────┬──────────────┐"
+echo "  │ Username │ Password     │"
+echo "  ├──────────┼──────────────┤"
 for i in $(seq 1 10); do
-    printf "  │ %-8s │ %-8s │\n" "team${i}" "${TEAM_PASSWORDS[team${i}]}"
+    printf "  │ %-8s │ %-12s │\n" "team${i}" "$(mask_pass "${TEAM_PASSWORDS[team${i}]}")"
 done
-echo "  └──────────┴──────────┘"
+echo "  └──────────┴──────────────┘"
+echo ""
+echo "  Full credentials saved to: ctfd/credentials.txt"
 echo ""
 info "52 challenges created across 6 progressive categories"
 echo ""
