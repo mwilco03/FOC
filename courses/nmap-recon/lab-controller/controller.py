@@ -288,7 +288,7 @@ def unlock_daemon():
                         log(f"CTF TIMER STARTED: {CTF_DURATION} min, ends {ctf_end_time.isoformat()}")
                         # Set CTFd freeze time (outside lock — network call)
                         ctfd_request("/configs/freeze", method="PATCH",
-                            data={"value": ctf_end_time.strftime("%Y-%m-%dT%H:%M:%S+00:00")})
+                            data={"value": str(int(ctf_end_time.timestamp()))})
         except Exception as e:
             log(f"Daemon error: {e}")
 
@@ -402,7 +402,7 @@ class LabHandler(SimpleHTTPRequestHandler):
                 log(f"Timer extended by {CTF_EXTEND} min. New end: {new_end.isoformat()}")
                 # Update CTFd freeze (outside lock — network call)
                 ctfd_request("/configs/freeze", method="PATCH",
-                    data={"value": new_end.strftime("%Y-%m-%dT%H:%M:%S+00:00")})
+                    data={"value": str(int(new_end.timestamp()))})
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json")
                 self.end_headers()
@@ -443,7 +443,7 @@ class LabHandler(SimpleHTTPRequestHandler):
             log(f"Timer MANUALLY started: {CTF_DURATION} min")
             # Update CTFd freeze (outside lock — network call)
             ctfd_request("/configs/freeze", method="PATCH",
-                data={"value": new_end.strftime("%Y-%m-%dT%H:%M:%S+00:00")})
+                data={"value": str(int(new_end.timestamp()))})
             self.send_response(200)
             self.send_header("Content-Type", "application/json")
             self.end_headers()
