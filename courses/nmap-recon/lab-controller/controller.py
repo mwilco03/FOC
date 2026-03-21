@@ -29,9 +29,10 @@ PORT = int(os.environ.get("CONTROLLER_PORT", "8080"))
 CTF_DURATION = int(os.environ.get("CTF_DURATION_MINUTES", "120"))
 CTF_EXTEND = int(os.environ.get("CTF_EXTEND_MINUTES", "60"))
 
-# Timer state
+# Timer state (guarded by timer_lock for thread safety)
 ctf_start_time = None   # Set when first real category unlocks
 ctf_end_time = None      # start + duration
+timer_lock = threading.Lock()
 
 # Category unlock order
 CATEGORY_ORDER = [
@@ -281,10 +282,11 @@ def unlock_daemon():
                     # Start timer on first real category unlock (after Knowledge Check)
                     if ctf_start_time is None and cat != "Knowledge Check":
                         import datetime
-                        ctf_start_time = datetime.datetime.utcnow()
-                        ctf_end_time = ctf_start_time + datetime.timedelta(minutes=CTF_DURATION)
+                        with timer_lock:
+                            ctf_start_time = datetime.datetime.utcnow()
+                            ctf_end_time = ctf_start_time + datetime.timedelta(minutes=CTF_DURATION)
                         log(f"CTF TIMER STARTED: {CTF_DURATION} min, ends {ctf_end_time.isoformat()}")
-                        # Set CTFd freeze time
+                        # Set CTFd freeze time (outside lock — network call)
                         ctfd_request("/configs/freeze", method="PATCH",
                             data={"value": ctf_end_time.strftime("%Y-%m-%dT%H:%M:%S+00:00")})
         except Exception as e:
@@ -357,12 +359,14 @@ class LabHandler(SimpleHTTPRequestHandler):
         if self.path == "/api/timer":
             now = datetime.datetime.utcnow()
             data = {"started": False, "remaining": 0, "end_time": None}
-            if ctf_end_time:
-                remaining = max(0, int((ctf_end_time - now).total_seconds()))
+            with timer_lock:
+                end = ctf_end_time
+            if end:
+                remaining = max(0, int((end - now).total_seconds()))
                 data = {
                     "started": True,
                     "remaining": remaining,
-                    "end_time": ctf_end_time.isoformat() + "Z",
+                    "end_time": end.isoformat() + "Z",
                     "expired": remaining == 0,
                 }
             self.send_response(200)
@@ -389,19 +393,23 @@ class LabHandler(SimpleHTTPRequestHandler):
                 self.end_headers()
                 return
 
-            if ctf_end_time:
-                ctf_end_time = ctf_end_time + datetime.timedelta(minutes=CTF_EXTEND)
-                log(f"Timer extended by {CTF_EXTEND} min. New end: {ctf_end_time.isoformat()}")
-                # Update CTFd freeze
+            with timer_lock:
+                end = ctf_end_time
+            if end:
+                new_end = end + datetime.timedelta(minutes=CTF_EXTEND)
+                with timer_lock:
+                    ctf_end_time = new_end
+                log(f"Timer extended by {CTF_EXTEND} min. New end: {new_end.isoformat()}")
+                # Update CTFd freeze (outside lock — network call)
                 ctfd_request("/configs/freeze", method="PATCH",
-                    data={"value": ctf_end_time.strftime("%Y-%m-%dT%H:%M:%S+00:00")})
+                    data={"value": new_end.strftime("%Y-%m-%dT%H:%M:%S+00:00")})
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json")
                 self.end_headers()
                 self.wfile.write(json.dumps({
                     "status": "extended",
                     "added_minutes": CTF_EXTEND,
-                    "new_end": ctf_end_time.isoformat() + "Z",
+                    "new_end": new_end.isoformat() + "Z",
                 }).encode())
             else:
                 self.send_response(400)
@@ -427,18 +435,22 @@ class LabHandler(SimpleHTTPRequestHandler):
                 self.end_headers()
                 return
 
-            ctf_start_time = datetime.datetime.utcnow()
-            ctf_end_time = ctf_start_time + datetime.timedelta(minutes=CTF_DURATION)
+            now = datetime.datetime.utcnow()
+            new_end = now + datetime.timedelta(minutes=CTF_DURATION)
+            with timer_lock:
+                ctf_start_time = now
+                ctf_end_time = new_end
             log(f"Timer MANUALLY started: {CTF_DURATION} min")
+            # Update CTFd freeze (outside lock — network call)
             ctfd_request("/configs/freeze", method="PATCH",
-                data={"value": ctf_end_time.strftime("%Y-%m-%dT%H:%M:%S+00:00")})
+                data={"value": new_end.strftime("%Y-%m-%dT%H:%M:%S+00:00")})
             self.send_response(200)
             self.send_header("Content-Type", "application/json")
             self.end_headers()
             self.wfile.write(json.dumps({
                 "status": "started",
                 "duration_minutes": CTF_DURATION,
-                "end_time": ctf_end_time.isoformat() + "Z",
+                "end_time": new_end.isoformat() + "Z",
             }).encode())
             return
 
