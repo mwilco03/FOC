@@ -1,44 +1,81 @@
 #!/bin/bash
-# Entrypoint: creates all team users, presents login prompt
+# =============================================================================
+# Student terminal entrypoint — creates team users with security hardening
+#
+# Complexity: O(TEAM_COUNT) — linear pass creating users
+# =============================================================================
 
-# Create all 10 team users
-for i in $(seq 1 10); do
-    PASS_VAR="TEAM${i}_PASS"
-    PASS="${!PASS_VAR:-scan4flags${i}}"
-    USER="team${i}"
+# --- Constants (sourced from env with sensible defaults) ---------------------
+readonly TEAM_COUNT="${TEAM_COUNT:-10}"
+readonly SHELLINABOX_PORT="${SHELLINABOX_PORT:-4200}"
+readonly CTFD_PORT="${CTFD_PORT:-8000}"
+readonly NOTES_SRC="/opt/bash_notes.txt"
+readonly DARK_CSS="/opt/cyber-dark.css"
+readonly LIGHT_CSS="/etc/shellinabox/options-enabled/00_White On Black.css"
+readonly HOME_DIR_MODE=700
+readonly SUDOERS_MODE=440
 
-    if ! id "$USER" &>/dev/null; then
-        useradd -m -s /bin/bash "$USER"
+# Allowed sudo commands — tools that require raw socket privileges
+readonly -a SUDO_ALLOWED=(
+    /usr/bin/nmap
+    /usr/bin/tcpdump
+    /usr/sbin/traceroute
+    /usr/bin/traceroute
+)
+
+# --- Functions ---------------------------------------------------------------
+
+# Create a single team user with restricted sudo and isolated home directory
+create_team_user() {
+    local index=$1
+    local user="team${index}"
+    local pass_var="TEAM${index}_PASS"
+    local pass="${!pass_var:-scan4flags${index}}"
+
+    # Create user if not exists
+    if ! id "$user" &>/dev/null; then
+        useradd -m -s /bin/bash "$user"
     fi
-    echo "${USER}:${PASS}" | chpasswd
+    echo "${user}:${pass}" | chpasswd
 
-    # Passwordless sudo
-    echo "${USER} ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/${USER}
-    chmod 440 /etc/sudoers.d/${USER}
+    # Restricted sudo: only network analysis tools, no shell access
+    local sudoers_cmds
+    sudoers_cmds=$(IFS=', '; echo "${SUDO_ALLOWED[*]}")
+    printf '%s ALL=(ALL) NOPASSWD: %s\n' "$user" "$sudoers_cmds" \
+        > "/etc/sudoers.d/${user}"
+    chmod "$SUDOERS_MODE" "/etc/sudoers.d/${user}"
 
-    # Copy notes to home
-    cp /opt/bash_notes.txt /home/${USER}/bash_notes.txt
-    chown ${USER}:${USER} /home/${USER}/bash_notes.txt
+    # Isolate home directory — users cannot read each other's files
+    chmod "$HOME_DIR_MODE" "/home/${user}"
 
-    # Setup .bashrc (only if not already configured)
-    if ! grep -q "nmap-lab" /home/${USER}/.bashrc 2>/dev/null; then
-        cat >> /home/${USER}/.bashrc <<'BASHRC'
-CTFD_HOST=${CTFD_HOST:-$(getent hosts host.docker.internal | awk "{print \$1}" 2>/dev/null || echo "localhost")}
+    # Provide course notes
+    cp "$NOTES_SRC" "/home/${user}/bash_notes.txt"
+    chown "${user}:${user}" "/home/${user}/bash_notes.txt"
+
+    # Configure shell environment (idempotent — skips if already done)
+    if ! grep -q "nmap-lab" "/home/${user}/.bashrc" 2>/dev/null; then
+        cat >> "/home/${user}/.bashrc" <<BASHRC
+CTFD_HOST=\${CTFD_HOST:-\$(getent hosts host.docker.internal | awk "{print \\\$1}" 2>/dev/null || echo "localhost")}
 echo ""
-echo "  SUBMIT FLAGS: http://${CTFD_HOST}:8000"
+echo "  SUBMIT FLAGS: http://\${CTFD_HOST}:${CTFD_PORT}"
 echo "  Format: FLAG{some_text_here}"
 echo ""
-export PS1="\[\e[32m\]\u@nmap-lab\[\e[0m\]:\[\e[34m\]\w\[\e[0m\]\$ "
+export PS1="\[\e[32m\]\u@nmap-lab\[\e[0m\]:\[\e[34m\]\w\[\e[0m\]\\$ "
 alias notes="less ~/bash_notes.txt"
 alias cheatsheet="less ~/bash_notes.txt"
 BASHRC
     fi
+}
+
+# --- Main: create all team users ---------------------------------------------
+for i in $(seq 1 "$TEAM_COUNT"); do
+    create_team_user "$i"
 done
 
-# Shell-in-a-Box with LOGIN prompt and dark theme
+# --- Start shellinabox with LOGIN prompt and dark theme ----------------------
 exec shellinaboxd \
     --no-beep \
     --disable-ssl \
-    --port=4200 \
-    --user-css "Cyber Dark:+/opt/cyber-dark.css,White On Black:-/etc/shellinabox/options-enabled/00_White On Black.css" \
+    --port="$SHELLINABOX_PORT" \
+    --user-css "Cyber Dark:+${DARK_CSS},White On Black:-${LIGHT_CSS}" \
     --service=/:LOGIN
