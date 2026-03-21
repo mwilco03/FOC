@@ -41,6 +41,53 @@ pre { background: rgba(15,15,35,.9); border: 1px solid rgba(255,107,53,.15); bor
 <div class="timeline-entry"><span class="timeline-time">15:00-15:57</span><span>DNS tunneling exfiltration</span></div>
 </div>
 
+<h2>Availability &amp; Observability (8 challenges)</h2>
+
+<div class="challenge">
+<span class="challenge-name">Log Source Inventory</span> — <span class="flag">C (5 sources)</span>
+<p>The Event Source Breakdown pie chart shows 5 index patterns: sysmon-*, zeek-*, winsec-*, applocker-*, winlogbeat-*.</p>
+</div>
+
+<div class="challenge">
+<span class="challenge-name">Ingestion Health Check</span> — <span class="flag">C (applocker)</span>
+<p>AppLocker only fires on blocked execution attempts. In this scenario, only one block event (invoice.exe) occurs, making it the lowest-volume source.</p>
+</div>
+
+<div class="challenge">
+<span class="challenge-name">Coverage Gap</span> — <span class="flag">FLAG{3}</span>
+<p>The attacker stopped Sysmon at 14:27 and restarted it at ~14:30. The Events Per Host timeline shows a 3-minute dropout for the victim host's Sysmon events.</p>
+<div class="teach">Teaching point: A coverage gap IS the signal. Attackers disable logging tools — the absence of events is itself an indicator of compromise.</div>
+</div>
+
+<div class="challenge">
+<span class="challenge-name">Priority Matrix</span> — <span class="flag">A (4, 1, 2, 3)</span>
+<p>For USB-based kiosk attacks: AppLocker fires first (blocks initial attempt), Sysmon shows what actually executed, Zeek captures C2/exfil network activity, Windows Security provides supporting logon context.</p>
+<div class="teach">Teaching point: Priority depends on the attack vector. For removable media threats on public terminals, execution-blocking controls (AppLocker) are your first line.</div>
+</div>
+
+<div class="challenge">
+<span class="challenge-name">Dashboard Builder</span> — <span class="flag">FLAG{350}</span>
+<p>Students build their own Kibana visualization. The peak ProcessCreate rate occurs during the discovery phase (~14:35) when the attacker runs ipconfig, net view, arp -a, and other commands in rapid succession.</p>
+</div>
+
+<div class="challenge">
+<span class="challenge-name">Silent Host Detection</span> — <span class="flag">B (No — Winlogbeat still sends other event types)</span>
+<p>Even when Sysmon stops, the host continues sending Windows Security, AppLocker, and other event channels via Winlogbeat. The Reporting Hosts metric stays at 1.</p>
+<div class="teach">Teaching point: Multiple telemetry channels provide resilience. If an attacker kills one source, others continue. This is why defense-in-depth applies to logging too.</div>
+</div>
+
+<div class="challenge">
+<span class="challenge-name">Observability Blind Spots</span> — <span class="flag">C (HTTPS payload content)</span>
+<p>Zeek sees connection metadata, DNS queries, SMB file names, and unencrypted content. TLS-encrypted payloads (HTTPS) are opaque — Zeek logs the TLS handshake (JA3, server cert) but not the payload.</p>
+<div class="teach">Teaching point: Know your blind spots. If C2 uses HTTPS, you need endpoint telemetry (Sysmon) or TLS inspection to see the payload. Network monitoring alone is insufficient.</div>
+</div>
+
+<div class="challenge">
+<span class="challenge-name">Triage Priorities</span> — <span class="flag">B (Investigate why Sysmon stopped)</span>
+<p>Other sources flowing = infrastructure is fine. One host's Sysmon dropping during an investigation means someone/something stopped it on that host. This is a high-priority indicator.</p>
+<div class="teach">Teaching point: When triaging observability alerts, first determine scope (one host vs. all hosts). One host losing one source = host compromise. All hosts losing a source = infrastructure issue.</div>
+</div>
+
 <p>See <code>instructor/solution-guide.txt</code> for complete challenge-by-challenge solutions with commands and teaching notes.</p>
 
 </body>

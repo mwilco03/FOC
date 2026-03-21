@@ -35,12 +35,13 @@ ctf_end_time = None      # start + duration
 
 # Category unlock order
 CATEGORY_ORDER = [
-    "Orientation",          # Unlocked from start (during lecture)
-    "Initial Triage",       # First hands-on with Kibana
-    "Sysmon Tuning",        # Noise reduction, query building
-    "Kill Chain Analysis",  # Trace the attack
-    "Active Response",      # Containment + Kansa + Arkime
-    "Detection Engineering",# YARA, alerts, timeline, brief instructor
+    "Orientation",                  # Unlocked from start (during lecture)
+    "Initial Triage",               # First hands-on with Kibana
+    "Availability & Observability", # Dashboards, log health, priorities
+    "Sysmon Tuning",                # Noise reduction, query building
+    "Kill Chain Analysis",          # Trace the attack
+    "Active Response",              # Containment + Kansa + Arkime
+    "Detection Engineering",        # YARA, alerts, timeline, brief instructor
 ]
 
 api_token = None

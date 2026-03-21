@@ -13,8 +13,8 @@ import json
 import time
 import threading
 from http.server import HTTPServer, SimpleHTTPRequestHandler
-from urllib.request import Request, urlopen
-from urllib.error import URLError
+from urllib.request import Request, urlopen, HTTPRedirectHandler, build_opener
+from urllib.error import URLError, HTTPError
 import base64
 
 # --- CONFIG ---
@@ -77,11 +77,11 @@ def wait_for_ctfd():
     log("Waiting for CTFd...")
     for _ in range(120):
         try:
-            # Try to reach CTFd
-            req = Request(f"{CTFD_URL}/api/v1/challenges", headers={"Content-Type": "application/json"})
-            with urlopen(req, timeout=5):
-                pass
-            break
+            # Try to reach CTFd login page (no auth required)
+            req = Request(f"{CTFD_URL}/login", headers={"Content-Type": "application/json"})
+            with urlopen(req, timeout=5) as resp:
+                if resp.status == 200:
+                    break
         except Exception:
             time.sleep(2)
     else:
@@ -104,7 +104,7 @@ def wait_for_ctfd():
                 nonce = match.group(1)
                 cookie_header = resp.headers.get("Set-Cookie", "")
 
-            # Login
+            # Login - use non-redirecting opener to capture session cookie
             login_data = f"name={CTFD_ADMIN_USER}&password={CTFD_ADMIN_PASS}&nonce={nonce}".encode()
             login_req = Request(
                 f"{CTFD_URL}/login",
@@ -115,17 +115,28 @@ def wait_for_ctfd():
                 },
                 method="POST",
             )
+
+            class _NoRedirect(HTTPRedirectHandler):
+                def redirect_request(self, req, fp, code, msg, headers, newurl):
+                    return None
+
+            opener = build_opener(_NoRedirect)
+            session_cookie = None
             try:
-                with urlopen(login_req, timeout=10) as resp:
-                    session_cookie = resp.headers.get("Set-Cookie", cookie_header)
-            except Exception:
-                # 302 redirect is expected
-                pass
+                resp = opener.open(login_req, timeout=10)
+                session_cookie = resp.headers.get("Set-Cookie", "")
+            except HTTPError as e:
+                # 302 redirect is expected on successful login
+                session_cookie = e.headers.get("Set-Cookie", "")
+
+            if not session_cookie:
+                time.sleep(5)
+                continue
 
             # Get CSRF from admin page
             admin_req = Request(
                 f"{CTFD_URL}/admin/statistics",
-                headers={"Cookie": session_cookie.split(";")[0] if session_cookie else ""},
+                headers={"Cookie": session_cookie.split(";")[0]},
             )
             with urlopen(admin_req, timeout=10) as resp:
                 admin_page = resp.read().decode()
@@ -186,7 +197,7 @@ def set_category_state(challenges_by_cat, category, state):
     if category not in challenges_by_cat:
         return
     for c in challenges_by_cat[category]:
-        if c["state"] != state:
+        if c.get("state", "visible") != state:
             ctfd_request(f"/challenges/{c['id']}", method="PATCH", data={"state": state})
             log(f"  {c['name']} -> {state}")
 
@@ -215,9 +226,9 @@ def get_category_completion(challenges_by_cat, solves, category):
 # ==========================================================================
 def unlock_daemon():
     """Monitor solves and auto-unlock next category."""
-    if not wait_for_ctfd():
-        log("Cannot start unlock daemon - CTFd auth failed")
-        return
+    while not wait_for_ctfd():
+        log("Cannot start unlock daemon - CTFd auth failed, retrying in 30s...")
+        time.sleep(30)
 
     # Wait for setup.sh to finish creating challenges
     log("Waiting for challenges to be seeded...")

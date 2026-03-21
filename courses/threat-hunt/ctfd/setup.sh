@@ -194,6 +194,35 @@ create_challenge "Log Gap" "Initial Triage" \
     "There's a 3-minute gap in Sysmon logging during the attack. Why?\n\nA) The attacker stopped Sysmon temporarily\nB) The system rebooted\nC) Network connectivity was lost\nD) The attacker cleared the log\n\nHint: Look for Sysmon Event 4 (Service State Change)." 75 "A"
 
 # ╔═══════════════════════════════════════════════════════════════╗
+# ║ AVAILABILITY & OBSERVABILITY — Dashboards + priorities (easy)║
+# ║ 8 challenges, need 4 to unlock next                         ║
+# ╚═══════════════════════════════════════════════════════════════╝
+
+create_challenge "Log Source Inventory" "Availability & Observability" \
+    "Open the Availability & Observability dashboard in Kibana. How many distinct log sources (index patterns) are ingesting data?\n\nA) 2\nB) 3\nC) 5\nD) 7\n\nHint: Check the Event Source Breakdown pie chart — each wedge is a different index." 50 "C"
+
+create_challenge "Ingestion Health Check" "Availability & Observability" \
+    "Using the Log Ingestion Rate histogram, identify whether all 5 log sources are actively receiving events.\n\nWhich source has the LOWEST event count?\n\nA) sysmon\nB) zeek\nC) applocker\nD) winsec\n\nHint: AppLocker only fires on blocked executions — it should have the fewest events." 50 "C"
+
+create_challenge "Coverage Gap" "Availability & Observability" \
+    "Look at the Events Per Host timeline on the Availability dashboard. There is a gap where no Sysmon events arrive from the victim.\n\nHow long is the coverage gap in minutes? Submit as FLAG{X}\n\nHint: The attacker stopped Sysmon. Zoom into the timeline around 14:27-14:30 UTC." 75 "FLAG{3}"
+
+create_challenge "Priority Matrix" "Availability & Observability" \
+    "You have limited analyst time. Rank these log sources by priority for detecting a USB-based attack on a public kiosk:\n\n1) Sysmon process creation\n2) Zeek DNS logs\n3) Windows Security (logon events)\n4) AppLocker blocks\n\nWhat is the correct priority order (highest to lowest)?\n\nA) 4, 1, 2, 3\nB) 1, 4, 2, 3\nC) 1, 2, 3, 4\nD) 3, 1, 4, 2\n\nHint: AppLocker fires FIRST (blocks the initial attempt), then Sysmon shows what actually ran." 75 "A"
+
+create_challenge "Dashboard Builder" "Availability & Observability" \
+    "Create a new Kibana visualization: a date histogram of Sysmon Event ID 1 (ProcessCreate) events per minute.\n\nWhat is the peak events-per-minute during the attack window (14:00-16:00 UTC)?\n\nSubmit as FLAG{X} (round to nearest 50)\n\nHint: In Kibana Visualize, pick 'Vertical Bar', index sysmon-*, metric Count, bucket Date Histogram @timestamp interval 1m, add filter winlog.event_id: 1." 100 "FLAG{350}"
+
+create_challenge "Silent Host Detection" "Availability & Observability" \
+    "The Reporting Hosts metric shows how many unique hosts are sending logs. If a host stops reporting, this number drops.\n\nAfter the attacker stops Sysmon at 14:27, does the Reporting Hosts metric change?\n\nA) Yes — drops from 1 to 0\nB) No — Winlogbeat still sends other event types\nC) Yes — drops from 5 to 4\nD) No — Sysmon was only paused, not uninstalled\n\nHint: The host has multiple log channels. Sysmon is one; Windows Security, AppLocker continue." 50 "B"
+
+create_challenge "Observability Blind Spots" "Availability & Observability" \
+    "Review the Zeek Analyzer Coverage bar chart. Which of these network activities would NOT be visible in your current Zeek logs?\n\nA) DNS queries to C2 domains\nB) SMB file transfers to internal hosts\nC) HTTPS payload content to encrypted C2\nD) TCP connection metadata\n\nHint: Zeek sees metadata and unencrypted protocols. TLS-encrypted payloads remain opaque." 75 "C"
+
+create_challenge "Triage Priorities" "Availability & Observability" \
+    "An alert fires: the Log Ingestion Rate dashboard shows Sysmon events from the victim dropped to zero at 14:27 UTC, but Zeek and WinSec events continue.\n\nWhat is your FIRST priority action?\n\nA) Check if Elasticsearch is healthy\nB) Investigate why Sysmon stopped on the victim host\nC) Restart the Logstash pipeline\nD) Check if Winlogbeat crashed\n\nHint: Other sources are flowing — this is host-specific, not infrastructure. A Sysmon service stop on one host during an active investigation is a red flag." 75 "B"
+
+# ╔═══════════════════════════════════════════════════════════════╗
 # ║ SYSMON TUNING — Noise reduction (easy-medium)               ║
 # ║ 8 challenges, need 4 to unlock next                         ║
 # ╚═══════════════════════════════════════════════════════════════╝
@@ -281,7 +310,7 @@ create_challenge "Arkime: SMB Session" "Active Response" \
     "In Arkime (port 8005), search for SMB sessions involving the victim IP. What share name was accessed during lateral movement?\n\nSubmit as FLAG{sharename}\n\nHint: Filter by protocol=smb and look at the session details." 175 "FLAG{share}"
 
 create_challenge "Arkime: DNS Exfil" "Active Response" \
-    "In Arkime, filter for DNS sessions to update-service.xyz. How many unique DNS queries contain base64-encoded data in the subdomain?\n\nSubmit as FLAG{X}\n\nHint: Look for unusually long query names (>50 chars)." 175 "FLAG{12}"
+    "In Arkime, filter for DNS sessions to update-service.xyz. How many unique DNS queries contain base64-encoded data in the subdomain?\n\nSubmit as FLAG{X}\n\nHint: Look for unusually long query names (>50 chars) with .data.update-service.xyz suffix." 175 "FLAG{5}"
 
 create_challenge "Sit-Rep (Literally)" "Active Response" \
     "Complete the Air Force minimum sit-ups (42 in 1 minute). The instructor will count and provide the flag.\n\nYou must leave your terminal to complete this challenge." 200 "${PT_SITUP_FLAG:-FLAG{42}}"
@@ -301,7 +330,7 @@ create_challenge "DNS Tunnel Decode" "Detection Engineering" \
     "The attacker exfiltrated data via DNS tunneling. The subdomain labels of queries to update-service.xyz contain base64-encoded data.\n\nExtract and decode all the subdomain labels. What is the first line of the decoded data?\n\nSubmit as FLAG{first_line}\n\nHint: tshark + base64 -d, or Zeek dns.log + jq + base64" 300 "FLAG{BEGIN_CERTIFICATE}"
 
 create_challenge "Full Timeline" "Detection Engineering" \
-    "Build a complete incident timeline from first artifact to last. Minimum 8 entries.\n\nSubmit the timestamp of the exfiltration completion (last DNS tunnel query) as FLAG{HH:MM:SS}\n\nHint: Correlate Sysmon + Zeek + Windows Security events." 250 "FLAG{15:57:23}"
+    "Build a complete incident timeline from first artifact to last. Minimum 8 entries.\n\nSubmit the timestamp of the exfiltration completion (last DNS tunnel query) as FLAG{HH:MM:SS}\n\nHint: Correlate Sysmon + Zeek + Windows Security events." 250 "FLAG{15:21:00}"
 
 create_challenge "Firewall Gap" "Detection Engineering" \
     "The attacker moved from VLAN 20 (public) to VLAN 30 (relief ops) via SMB. This should have been blocked.\n\nWhat firewall rule was missing?\n\nA) Block VLAN 20 → VLAN 30 TCP/445\nB) Block VLAN 20 → VLAN 10 TCP/445\nC) Block all inter-VLAN traffic\nD) Block VLAN 20 outbound entirely" 150 "A"
@@ -360,15 +389,16 @@ fi
 # Summary
 # ---------------------------------------------------------------------------
 echo ""
-info "50 challenges created across 6 progressive categories"
+info "58 challenges created across 7 progressive categories"
 echo ""
 echo "  Categories (unlock order):"
-echo "    1. Orientation:           8 challenges  (trivial, during lecture)"
-echo "    2. Initial Triage:        8 challenges  (easy)"
-echo "    3. Sysmon Tuning:         8 challenges  (easy-medium)"
-echo "    4. Kill Chain Analysis:   10 challenges (medium)"
-echo "    5. Active Response:       8 challenges  (medium-hard)"
-echo "    6. Detection Engineering: 10 challenges (hard, time sinks)"
+echo "    1. Orientation:                    8 challenges  (trivial, during lecture)"
+echo "    2. Initial Triage:                 8 challenges  (easy)"
+echo "    3. Availability & Observability:   8 challenges  (easy, dashboards + priorities)"
+echo "    4. Sysmon Tuning:                  8 challenges  (easy-medium)"
+echo "    5. Kill Chain Analysis:           10 challenges  (medium)"
+echo "    6. Active Response:                8 challenges  (medium-hard)"
+echo "    7. Detection Engineering:         10 challenges  (hard, time sinks)"
 echo ""
 echo "  50% of a category must be solved to unlock the next."
 echo ""
