@@ -18,11 +18,21 @@ RUN postconf -e "smtpd_banner=mail.corp.local ESMTP FLAG{smtp_banner_captured}" 
 RUN printf 'dovecot_config_version = 2.4.0\ndovecot_storage_version = 2.4.0\nprotocols = imap pop3\nlisten = *\nssl = no\nauth_mechanisms = plain login\n' \
     > /etc/dovecot/dovecot.conf
 
-# Webmail on 443
-RUN mkdir -p /var/www/html /run/nginx
+# Webmail on 443 (HTTPS with self-signed cert)
+RUN apk add --no-cache openssl && \
+    mkdir -p /var/www/html /run/nginx /etc/nginx/ssl && \
+    openssl req -x509 -newkey rsa:2048 -nodes \
+        -keyout /etc/nginx/ssl/webmail.key \
+        -out /etc/nginx/ssl/webmail.crt \
+        -days 3650 -subj "/CN=mail.corp.local/O=Corp/C=US"
 COPY webmail.html /var/www/html/index.html
-RUN printf 'server { listen 443; root /var/www/html; index index.html; }\n' \
-    > /etc/nginx/http.d/default.conf
+RUN printf 'server {\n\
+    listen 443 ssl;\n\
+    ssl_certificate /etc/nginx/ssl/webmail.crt;\n\
+    ssl_certificate_key /etc/nginx/ssl/webmail.key;\n\
+    root /var/www/html;\n\
+    index index.html;\n\
+}\n' > /etc/nginx/http.d/default.conf
 
 # SMTP challenge on 2525
 COPY smtp_challenge.py /app/smtp_challenge.py
