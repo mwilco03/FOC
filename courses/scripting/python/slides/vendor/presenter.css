@@ -1,0 +1,69 @@
+/* ===== custom presenter window: notes dominant, room to breathe ===== */
+*{ box-sizing:border-box; }
+html,body{ margin:0; height:100%; background:#1b1020; color:#fff;
+  font-family:'Source Sans 3','Segoe UI',Arial,sans-serif; }
+#pv{ display:grid; grid-template-columns:1fr 360px; gap:0; height:calc(100% - 68px); }
+
+/* --- notes: the main event --- */
+#pnotes{ padding:30px 40px; overflow-y:auto; background:#fff; color:#2a2230; }
+#pnotes .empty{ color:#9a90a4; font-style:italic; margin-top:2em; }
+/* notes-body styles come from ascension.css but we scale them UP here */
+#pnotes .notes-body{ font-size:21px; line-height:1.55; max-width:none; }
+#pnotes .notes-body h4{ font-size:1.5em; margin:.1em 0 .6em; }
+#pnotes .notes-body h4 .dot{ width:.6em; height:.6em; border-radius:50%; background:#00B072;
+  display:inline-block; margin-right:.5em; }
+#pnotes .notes-body .srcbar{ font-size:1.0em; padding:.5em .8em; }
+#pnotes .notes-body .lead{ font-size:1.08em; font-weight:600; color:#431B54; margin:.5em 0; }
+#pnotes .notes-body details{ border:1px solid #E4DCEC; border-radius:10px; margin:.55em 0; }
+#pnotes .notes-body summary{ font-size:1.05em; padding:.6em .8em; }
+#pnotes .notes-body details > p{ padding:.2em 1em .7em; margin:0; }
+#pnotes .notes-body details.verbatim{ margin-top:1em; border-color:#CFe9db; }
+#pnotes .notes-body details.verbatim summary{ background:#EAF7F0; color:#00935F; }
+#pnotes .notes-body .anskey{ background:#EAF7F0; border:1.5px solid #00B072; border-radius:10px;
+  padding:.4em .9em .6em; margin:0 0 .8em; }
+#pnotes .notes-body .anskey h4{ color:#00935F; margin:.2em 0 .3em; font-size:1.15em; }
+#pnotes .notes-body .anskey ol{ margin:.2em 0; padding-left:1.4em; }
+#pnotes .notes-body .anskey li{ font-weight:600; color:#2a2230; margin:.15em 0; }
+#pnotes .notes-body .bridge{ background:#F6F3FA; border-left:5px solid #9A75B4; border-radius:10px;
+  padding:.5em .9em .6em; margin:0 0 .8em; }
+#pnotes .notes-body .bridge h4{ color:#5B2E73; margin:.1em 0 .25em; font-size:1.1em; }
+#pnotes .notes-body .bridge p{ margin:0; font-size:1.05em; font-style:italic; color:#2a2230; }
+
+/* --- sidebar --- */
+#pside{ background:#241430; padding:18px; overflow-y:auto; display:flex; flex-direction:column; gap:16px; }
+.thumbwrap{ margin-bottom:6px; }
+.tlabel{ font-size:12px; font-weight:800; letter-spacing:.12em; color:#C9B8D6; margin-bottom:5px; }
+.thumb{ width:100%; border-radius:8px; overflow:hidden; background:#000;
+  box-shadow:0 4px 14px rgba(0,0,0,.4); position:relative; }
+.thumb .mini{ transform-origin:top left; width:1280px; height:720px; }
+.thumb .mini .slides{ width:1280px; height:720px; }
+.thumb .mini section{ display:block!important; position:absolute!important; inset:0!important;
+  width:1280px!important; height:720px!important; opacity:1!important; visibility:visible!important; }
+.thumb .mini .fragment{ opacity:1!important; visibility:visible!important; transform:none!important; }
+
+.clocks{ display:flex; gap:12px; }
+.timer{ flex:1; background:#1b1020; border-radius:10px; padding:10px 12px; }
+.timer .lbl{ font-size:11px; letter-spacing:.14em; color:#9a7fb0; font-weight:800; }
+.timer .big{ font-size:26px; font-weight:800; font-variant-numeric:tabular-nums; }
+
+/* --- video transport --- */
+.vbox{ background:#1b1020; border:1px solid #3a2550; border-radius:12px; padding:12px; }
+.vbox .lbl{ font-size:11px; letter-spacing:.14em; color:#9a7fb0; font-weight:800; margin-bottom:8px; }
+.vrow{ display:flex; align-items:center; justify-content:center; gap:14px; }
+.vbox button{ background:#3a2550; border:none; color:#fff; width:44px; height:44px; border-radius:50%;
+  display:grid; place-items:center; cursor:pointer; }
+.vbox button.big-btn{ width:56px; height:56px; background:#00B072; }
+.vbox button:hover{ filter:brightness(1.12); }
+.vbox svg{ width:22px; height:22px; fill:#fff; }
+.vbox .big-btn svg{ width:26px; height:26px; }
+.vtime{ text-align:center; font-variant-numeric:tabular-nums; color:#C9B8D6; margin:8px 0 4px; font-weight:700; }
+.vseek{ width:100%; accent-color:#00B072; }
+
+/* --- bottom nav --- */
+#pbar{ height:68px; display:flex; align-items:center; justify-content:center; gap:14px;
+  background:#120a18; border-top:1px solid #2a1838; }
+#pbar button{ display:inline-flex; align-items:center; gap:.5em; background:#3a2550; color:#fff;
+  border:none; border-radius:999px; padding:12px 26px; font-size:16px; font-weight:800; cursor:pointer; }
+#pbar button.primary{ background:#00B072; }
+#pbar button:hover{ filter:brightness(1.12); }
+#pbar svg{ width:22px; height:22px; fill:none; stroke:#fff; stroke-width:2.4; stroke-linecap:round; stroke-linejoin:round; }

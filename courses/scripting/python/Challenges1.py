@@ -67,8 +67,6 @@ print(multiply_all([5]))           # Expected: 5
 print(multiply_all([]))            # Expected: 1
 print(multiply_all([2, 0, 5]))     # Expected: 0
 
-# More problems will follow in full version...
-
 # 6. Uppercase and Join Strings
 def format_names(names):
     # TODO: Use a for loop to:
@@ -134,8 +132,6 @@ print(recursive_sum([]))            # Expected: 0
 print(recursive_sum([5]))           # Expected: 5
 print(recursive_sum([10, -10, 5]))  # Expected: 5
 
-# (Problems 11–60 will be appended in full as a continuation)
-
 # 11. Absolute Difference
 def absolute_diff(a, b):
     # TODO: Return the absolute difference between a and b
@@ -155,8 +151,8 @@ def print_banner(text):
     pass
 
 # Tests
-print(print_banner("Hi"))        # Expected: '********Hi*********'
-print(print_banner("Welcome"))   # Expected: '******Welcome******'
+print(print_banner("Hi"))        # Expected: '*********Hi*********'
+print(print_banner("Welcome"))   # Expected: '******Welcome*******'
 print(print_banner(""))          # Expected: '********************'
 print(print_banner("Python"))    # Expected: '*******Python*******'
 
@@ -195,8 +191,6 @@ print(max_of_three(1, 2, 3))   # Expected: 3
 print(max_of_three(3, 2, 1))   # Expected: 3
 print(max_of_three(-1, 0, -5)) # Expected: 0
 print(max_of_three(5, 5, 5))   # Expected: 5
-
-# (... continuing to 60 problems ...)
 
 # 16. Find Smallest Number in List
 def min_value(lst):
@@ -257,8 +251,6 @@ print(contains_vowel("hello"))   # Expected: True
 print(contains_vowel("sky"))     # Expected: False
 print(contains_vowel("a"))       # Expected: True
 print(contains_vowel(""))        # Expected: False
-
-# More problems (21–60) will continue with similar structure...
 
 # === Intermediate Problems: Sorting, Filtering, Dictionaries, JSON, 2D Arrays ===
 
@@ -408,8 +400,6 @@ print(remove_duplicates([1, 1, 1]))        # Expected: [1]
 print(remove_duplicates([]))              # Expected: []
 print(remove_duplicates(['a', 'b', 'a']))  # Expected: ['a', 'b']
 
-# (Remaining 33–60 continue in same style...)
-
 # 33. Invert Dictionary (value -> key)
 def invert_dict(d):
     # TODO: Return dictionary with keys and values swapped
@@ -437,7 +427,8 @@ print(merge_lists(['a', 'b'], [1]))       # Expected: {'a': 1}
 # 35. Only Numbers from Mixed List
 def only_numbers(items):
     # TODO: Return list of numbers (int, float only)
-    # See: isinstance()
+    # See: isinstance(). Careful: in Python, True and False are ints,
+    #      so isinstance(True, int) is True. Exclude bool explicitly.
     pass
 
 # Tests

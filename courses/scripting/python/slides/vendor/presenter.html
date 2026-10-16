@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<title>Presenter View</title>
+<link rel="stylesheet" href="reveal/reveal.css">
+<link rel="stylesheet" href="foc-deck.css">
+<link rel="stylesheet" href="presenter.css">
+</head><body>
+<div id="pv">
+  <main id="pnotes"><div class="empty">Notes will appear here.</div></main>
+  <aside id="pside">
+    <div id="vbox" class="vbox" hidden>
+      <div class="lbl">VIDEO</div>
+      <div class="vrow">
+        <button data-v="rewind" title="Back 10s"><svg viewBox="0 0 24 24"><path d="M11 5 4 12l7 7"/><path d="M4 12h11a5 5 0 0 1 0 10h-1"/></svg></button>
+        <button data-v="play" class="big-btn" title="Play"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
+        <button data-v="pause" class="big-btn" title="Pause" hidden><svg viewBox="0 0 24 24"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg></button>
+        <button data-v="restart" title="Restart"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9 9 0 0 0-7 3.3"/><path d="M4 3v4h4"/></svg></button>
+      </div>
+      <div class="vtime"><span id="vcur">0:00</span> / <span id="vdur">0:00</span></div>
+      <input id="vseek" class="vseek" type="range" min="0" max="1000" value="0">
+    </div>
+    <div class="thumbs">
+      <div class="thumbwrap"><div class="tlabel">NOW <span id="pcur">–</span>/<span id="ptot">–</span></div>
+        <div class="thumb" id="tnow"></div></div>
+      <div class="thumbwrap"><div class="tlabel">NEXT</div>
+        <div class="thumb" id="tnext"></div></div>
+    </div>
+    <div class="clocks">
+      <div class="timer"><div class="lbl">ELAPSED</div><div class="big" id="elapsed">00:00</div></div>
+      <div class="timer"><div class="lbl">TIME</div><div class="big" id="clock">--:--</div></div>
+    </div>
+  </aside>
+</div>
+<nav id="pbar">
+  <button data-act="prev"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg><span>Prev</span></button>
+  <button data-act="next" class="primary"><span>Next</span><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
+</nav>
+<script>
+function mini(host, html){
+  host.innerHTML = '';
+  if(!html){ return; }
+  var wrap = document.createElement('div'); wrap.className='reveal mini';
+  var slides = document.createElement('div'); slides.className='slides';
+  slides.innerHTML = html; wrap.appendChild(slides); host.appendChild(wrap);
+  // scale 1280x720 stage into the thumb box
+  requestAnimationFrame(function(){
+    var s = host.clientWidth / 1280;
+    wrap.style.transform = 'scale('+s+')';
+    host.style.height = (720*s) + 'px';
+  });
+}
+function fmt(t){ t=Math.max(0,Math.floor(t||0)); var m=Math.floor(t/60), s=t%60; return m+':' + (s<10?'0':'')+s; }
+function send(act){ if(window.opener) window.opener.postMessage({type:'cmd', act:act}, '*'); }
+
+document.getElementById('pbar').addEventListener('click', function(e){
+  var b=e.target.closest('button'); if(b) send(b.dataset.act);
+});
+document.getElementById('vbox').addEventListener('click', function(e){
+  var b=e.target.closest('button'); if(b) send('v:'+b.dataset.v);
+});
+document.getElementById('vseek').addEventListener('input', function(e){
+  send('v:seek:'+ (e.target.value/1000));
+});
+
+var start=Date.now();
+setInterval(function(){
+  document.getElementById('elapsed').textContent = fmt((Date.now()-start)/1000);
+  var d=new Date(); document.getElementById('clock').textContent =
+    ((d.getHours()%12)||12)+':'+String(d.getMinutes()).padStart(2,'0');
+}, 1000);
+
+window.addEventListener('message', function(e){
+  var d=e.data||{}; if(d.type!=='state') return;
+  document.getElementById('pcur').textContent=d.cur;
+  document.getElementById('ptot').textContent=d.total;
+  var n=document.getElementById('pnotes');
+  n.innerHTML = d.notes && d.notes.trim() ? d.notes : '<div class="empty">No leader notes for this slide.</div>';
+  mini(document.getElementById('tnow'), d.curHTML);
+  mini(document.getElementById('tnext'), d.nextHTML);
+  var vb=document.getElementById('vbox');
+  if(d.video && d.video.has){
+    vb.hidden=false;
+    document.querySelector('[data-v=play]').hidden = !d.video.paused;
+    document.querySelector('[data-v=pause]').hidden = d.video.paused;
+    document.getElementById('vcur').textContent=fmt(d.video.cur);
+    document.getElementById('vdur').textContent=fmt(d.video.dur);
+    var sk=document.getElementById('vseek');
+    if(d.video.dur) sk.value = Math.round((d.video.cur/d.video.dur)*1000);
+  } else { vb.hidden=true; }
+});
+if(window.opener) window.opener.postMessage({type:'ready'}, '*');
+</script>
+</body></html>
