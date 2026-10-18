@@ -1,6 +1,6 @@
 // Service Worker for FOC - Future Operators Course
 // Caches all self-contained HTML pages for offline use
-const CACHE_NAME = 'foc-v2';
+const CACHE_NAME = 'foc-v3';
 const PAGES = [
   './',
   './index.html',
@@ -13,6 +13,7 @@ const PAGES = [
   '../courses/scripting/data-apis/Challenges5.html',
   '../courses/scripting/bash/BashTerminal.html',
   '../courses/scripting/python/PythonTerminal.html',
+  '../courses/scripting/shared/line-editor.js',
   '../courses/networking-fundamentals/subnetting.html',
   '../courses/networking-fundamentals/syntax-drill.html',
   '../courses/networking-fundamentals/hex.html',

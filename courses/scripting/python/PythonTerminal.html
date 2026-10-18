@@ -41,8 +41,8 @@ body{font-family:'JetBrains Mono',monospace,system-ui,sans-serif;background:var(
 
 <div class="loading-overlay" id="loading">
   <div class="spinner"></div>
-  <h2>Loading Python Environment</h2>
-  <p>Downloading Pyodide (CPython in WebAssembly)...</p>
+  <h2>Loading Python + IPython</h2>
+  <p>Downloading Pyodide (CPython in WebAssembly) and IPython...</p>
   <p id="load-status" style="margin-top:.5rem;color:var(--cyan);font-size:.75rem"></p>
 </div>
 
@@ -77,7 +77,8 @@ body{font-family:'JetBrains Mono',monospace,system-ui,sans-serif;background:var(
 
 <script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.js"></script>
-<script src="https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js"></script>
+<script src="../shared/line-editor.js"></script>
+<script src="https://cdn.jsdelivr.net/pyodide/v314.0.7/full/pyodide.js"></script>
 <script>
 // ============ CHALLENGES ============
 const CHALLENGES = [
@@ -123,20 +124,114 @@ const CHALLENGES = [
     tests:[['find_primes(10)','[2, 3, 5, 7]'],['find_primes(1)','[]'],['find_primes(2)','[2]'],['find_primes(20)','[2, 3, 5, 7, 11, 13, 17, 19]']]},
 ];
 
+// ============ CONFIG ============
+const PYODIDE_INDEX_URL = 'https://cdn.jsdelivr.net/pyodide/v314.0.7/full/';
+const PYTHON_PACKAGES = ['ipython'];
+const HIGHLIGHT_STYLE = 'github-dark';
+const IPYTHON_PROMPT_DOTS = '...: ';
+const MODE = Object.freeze({ CHALLENGE: 'challenge', REPL: 'repl' });
+const COMMANDS = Object.freeze({
+  TEST: 'test()', NEXT: 'next()', PREV: 'prev()', HELP: 'help()',
+  RESET: 'reset()', CLEAR: 'clear()', CHALLENGE: 'challenge()',
+});
+const CHALLENGE_JUMP = /^challenge\((\d+)\)$/;
+
 // ============ STATE ============
 let currentChallenge = 0;
 let score = 0;
 let passed = new Set();
 let pyodide = null;
+let py = null;      // Python helper functions, see PYTHON_BOOTSTRAP
 let term = null;
 let fitAddon = null;
-let currentLine = '';
-let multiLineCode = '';
-let isMultiLine = false;
-let commandHistory = [];
-let historyPos = -1;
-let ready = false;
-let currentMode = 'challenge';
+let editor = null;
+let currentMode = MODE.CHALLENGE;
+
+// ============ PYTHON BOOTSTRAP ============
+// Runs once inside Pyodide. User code runs in the IPython shell's own
+// namespace; these helpers live outside it so %who stays clean.
+const PYTHON_BOOTSTRAP = `
+import sys, json, types
+from IPython.core.interactiveshell import InteractiveShell
+from IPython.core.completer import provisionalcompleter
+from traitlets.config import Config
+from pygments import highlight as _pyg_highlight
+from pygments.lexers import PythonLexer
+from pygments.formatters import TerminalTrueColorFormatter
+from pygments.util import ClassNotFound
+
+_cfg = Config()
+_cfg.HistoryManager.hist_file = ':memory:'
+shell = InteractiveShell.instance(config=_cfg)
+shell.Completer.use_jedi = False
+
+def _out_prompt(self):
+    sys.stdout.write(self.shell.separate_out)
+    if self.do_full_cache:
+        n = self.shell.execution_count - 1
+        sys.stdout.write(f'\\x1b[31mOut[\\x1b[1;31m{n}\\x1b[0;31m]:\\x1b[0m ')
+shell.displayhook.write_output_prompt = types.MethodType(_out_prompt, shell.displayhook)
+
+_lexer = PythonLexer(stripnl=False, ensurenl=False)
+try:
+    _formatter = TerminalTrueColorFormatter(style=HIGHLIGHT_STYLE)
+except ClassNotFound:
+    _formatter = TerminalTrueColorFormatter()
+
+def execution_count():
+    return shell.execution_count
+
+async def run_cell(code):
+    try:
+        transformed, exc = shell.transform_cell(code), None
+    except Exception:
+        transformed, exc = code, sys.exc_info()
+    try:
+        await shell.run_cell_async(code, store_history=True,
+                                   transformed_cell=transformed,
+                                   preprocessing_exc_tuple=exc)
+    finally:
+        sys.stdout.flush()
+        sys.stderr.flush()
+
+def check_complete(code):
+    status, indent = shell.check_complete(code)
+    return json.dumps({"complete": status != "incomplete", "indent": indent or ""})
+
+def complete(code, cursor):
+    with provisionalcompleter():
+        found = list(shell.Completer.completions(code, cursor))
+    if not found:
+        return json.dumps(None)
+    start = min(c.start for c in found)
+    end = max(c.end for c in found)
+    matches = [code[start:c.start] + c.text + code[c.end:end] for c in found]
+    return json.dumps({"start": start, "end": end, "matches": list(dict.fromkeys(matches))})
+
+def highlight(code):
+    return _pyg_highlight(code, _lexer, _formatter)
+
+def has_callable(name):
+    return callable(shell.user_ns.get(name))
+
+def reset_name(name):
+    shell.user_ns.pop(name, None)
+
+def test_challenge(func_name, test_calls):
+    """test_calls is JSON [[call_str, expected_repr], ...]."""
+    results = []
+    for call_str, expected in json.loads(test_calls):
+        try:
+            actual = repr(eval(call_str, shell.user_ns))
+            ok = actual == expected or actual.replace("'", '"') == expected.replace("'", '"')
+            results.append({"call": call_str, "expected": expected, "actual": actual, "passed": ok, "error": None})
+        except Exception as e:
+            results.append({"call": call_str, "expected": expected, "actual": None, "passed": False, "error": f"{type(e).__name__}: {e}"})
+    return json.dumps(results)
+`;
+
+const PYTHON_HELPERS = ['execution_count', 'check_complete', 'complete', 'highlight',
+                        'has_callable', 'reset_name', 'test_challenge'];
 
 // ============ TERMINAL SETUP ============
 function initTerminal() {
@@ -170,92 +265,14 @@ function initTerminal() {
     cursorBlink: true,
     cursorStyle: 'block',
     scrollback: 5000,
+    convertEol: true,
   });
 
   fitAddon = new FitAddon.FitAddon();
   term.loadAddon(fitAddon);
   term.open(document.getElementById('terminal-container'));
   fitAddon.fit();
-
-  window.addEventListener('resize', () => fitAddon.fit());
-
-  term.onKey(({ key, domEvent }) => {
-    if (!ready) return;
-    const ev = domEvent;
-
-    if (ev.keyCode === 13) { // Enter
-      term.write('\r\n');
-      const line = currentLine;
-      currentLine = '';
-      handleLine(line);
-    } else if (ev.keyCode === 8) { // Backspace
-      if (currentLine.length > 0) {
-        currentLine = currentLine.slice(0, -1);
-        term.write('\b \b');
-      }
-    } else if (ev.keyCode === 38) { // Up arrow
-      if (commandHistory.length > 0 && historyPos > 0) {
-        historyPos--;
-        clearCurrentLine();
-        currentLine = commandHistory[historyPos];
-        term.write(currentLine);
-      }
-    } else if (ev.keyCode === 40) { // Down arrow
-      if (historyPos < commandHistory.length - 1) {
-        historyPos++;
-        clearCurrentLine();
-        currentLine = commandHistory[historyPos];
-        term.write(currentLine);
-      } else if (historyPos === commandHistory.length - 1) {
-        historyPos = commandHistory.length;
-        clearCurrentLine();
-        currentLine = '';
-      }
-    } else if (ev.keyCode === 9) { // Tab
-      ev.preventDefault();
-      currentLine += '    ';
-      term.write('    ');
-    } else if (ev.ctrlKey && ev.keyCode === 67) { // Ctrl+C
-      term.write('^C\r\n');
-      currentLine = '';
-      multiLineCode = '';
-      isMultiLine = false;
-      showPrompt();
-    } else if (ev.ctrlKey && ev.keyCode === 76) { // Ctrl+L
-      term.clear();
-      showPrompt();
-    } else if (!ev.altKey && !ev.ctrlKey && !ev.metaKey && key.length === 1) {
-      currentLine += key;
-      term.write(key);
-    }
-  });
-
-  // Enable paste
-  term.onData(data => {
-    if (data.length > 1 && !data.startsWith('\x1b')) {
-      // Pasted text
-      const cleaned = data.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-      const lines = cleaned.split('\n');
-      if (lines.length === 1) {
-        currentLine += lines[0];
-        term.write(lines[0]);
-      } else {
-        // Multi-line paste
-        for (let i = 0; i < lines.length; i++) {
-          if (i === lines.length - 1) {
-            currentLine += lines[i];
-            term.write(lines[i]);
-          } else {
-            currentLine += lines[i];
-            term.write(lines[i] + '\r\n');
-            const line = currentLine;
-            currentLine = '';
-            handleLine(line);
-          }
-        }
-      }
-    }
-  });
+  new ResizeObserver(() => fitAddon.fit()).observe(document.getElementById('terminal-container'));
 
   term.write('\x1b[36m');
   term.write('  ____        _   _                   _____                   \r\n');
@@ -265,183 +282,96 @@ function initTerminal() {
   term.write(' |_|    \\__, |\\__|_| |_|\\___/|_| |_|  |_|\\___|_|  |_| |_| |_|\r\n');
   term.write('        |___/                                                 \r\n');
   term.write('\x1b[0m\r\n');
-  term.write('\x1b[33mLoading Python (Pyodide)...\x1b[0m\r\n');
+  term.write('\x1b[33mLoading Python + IPython (Pyodide)...\x1b[0m\r\n');
 }
 
-function clearCurrentLine() {
-  while (currentLine.length > 0) {
-    term.write('\b \b');
-    currentLine = currentLine.slice(0, -1);
-  }
+function inPrompt() {
+  const n = py.execution_count();
+  return `\x1b[32mIn [\x1b[1;32m${n}\x1b[0;32m]: \x1b[0m`;
 }
 
-function showPrompt() {
-  const prompt = isMultiLine ? '\x1b[36m... \x1b[0m' : '\x1b[36m>>> \x1b[0m';
-  term.write(prompt);
+function continuationPrompt(width) {
+  return '\x1b[32m' + ' '.repeat(Math.max(0, width - IPYTHON_PROMPT_DOTS.length)) + IPYTHON_PROMPT_DOTS + '\x1b[0m';
+}
+
+function initEditor() {
+  editor = new LineEditor(term, {
+    prompt: inPrompt,
+    continuationPrompt,
+    multiline: true,
+    isComplete: code => JSON.parse(py.check_complete(code)),
+    complete: (code, cursor) => JSON.parse(py.complete(code, cursor)),
+    highlight: code => py.highlight(code),
+    onSubmit: handleCell,
+  });
 }
 
 function writeLine(text) {
-  term.write(text.replace(/\n/g, '\r\n'));
-  if (!text.endsWith('\n')) term.write('\r\n');
+  editor ? editor.print(text) : term.write(text + '\r\n');
 }
 
 // ============ PYTHON EXECUTION ============
+function setStatus(text) {
+  document.getElementById('load-status').textContent = text;
+}
+
 async function initPyodide() {
-  const status = document.getElementById('load-status');
-  status.textContent = 'Initializing Pyodide...';
+  setStatus('Initializing Pyodide...');
+  pyodide = await loadPyodide({ indexURL: PYODIDE_INDEX_URL });
 
-  pyodide = await loadPyodide({
-    indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.24.1/full/'
-  });
+  const decoder = new TextDecoder();
+  const writer = {
+    isatty: true,
+    write: buf => { term.write(decoder.decode(buf, { stream: true })); return buf.length; },
+    getTerminalSize: () => ({ rows: term.rows, columns: term.cols }),
+  };
+  pyodide.setStdout(writer);
+  pyodide.setStderr(writer);
 
-  status.textContent = 'Setting up Python environment...';
+  setStatus('Installing IPython...');
+  await pyodide.loadPackage(PYTHON_PACKAGES);
 
-  // Set up Python helpers
-  await pyodide.runPythonAsync(`
-import sys, traceback, json
-from io import StringIO
+  setStatus('Starting IPython shell...');
+  pyodide.globals.set('HIGHLIGHT_STYLE', HIGHLIGHT_STYLE);
+  await pyodide.runPythonAsync(PYTHON_BOOTSTRAP);
+  py = Object.fromEntries(PYTHON_HELPERS.map(name => [name, pyodide.globals.get(name)]));
 
-def _run_code(code):
-    """Execute code and return (output, error) as JSON."""
-    buf = StringIO()
-    old_stdout = sys.stdout
-    old_stderr = sys.stderr
-    sys.stdout = buf
-    sys.stderr = buf
-    result_repr = None
-    error = None
-    try:
-        try:
-            compiled = compile(code, '<input>', 'eval')
-            result = eval(compiled)
-            if result is not None:
-                result_repr = repr(result)
-        except SyntaxError:
-            exec(compile(code, '<input>', 'exec'), globals())
-    except Exception:
-        error = traceback.format_exc()
-    finally:
-        sys.stdout = old_stdout
-        sys.stderr = old_stderr
-    output = buf.getvalue()
-    return json.dumps({"output": output, "result": result_repr, "error": error})
-
-def _test_challenge(func_name, test_calls):
-    """Run test cases. test_calls is JSON [[call_str, expected_repr], ...]."""
-    import json
-    tests = json.loads(test_calls)
-    results = []
-    for item in tests:
-        call_str, expected = item[0], item[1]
-        buf = StringIO()
-        old_stdout = sys.stdout
-        sys.stdout = buf
-        try:
-            result = eval(call_str)
-            actual = repr(result)
-            sys.stdout = old_stdout
-            stdout = buf.getvalue()
-            # Normalize quote style for dict/string comparison
-            passed = (actual == expected) or (actual.replace("'", '"') == expected.replace("'", '"'))
-            results.append({"call": call_str, "expected": expected, "actual": actual, "passed": passed, "error": None})
-        except Exception as e:
-            sys.stdout = old_stdout
-            results.append({"call": call_str, "expected": expected, "actual": None, "passed": False, "error": str(e)})
-    return json.dumps(results)
-  `);
-
-  // Ready
   document.getElementById('loading').style.display = 'none';
-  ready = true;
-
-  term.write('\x1b[32mPython ' + pyodide.runPython('sys.version.split()[0]') + ' (Pyodide) ready!\x1b[0m\r\n');
+  const versions = pyodide.runPython('import IPython; f"Python {sys.version.split()[0]} | IPython {IPython.__version__}"');
+  term.write(`\x1b[32m${versions} (Pyodide) ready!\x1b[0m\r\n`);
   term.write('\x1b[90mType Python code directly. Use \x1b[36mtest()\x1b[90m to check your solution.\x1b[0m\r\n');
-  term.write('\x1b[90mCommands: \x1b[36mtest()\x1b[90m  \x1b[36mnext()\x1b[90m  \x1b[36mprev()\x1b[90m  \x1b[36mhelp()\x1b[90m  \x1b[36mreset()\x1b[90m  \x1b[36mclear()\x1b[0m\r\n\r\n');
+  term.write('\x1b[90mCommands: \x1b[36mtest()\x1b[90m  \x1b[36mnext()\x1b[90m  \x1b[36mprev()\x1b[90m  \x1b[36mhelp()\x1b[90m  \x1b[36mreset()\x1b[90m  \x1b[36mclear()\x1b[0m\r\n');
+  term.write('\x1b[90mIPython: \x1b[36mobj?\x1b[90m  \x1b[36m%timeit\x1b[90m  \x1b[36m%who\x1b[90m  \x1b[36mTab\x1b[90m completes  \x1b[36mAlt+Enter\x1b[90m new line\x1b[0m\r\n');
+  initEditor();
   showChallengeInTerminal();
-  showPrompt();
+  editor.prompt();
   term.focus();
 }
 
 async function executePython(code) {
-  try {
-    const resultJson = pyodide.runPython(`_run_code(${JSON.stringify(code)})`);
-    const result = JSON.parse(resultJson);
-
-    if (result.output) {
-      term.write(result.output.replace(/\n/g, '\r\n'));
-      if (!result.output.endsWith('\n')) term.write('\r\n');
-    }
-    if (result.result) {
-      term.write(result.result + '\r\n');
-    }
-    if (result.error) {
-      // Show just the last few lines of traceback
-      const lines = result.error.trim().split('\n');
-      const shortened = lines.length > 4 ? lines.slice(-3) : lines;
-      term.write('\x1b[31m' + shortened.join('\r\n') + '\x1b[0m\r\n');
-    }
-  } catch (e) {
-    term.write('\x1b[31mError: ' + e.message + '\x1b[0m\r\n');
-  }
+  pyodide.globals.set('_foc_src', code);
+  await pyodide.runPythonAsync('await run_cell(_foc_src)');
 }
 
-// ============ LINE HANDLING ============
-async function handleLine(line) {
-  if (line.trim().length > 0) {
-    commandHistory.push(line);
-    historyPos = commandHistory.length;
-  }
+// ============ CELL HANDLING ============
+const TERMINAL_COMMANDS = {
+  [COMMANDS.TEST]: () => runTests(),
+  [COMMANDS.NEXT]: () => nextChallenge(),
+  [COMMANDS.PREV]: () => prevChallenge(),
+  [COMMANDS.HELP]: () => showHelp(),
+  [COMMANDS.RESET]: () => resetChallenge(),
+  [COMMANDS.CLEAR]: () => editor.clearScreen(),
+  [COMMANDS.CHALLENGE]: () => showChallengeInTerminal(),
+};
 
-  // Special commands (only when not in multi-line mode)
-  if (!isMultiLine) {
-    const trimmed = line.trim();
-    if (trimmed === 'test()') { await runTests(); showPrompt(); return; }
-    if (trimmed === 'next()') { nextChallenge(); showPrompt(); return; }
-    if (trimmed === 'prev()') { prevChallenge(); showPrompt(); return; }
-    if (trimmed === 'help()') { showHelp(); showPrompt(); return; }
-    if (trimmed === 'reset()') { resetChallenge(); showPrompt(); return; }
-    if (trimmed === 'clear()') { term.clear(); showPrompt(); return; }
-    if (trimmed === 'challenge()') { showChallengeInTerminal(); showPrompt(); return; }
-    if (trimmed.match(/^challenge\((\d+)\)$/)) {
-      const n = parseInt(RegExp.$1) - 1;
-      if (n >= 0 && n < CHALLENGES.length) { currentChallenge = n; updateChallengePanel(); showChallengeInTerminal(); }
-      else writeLine('\x1b[31mChallenge number out of range (1-' + CHALLENGES.length + ')\x1b[0m');
-      showPrompt(); return;
-    }
-  }
-
-  // Multi-line handling
-  if (isMultiLine) {
-    if (line.trim() === '' && !multiLineCode.trim().endsWith(':')) {
-      isMultiLine = false;
-      const code = multiLineCode;
-      multiLineCode = '';
-      await executePython(code);
-      showPrompt();
-    } else {
-      multiLineCode += line + '\n';
-      showPrompt();
-    }
-    return;
-  }
-
-  // Check if this line starts a multi-line block
-  if (line.trim().endsWith(':') || line.trim().startsWith('@')) {
-    isMultiLine = true;
-    multiLineCode = line + '\n';
-    showPrompt();
-    return;
-  }
-
-  // Empty line
-  if (line.trim() === '') {
-    showPrompt();
-    return;
-  }
-
-  // Single line execution
-  await executePython(line);
-  showPrompt();
+async function handleCell(code) {
+  const trimmed = code.trim();
+  if (trimmed === '') return;
+  if (TERMINAL_COMMANDS[trimmed]) { TERMINAL_COMMANDS[trimmed](); return; }
+  const jump = trimmed.match(CHALLENGE_JUMP);
+  if (jump) { jumpToChallenge(parseInt(jump[1], 10) - 1); return; }
+  await executePython(code);
+  term.write('\r\n');
 }
 
 // ============ CHALLENGE SYSTEM ============
@@ -458,147 +388,144 @@ function updateChallengePanel() {
 function showChallengeInTerminal() {
   const ch = CHALLENGES[currentChallenge];
   const marker = passed.has(currentChallenge) ? '\x1b[32m [PASSED]\x1b[0m' : '';
-  writeLine('');
-  writeLine(`\x1b[36m--- Challenge ${currentChallenge + 1}/${CHALLENGES.length}: ${ch.name}(...) ---\x1b[0m${marker}`);
-  writeLine(`\x1b[90m${ch.desc}\x1b[0m`);
-  writeLine(`\x1b[33m${ch.sig}\x1b[0m`);
-  writeLine(`\x1b[90mTests: ${ch.tests.map(t => t[0] + '==' + t[1]).join(' | ')}\x1b[0m`);
-  writeLine('');
+  writeLine([
+    '',
+    `\x1b[36m--- Challenge ${currentChallenge + 1}/${CHALLENGES.length}: ${ch.name}(...) ---\x1b[0m${marker}`,
+    `\x1b[90m${ch.desc}\x1b[0m`,
+    `\x1b[33m${ch.sig}\x1b[0m`,
+    `\x1b[90mTests: ${ch.tests.map(t => t[0] + '==' + t[1]).join(' | ')}\x1b[0m`,
+    '',
+  ].join('\n'));
 }
 
-async function runTests() {
+function runTests() {
   const ch = CHALLENGES[currentChallenge];
-
-  // Check if function exists
-  try {
-    const exists = pyodide.runPython(`callable(${ch.name}) if '${ch.name}' in dir() else False`);
-    if (!exists) {
-      writeLine(`\x1b[31mFunction '${ch.name}' not found. Define it first!\x1b[0m`);
-      return;
-    }
-  } catch (e) {
+  if (!py.has_callable(ch.name)) {
     writeLine(`\x1b[31mFunction '${ch.name}' not found. Define it first!\x1b[0m`);
     return;
   }
 
-  const testsJson = JSON.stringify(ch.tests);
-  const resultJson = pyodide.runPython(`_test_challenge("${ch.name}", ${JSON.stringify(testsJson)})`);
-  const results = JSON.parse(resultJson);
+  const results = JSON.parse(py.test_challenge(ch.name, JSON.stringify(ch.tests)));
+  const lines = results.map(r => r.passed
+    ? `  \x1b[32m  ${r.call} == ${r.expected}\x1b[0m`
+    : r.error
+      ? `  \x1b[31m  ${r.call} raised: ${r.error}\x1b[0m`
+      : `  \x1b[31m  ${r.call} returned ${r.actual}, expected ${r.expected}\x1b[0m`);
+  const allPassed = results.every(r => r.passed);
 
-  writeLine('');
-  writeLine(`\x1b[36mTesting ${ch.name}()...\x1b[0m`);
-
-  let allPassed = true;
-  for (const r of results) {
-    if (r.passed) {
-      writeLine(`  \x1b[32m  ${r.call} == ${r.expected}\x1b[0m`);
-    } else if (r.error) {
-      writeLine(`  \x1b[31m  ${r.call} raised: ${r.error}\x1b[0m`);
-      allPassed = false;
-    } else {
-      writeLine(`  \x1b[31m  ${r.call} returned ${r.actual}, expected ${r.expected}\x1b[0m`);
-      allPassed = false;
-    }
+  if (allPassed && !passed.has(currentChallenge)) {
+    passed.add(currentChallenge);
+    score++;
+    document.getElementById('score').textContent = score;
   }
+  writeLine([
+    '',
+    `\x1b[36mTesting ${ch.name}()...\x1b[0m`,
+    ...lines,
+    '',
+    allPassed
+      ? '\x1b[32m  All tests passed! Type next() for the next challenge.\x1b[0m'
+      : '\x1b[33m  Some tests failed. Keep trying!\x1b[0m',
+    '',
+  ].join('\n'));
+}
 
-  if (allPassed) {
-    if (!passed.has(currentChallenge)) {
-      passed.add(currentChallenge);
-      score++;
-      document.getElementById('score').textContent = score;
-    }
-    writeLine(`\x1b[32m\r\n  All tests passed! Type next() for the next challenge.\x1b[0m`);
-  } else {
-    writeLine(`\x1b[33m\r\n  Some tests failed. Keep trying!\x1b[0m`);
+function jumpToChallenge(n) {
+  if (n < 0 || n >= CHALLENGES.length) {
+    writeLine(`\x1b[31mChallenge number out of range (1-${CHALLENGES.length})\x1b[0m`);
+    return;
   }
-  writeLine('');
+  currentChallenge = n;
+  updateChallengePanel();
+  showChallengeInTerminal();
 }
 
 function nextChallenge() {
-  if (currentChallenge < CHALLENGES.length - 1) {
-    currentChallenge++;
-    updateChallengePanel();
-    showChallengeInTerminal();
-  } else {
-    writeLine('\x1b[32mYou\'ve reached the last challenge! Score: ' + score + '/' + CHALLENGES.length + '\x1b[0m');
-    if (score === CHALLENGES.length) {
-      writeLine('\x1b[33m  Perfect score! Outstanding work!\x1b[0m');
-    }
-  }
+  if (currentChallenge < CHALLENGES.length - 1) { jumpToChallenge(currentChallenge + 1); return; }
+  writeLine('\x1b[32mYou\'ve reached the last challenge! Score: ' + score + '/' + CHALLENGES.length + '\x1b[0m');
+  if (score === CHALLENGES.length) writeLine('\x1b[33m  Perfect score! Outstanding work!\x1b[0m');
 }
 
 function prevChallenge() {
-  if (currentChallenge > 0) {
-    currentChallenge--;
-    updateChallengePanel();
-    showChallengeInTerminal();
-  } else {
-    writeLine('\x1b[90mAlready at the first challenge.\x1b[0m');
-  }
+  if (currentChallenge > 0) { jumpToChallenge(currentChallenge - 1); return; }
+  writeLine('\x1b[90mAlready at the first challenge.\x1b[0m');
 }
 
 function resetChallenge() {
   const ch = CHALLENGES[currentChallenge];
-  try { pyodide.runPython(`del ${ch.name}`); } catch (e) {}
+  py.reset_name(ch.name);
   writeLine(`\x1b[90mReset: ${ch.name} has been cleared.\x1b[0m`);
   showChallengeInTerminal();
 }
 
 function showHelp() {
-  writeLine('');
-  writeLine('\x1b[36m=== Python Terminal Help ===\x1b[0m');
-  writeLine('\x1b[90mThis is a real Python environment running in your browser via Pyodide.\x1b[0m');
-  writeLine('');
-  writeLine('\x1b[33mChallenge Commands:\x1b[0m');
-  writeLine('  \x1b[36mtest()\x1b[0m        Run tests for the current challenge');
-  writeLine('  \x1b[36mnext()\x1b[0m        Go to the next challenge');
-  writeLine('  \x1b[36mprev()\x1b[0m        Go to the previous challenge');
-  writeLine('  \x1b[36mchallenge()\x1b[0m   Show current challenge details');
-  writeLine('  \x1b[36mchallenge(5)\x1b[0m  Jump to challenge #5');
-  writeLine('  \x1b[36mreset()\x1b[0m       Clear your current function');
-  writeLine('');
-  writeLine('\x1b[33mTerminal:\x1b[0m');
-  writeLine('  \x1b[36mclear()\x1b[0m       Clear terminal screen');
-  writeLine('  \x1b[36mCtrl+C\x1b[0m        Cancel current input');
-  writeLine('  \x1b[36mCtrl+L\x1b[0m        Clear screen');
-  writeLine('  \x1b[36mUp/Down\x1b[0m       Command history');
-  writeLine('');
-  writeLine('\x1b[33mWorkflow:\x1b[0m');
-  writeLine('  1. Read the challenge in the panel above');
-  writeLine('  2. Define your function (press Enter twice after the body)');
-  writeLine('  3. Type \x1b[36mtest()\x1b[0m to check your solution');
-  writeLine('  4. Type \x1b[36mnext()\x1b[0m to advance');
-  writeLine('');
-  writeLine('\x1b[33mTip:\x1b[0m You can also use this as a free Python REPL!');
-  writeLine('  Try: 2 + 2, "hello".upper(), [x**2 for x in range(5)]');
-  writeLine('');
+  writeLine([
+    '',
+    '\x1b[36m=== Python Terminal Help ===\x1b[0m',
+    '\x1b[90mA real IPython shell running in your browser via Pyodide.\x1b[0m',
+    '',
+    '\x1b[33mChallenge Commands:\x1b[0m',
+    '  \x1b[36mtest()\x1b[0m        Run tests for the current challenge',
+    '  \x1b[36mnext()\x1b[0m        Go to the next challenge',
+    '  \x1b[36mprev()\x1b[0m        Go to the previous challenge',
+    '  \x1b[36mchallenge()\x1b[0m   Show current challenge details',
+    '  \x1b[36mchallenge(5)\x1b[0m  Jump to challenge #5',
+    '  \x1b[36mreset()\x1b[0m       Clear your current function',
+    '',
+    '\x1b[33mIPython:\x1b[0m',
+    '  \x1b[36mobj?\x1b[0m / \x1b[36mobj??\x1b[0m   Help / source for obj',
+    '  \x1b[36m%timeit expr\x1b[0m  Time an expression',
+    '  \x1b[36m%who\x1b[0m          List your variables',
+    '  \x1b[36m_\x1b[0m, \x1b[36mOut[n]\x1b[0m     Previous results',
+    '',
+    '\x1b[33mEditing:\x1b[0m',
+    '  \x1b[36mLeft/Right\x1b[0m    Move cursor   \x1b[36mCtrl+Left/Right\x1b[0m  Move by word',
+    '  \x1b[36mHome/End\x1b[0m      Line start/end (also \x1b[36mCtrl+A/E\x1b[0m)',
+    '  \x1b[36mUp/Down\x1b[0m       Move between lines, then history (type a prefix to filter)',
+    '  \x1b[36mTab\x1b[0m           Complete names, or indent',
+    '  \x1b[36mShift+Tab\x1b[0m     Dedent',
+    '  \x1b[36mAlt+Enter\x1b[0m     Insert a new line without running',
+    '  \x1b[36mCtrl+K/U/W\x1b[0m    Delete to end / to start / previous word   \x1b[36mCtrl+Y\x1b[0m  Paste deleted text',
+    '  \x1b[36mCtrl+C\x1b[0m        Cancel input   \x1b[36mCtrl+L\x1b[0m  Clear screen',
+    '',
+    '\x1b[33mWorkflow:\x1b[0m',
+    '  1. Read the challenge in the panel above',
+    '  2. Define your function; Enter on a blank line finishes the block',
+    '  3. Type \x1b[36mtest()\x1b[0m to check your solution',
+    '  4. Type \x1b[36mnext()\x1b[0m to advance',
+    '',
+  ].join('\n'));
 }
 
 function setMode(mode) {
   currentMode = mode;
-  document.getElementById('mode-challenge').classList.toggle('active', mode === 'challenge');
-  document.getElementById('mode-repl').classList.toggle('active', mode === 'repl');
-  document.getElementById('challenge-panel').style.display = mode === 'challenge' ? 'flex' : 'none';
-  setTimeout(() => fitAddon.fit(), 50);
+  document.getElementById('mode-challenge').classList.toggle('active', mode === MODE.CHALLENGE);
+  document.getElementById('mode-repl').classList.toggle('active', mode === MODE.REPL);
+  document.getElementById('challenge-panel').style.display = mode === MODE.CHALLENGE ? 'flex' : 'none';
+  term.focus();
 }
 
 // ============ INIT ============
 function showLoadError(msg) {
   const el = document.getElementById('loading');
+  el.style.display = 'flex';
   el.innerHTML = `<h2 style="color:var(--red);">Failed to Load</h2>
     <p style="color:var(--muted);max-width:400px;line-height:1.6;">${msg}</p>
     <p style="color:var(--muted);margin-top:1rem;font-size:.75rem;">Check the browser console (F12) for details.</p>
     <a href="../../../hub/index.html" style="margin-top:1rem;padding:.5rem 1rem;background:var(--cyan);color:#000;border-radius:6px;text-decoration:none;font-size:.82rem;">&larr; Back to Home</a>`;
 }
 
-if (typeof Terminal === 'undefined') {
+if (typeof Terminal === 'undefined' || typeof LineEditor === 'undefined') {
   showLoadError('Could not load the terminal library (xterm.js) from CDN. This may be caused by a network issue, ad blocker, or firewall. Try disabling extensions or using a different network.');
 } else if (typeof loadPyodide === 'undefined') {
   showLoadError('Could not load the Python runtime (Pyodide) from CDN. This is a ~30MB download. Try a faster connection or check if cdn.jsdelivr.net is accessible.');
 } else {
   updateChallengePanel();
   initTerminal();
-  initPyodide();
+  initPyodide().catch(err => {
+    console.error(err);
+    showLoadError('Python started but IPython failed to initialize: ' + String(err && err.message || err).split('\n').pop());
+  });
 }
 </script>
 </body>

@@ -67,6 +67,7 @@ body{font-family:'JetBrains Mono',monospace,system-ui,sans-serif;background:var(
 
 <script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.js"></script>
+<script src="../shared/line-editor.js"></script>
 <script>
 // ============ CHALLENGES ============
 const CHALLENGES = [
@@ -198,11 +199,9 @@ let score = 0;
 let passedSet = new Set();
 let term = null;
 let fitAddon = null;
-let currentLine = '';
+let editor = null;
 let multiLineCode = '';
 let isMultiLine = false;
-let commandHistory = [];
-let historyPos = -1;
 let userFunctions = {};
 let currentMode = 'challenge';
 
@@ -376,7 +375,7 @@ function executeCommand(cmd, args, fullLine) {
       return known.includes(args[0]) ? `/usr/bin/${args[0]}\n` : `${args[0]} not found\n`;
     }
     case 'help': showHelp(); return '';
-    case 'clear': term.clear(); return '';
+    case 'clear': editor.clearScreen(); return '';
     default:
       // Check if it's a user-defined function call
       if (userFunctions[cmd]) {
@@ -741,81 +740,12 @@ function initTerminal() {
   term.open(document.getElementById('terminal-container'));
   fitAddon.fit();
 
-  window.addEventListener('resize', () => fitAddon.fit());
+  new ResizeObserver(() => fitAddon.fit()).observe(document.getElementById('terminal-container'));
 
-  term.onKey(({ key, domEvent }) => {
-    const ev = domEvent;
-
-    if (ev.keyCode === 13) { // Enter
-      term.write('\r\n');
-      const line = currentLine;
-      currentLine = '';
-      handleLine(line);
-    } else if (ev.keyCode === 8) { // Backspace
-      if (currentLine.length > 0) {
-        currentLine = currentLine.slice(0, -1);
-        term.write('\b \b');
-      }
-    } else if (ev.keyCode === 38) { // Up
-      if (commandHistory.length > 0 && historyPos > 0) {
-        historyPos--;
-        clearCurrentLine();
-        currentLine = commandHistory[historyPos];
-        term.write(currentLine);
-      }
-    } else if (ev.keyCode === 40) { // Down
-      if (historyPos < commandHistory.length - 1) {
-        historyPos++;
-        clearCurrentLine();
-        currentLine = commandHistory[historyPos];
-        term.write(currentLine);
-      } else if (historyPos === commandHistory.length - 1) {
-        historyPos = commandHistory.length;
-        clearCurrentLine();
-        currentLine = '';
-      }
-    } else if (ev.keyCode === 9) { // Tab
-      ev.preventDefault();
-      currentLine += '  ';
-      term.write('  ');
-    } else if (ev.ctrlKey && ev.keyCode === 67) { // Ctrl+C
-      term.write('^C\r\n');
-      currentLine = '';
-      multiLineCode = '';
-      isMultiLine = false;
-      showPrompt();
-    } else if (ev.ctrlKey && ev.keyCode === 76) { // Ctrl+L
-      term.clear();
-      showPrompt();
-    } else if (!ev.altKey && !ev.ctrlKey && !ev.metaKey && key.length === 1) {
-      currentLine += key;
-      term.write(key);
-    }
-  });
-
-  // Enable paste
-  term.onData(data => {
-    if (data.length > 1 && !data.startsWith('\x1b')) {
-      const cleaned = data.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-      const lines = cleaned.split('\n');
-      if (lines.length === 1) {
-        currentLine += lines[0];
-        term.write(lines[0]);
-      } else {
-        for (let i = 0; i < lines.length; i++) {
-          if (i === lines.length - 1) {
-            currentLine += lines[i];
-            term.write(lines[i]);
-          } else {
-            currentLine += lines[i];
-            term.write(lines[i] + '\r\n');
-            const line = currentLine;
-            currentLine = '';
-            handleLine(line);
-          }
-        }
-      }
-    }
+  editor = new LineEditor(term, {
+    prompt: promptString,
+    indentUnit: '  ',
+    onSubmit: handleLine,
   });
 
   // Banner
@@ -830,50 +760,36 @@ function initTerminal() {
   term.write('\x1b[90mDefine functions, then use \x1b[36mtest\x1b[90m to check your solution.\x1b[0m\r\n');
   term.write('\x1b[90mCommands: \x1b[36mtest\x1b[90m  \x1b[36mnext\x1b[90m  \x1b[36mprev\x1b[90m  \x1b[36mhelp\x1b[90m  \x1b[36mreset\x1b[90m  \x1b[36mclear\x1b[0m\r\n\r\n');
   showChallengeInTerminal();
-  showPrompt();
+  editor.prompt();
   term.focus();
 }
 
-function clearCurrentLine() {
-  while (currentLine.length > 0) {
-    term.write('\b \b');
-    currentLine = currentLine.slice(0, -1);
-  }
-}
-
-function showPrompt() {
-  const prompt = isMultiLine ? '\x1b[36m> \x1b[0m' : `\x1b[32m${envVars.USER}@${envVars.HOSTNAME}\x1b[0m:\x1b[34m${cwd}\x1b[0m$ `;
-  term.write(prompt);
+function promptString() {
+  return isMultiLine ? '\x1b[36m> \x1b[0m' : `\x1b[32m${envVars.USER}@${envVars.HOSTNAME}\x1b[0m:\x1b[34m${cwd}\x1b[0m$ `;
 }
 
 function writeLine(text) {
-  term.write(text.replace(/\n/g, '\r\n'));
-  if (!text.endsWith('\n')) term.write('\r\n');
+  editor ? editor.print(text) : term.write(text.replace(/\n/g, '\r\n') + '\r\n');
 }
 
 // ============ LINE HANDLING ============
 function handleLine(line) {
-  if (line.trim().length > 0) {
-    commandHistory.push(line);
-    historyPos = commandHistory.length;
-  }
-
   // Special terminal commands
   if (!isMultiLine) {
     const trimmed = line.trim();
-    if (trimmed === 'test') { runTests(); showPrompt(); return; }
-    if (trimmed === 'next') { nextChallenge(); showPrompt(); return; }
-    if (trimmed === 'prev') { prevChallenge(); showPrompt(); return; }
-    if (trimmed === 'help') { showHelp(); showPrompt(); return; }
-    if (trimmed === 'reset') { resetChallenge(); showPrompt(); return; }
-    if (trimmed === 'clear') { term.clear(); showPrompt(); return; }
-    if (trimmed === 'challenge') { showChallengeInTerminal(); showPrompt(); return; }
-    if (trimmed === 'hint') { showHint(); showPrompt(); return; }
+    if (trimmed === 'test') { runTests(); return; }
+    if (trimmed === 'next') { nextChallenge(); return; }
+    if (trimmed === 'prev') { prevChallenge(); return; }
+    if (trimmed === 'help') { showHelp(); return; }
+    if (trimmed === 'reset') { resetChallenge(); return; }
+    if (trimmed === 'clear') { editor.clearScreen(); return; }
+    if (trimmed === 'challenge') { showChallengeInTerminal(); return; }
+    if (trimmed === 'hint') { showHint(); return; }
     if (trimmed.match(/^challenge\s+(\d+)$/)) {
       const n = parseInt(RegExp.$1) - 1;
       if (n >= 0 && n < CHALLENGES.length) { currentChallenge = n; updateChallengePanel(); showChallengeInTerminal(); }
       else writeLine(`\x1b[31mChallenge number out of range (1-${CHALLENGES.length})\x1b[0m`);
-      showPrompt(); return;
+      return;
     }
   }
 
@@ -890,9 +806,6 @@ function handleLine(line) {
         writeLine(`\x1b[31mFailed to parse function.\x1b[0m`);
       }
       multiLineCode = '';
-      showPrompt();
-    } else {
-      showPrompt();
     }
     return;
   }
@@ -908,16 +821,14 @@ function handleLine(line) {
         userFunctions[func.name] = func;
         writeLine(`\x1b[32mFunction '${func.name}' defined.\x1b[0m`);
       }
-      showPrompt();
       return;
     }
     multiLineCode = line + '\n';
-    showPrompt();
     return;
   }
 
   // Empty line
-  if (line.trim() === '') { showPrompt(); return; }
+  if (line.trim() === '') return;
 
   // Execute command
   const output = simulateBash(line);
@@ -925,7 +836,6 @@ function handleLine(line) {
     term.write(output.replace(/\n/g, '\r\n'));
     if (!output.endsWith('\n')) term.write('\r\n');
   }
-  showPrompt();
 }
 
 // ============ CHALLENGE SYSTEM ============
@@ -1109,7 +1019,7 @@ function setMode(mode) {
   document.getElementById('mode-challenge').classList.toggle('active', mode === 'challenge');
   document.getElementById('mode-repl').classList.toggle('active', mode === 'repl');
   document.getElementById('challenge-panel').style.display = mode === 'challenge' ? 'flex' : 'none';
-  setTimeout(() => fitAddon.fit(), 50);
+  term.focus();
 }
 
 // ============ INIT ============
