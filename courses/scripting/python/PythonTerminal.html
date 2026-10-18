@@ -10,22 +10,21 @@
 :root{--bg:#0a0e17;--card:#141925;--border:#2a3650;--text:#e2e8f0;--muted:#64748b;--cyan:#06b6d4;--green:#10b981;--red:#ef4444;--blue:#3b82f6;--amber:#f59e0b}
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'JetBrains Mono',monospace,system-ui,sans-serif;background:var(--bg);color:var(--text);height:100vh;display:flex;flex-direction:column;overflow:hidden}
-.top-bar{display:flex;justify-content:space-between;align-items:center;padding:.5rem 1rem;border-bottom:1px solid var(--border);background:var(--card);flex-shrink:0}
+.top-bar{display:flex;justify-content:space-between;align-items:center;padding:.25rem 1rem;border-bottom:1px solid var(--border);background:var(--card);flex-shrink:0}
 .top-bar a{color:var(--muted);text-decoration:none;font-size:.8rem}
 .top-bar a:hover{color:var(--cyan)}
 .top-bar h1{font-size:1rem;color:var(--cyan)}
 .top-bar .score-area{font-size:.75rem;color:var(--muted)}
 .top-bar .score-area .v{color:var(--cyan);font-weight:700}
-.challenge-panel{background:var(--card);border-bottom:1px solid var(--border);padding:.6rem 1rem;flex-shrink:0;display:flex;gap:1rem;align-items:flex-start;min-height:0}
-.challenge-panel .ch-info{flex:1;min-width:0}
-.challenge-panel .ch-title{font-size:.82rem;font-weight:700;color:var(--cyan);margin-bottom:.25rem}
-.challenge-panel .ch-desc{font-size:.75rem;color:var(--muted);line-height:1.4}
-.challenge-panel .ch-sig{font-size:.75rem;color:#c9d1d9;background:#0d1117;padding:.4rem .6rem;border-radius:4px;margin-top:.3rem;white-space:pre;overflow-x:auto}
-.challenge-panel .ch-tests{font-size:.7rem;color:var(--muted);margin-top:.25rem}
-.challenge-panel .ch-nav{display:flex;gap:.3rem;flex-shrink:0;align-items:center}
-.ch-nav button{font-family:inherit;font-size:.72rem;padding:.3rem .6rem;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--muted);cursor:pointer}
-.ch-nav button:hover{border-color:var(--cyan);color:var(--cyan)}
-.ch-nav .ch-counter{font-size:.72rem;color:var(--muted);white-space:nowrap}
+.challenge-panel{background:var(--card);border-bottom:1px solid var(--border);padding:.25rem 1rem;flex-shrink:0;display:flex;flex-wrap:wrap;gap:.25rem .7rem;align-items:center;font-size:.75rem}
+.ch-counter{color:var(--muted);white-space:nowrap}
+.ch-counter.passed{color:var(--green)}
+.ch-sig{color:var(--amber);white-space:nowrap}
+.ch-desc{flex:1;min-width:0;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ch-tests{flex-basis:100%;color:var(--muted);font-size:.7rem;overflow-x:auto;white-space:nowrap}
+.ch-tests[hidden]{display:none}
+.challenge-panel button{font-family:inherit;font-size:.7rem;padding:.1rem .5rem;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--muted);cursor:pointer}
+.challenge-panel button:hover,.challenge-panel button.active{border-color:var(--cyan);color:var(--cyan)}
 #terminal-container{flex:1;min-height:0;min-width:0;padding:2px}
 .workspace{flex:1;min-height:0;display:flex}
 .splitter{width:5px;flex-shrink:0;cursor:col-resize;background:var(--border)}
@@ -117,18 +116,13 @@ body.vx-hidden #var-pane,body.vx-hidden .splitter{display:none}
 </div>
 
 <div class="challenge-panel" id="challenge-panel">
-  <div class="ch-info">
-    <div class="ch-title" id="ch-title">Challenge 1: add(a, b)</div>
-    <div class="ch-desc" id="ch-desc">Return the sum of a and b</div>
-    <div class="ch-sig" id="ch-sig">def add(a, b):
-    # your code here</div>
-    <div class="ch-tests" id="ch-tests">add(2,3)==5  add(-1,1)==0  add(100,250)==350</div>
-  </div>
-  <div class="ch-nav">
-    <span class="ch-counter" id="ch-counter">1 / 20</span>
-    <button onclick="prevChallenge()">&laquo; Prev</button>
-    <button onclick="nextChallenge()">Next &raquo;</button>
-  </div>
+  <span class="ch-counter" id="ch-counter">1/20</span>
+  <code class="ch-sig" id="ch-sig">def add(a, b):</code>
+  <span class="ch-desc" id="ch-desc">Return the sum of a and b</span>
+  <button id="ch-tests-toggle" onclick="toggleTests()" title="Show the test cases">tests</button>
+  <button onclick="prevChallenge()" title="Previous challenge">&laquo;</button>
+  <button onclick="nextChallenge()" title="Next challenge">&raquo;</button>
+  <div class="ch-tests" id="ch-tests" hidden></div>
 </div>
 
 <div class="workspace" id="workspace">
@@ -348,15 +342,6 @@ function initTerminal() {
   fitAddon.fit();
   new ResizeObserver(() => fitAddon.fit()).observe(document.getElementById('terminal-container'));
 
-  term.write('\x1b[36m');
-  term.write('  ____        _   _                   _____                   \r\n');
-  term.write(' |  _ \\ _   _| |_| |__   ___  _ __  |_   _|__ _ __ _ __ ___  \r\n');
-  term.write(' | |_) | | | | __| \'_ \\ / _ \\| \'_ \\   | |/ _ \\ \'__| \'_ ` _ \\ \r\n');
-  term.write(' |  __/| |_| | |_| | | | (_) | | | |  | |  __/ |  | | | | | |\r\n');
-  term.write(' |_|    \\__, |\\__|_| |_|\\___/|_| |_|  |_|\\___|_|  |_| |_| |_|\r\n');
-  term.write('        |___/                                                 \r\n');
-  term.write('\x1b[0m\r\n');
-  term.write('\x1b[33mLoading Python + IPython (Pyodide)...\x1b[0m\r\n');
 }
 
 function inPrompt() {
@@ -415,12 +400,8 @@ async function initPyodide() {
 
   document.getElementById('loading').style.display = 'none';
   const versions = pyodide.runPython('import IPython; f"Python {sys.version.split()[0]} | IPython {IPython.__version__}"');
-  term.write(`\x1b[32m${versions} (Pyodide) ready!\x1b[0m\r\n`);
-  term.write('\x1b[90mType Python code directly. Use \x1b[36mtest()\x1b[90m to check your solution.\x1b[0m\r\n');
-  term.write('\x1b[90mCommands: \x1b[36mtest()\x1b[90m  \x1b[36mnext()\x1b[90m  \x1b[36mprev()\x1b[90m  \x1b[36mhelp()\x1b[90m  \x1b[36mreset()\x1b[90m  \x1b[36mclear()\x1b[0m\r\n');
-  term.write('\x1b[90mIPython: \x1b[36mobj?\x1b[90m  \x1b[36m%timeit\x1b[90m  \x1b[36m%who\x1b[90m  \x1b[36mTab\x1b[90m completes  \x1b[36mAlt+Enter\x1b[90m new line\x1b[0m\r\n');
+  term.write(`\x1b[32m${versions}\x1b[0m  \x1b[90mType \x1b[36mhelp()\x1b[90m for commands and keys.\x1b[0m\r\n`);
   initEditor();
-  showChallengeInTerminal();
   editor.prompt();
   term.focus();
 }
@@ -455,12 +436,22 @@ async function handleCell(code) {
 // ============ CHALLENGE SYSTEM ============
 function updateChallengePanel() {
   const ch = CHALLENGES[currentChallenge];
-  document.getElementById('ch-title').textContent = `Challenge ${currentChallenge + 1}: ${ch.name}(...)`;
+  const counter = document.getElementById('ch-counter');
+  counter.textContent = `${currentChallenge + 1}/${CHALLENGES.length}`;
+  counter.classList.toggle('passed', passed.has(currentChallenge));
+  counter.title = passed.has(currentChallenge) ? 'Passed' : '';
+  document.getElementById('ch-sig').textContent = ch.sig;
   document.getElementById('ch-desc').textContent = ch.desc;
-  document.getElementById('ch-sig').textContent = ch.sig + '\n    # your code here';
-  document.getElementById('ch-tests').textContent = ch.tests.map(t => `${t[0]} == ${t[1]}`).join('  |  ');
-  document.getElementById('ch-counter').textContent = `${currentChallenge + 1} / ${CHALLENGES.length}`;
+  document.getElementById('ch-desc').title = ch.desc;
+  document.getElementById('ch-tests').textContent = ch.tests.map(t => `${t[0]} == ${t[1]}`).join('   |   ');
   document.getElementById('total').textContent = CHALLENGES.length;
+}
+
+function toggleTests() {
+  const tests = document.getElementById('ch-tests');
+  tests.hidden = !tests.hidden;
+  document.getElementById('ch-tests-toggle').classList.toggle('active', !tests.hidden);
+  term.focus();
 }
 
 function showChallengeInTerminal() {
@@ -495,6 +486,7 @@ function runTests() {
     passed.add(currentChallenge);
     score++;
     document.getElementById('score').textContent = score;
+    updateChallengePanel();
   }
   writeLine([
     '',
@@ -515,7 +507,7 @@ function jumpToChallenge(n) {
   }
   currentChallenge = n;
   updateChallengePanel();
-  showChallengeInTerminal();
+  writeLine(`\x1b[36mChallenge ${n + 1}/${CHALLENGES.length}: \x1b[33m${CHALLENGES[n].sig}\x1b[0m`);
 }
 
 function nextChallenge() {
@@ -534,7 +526,6 @@ function resetChallenge() {
   py.reset_name(ch.name);
   varPane.refresh();
   writeLine(`\x1b[90mReset: ${ch.name} has been cleared.\x1b[0m`);
-  showChallengeInTerminal();
 }
 
 function showHelp() {
