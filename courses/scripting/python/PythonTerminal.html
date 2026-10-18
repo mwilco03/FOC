@@ -26,7 +26,64 @@ body{font-family:'JetBrains Mono',monospace,system-ui,sans-serif;background:var(
 .ch-nav button{font-family:inherit;font-size:.72rem;padding:.3rem .6rem;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--muted);cursor:pointer}
 .ch-nav button:hover{border-color:var(--cyan);color:var(--cyan)}
 .ch-nav .ch-counter{font-size:.72rem;color:var(--muted);white-space:nowrap}
-#terminal-container{flex:1;min-height:0;padding:2px}
+#terminal-container{flex:1;min-height:0;min-width:0;padding:2px}
+.workspace{flex:1;min-height:0;display:flex}
+.splitter{width:5px;flex-shrink:0;cursor:col-resize;background:var(--border)}
+.splitter:hover,.splitter.dragging{background:var(--cyan)}
+#var-pane{width:420px;min-width:240px;max-width:70vw;flex-shrink:0;display:flex;flex-direction:column;background:var(--card);font-size:.75rem}
+body.vx-hidden #var-pane,body.vx-hidden .splitter{display:none}
+@media (max-width:900px){.workspace{flex-direction:column}.splitter{display:none}#var-pane{width:auto;max-width:none;height:40vh;border-top:1px solid var(--border)}}
+.vx-header{display:flex;justify-content:space-between;align-items:center;padding:.4rem .6rem;border-bottom:1px solid var(--border)}
+.vx-title{color:var(--cyan);font-weight:700;font-size:.8rem}
+.vx-tools{display:flex;gap:.3rem}
+.vx-tools button,.vx-actions button,.vx-modal button{font-family:inherit;font-size:.68rem;padding:.2rem .45rem;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--muted);cursor:pointer}
+.vx-tools button:hover,.vx-actions button:hover,.vx-modal button:hover:not(:disabled){border-color:var(--cyan);color:var(--cyan)}
+.vx-modal button:disabled{opacity:.4;cursor:default}
+.vx-menu-wrap{position:relative}
+.vx-menu{position:absolute;right:0;top:110%;z-index:20;background:var(--card);border:1px solid var(--border);border-radius:6px;padding:.5rem .7rem;white-space:nowrap;box-shadow:0 6px 20px rgba(0,0,0,.5)}
+.vx-menu label{display:flex;gap:.4rem;align-items:center;padding:.2rem 0;color:var(--text);cursor:pointer}
+.vx-menu hr{border:0;border-top:1px solid var(--border);margin:.3rem 0}
+.vx-body{flex:1;min-height:0;overflow:auto}
+.vx-table{width:100%;border-collapse:collapse;table-layout:fixed}
+.vx-table th{position:sticky;top:0;background:#0d1117;color:var(--muted);font-weight:600;text-align:left;padding:.3rem .5rem;border-bottom:1px solid var(--border)}
+.vx-table th:nth-child(1){width:28%}.vx-table th:nth-child(2){width:18%}.vx-table th:nth-child(3){width:12%}
+.vx-table td{padding:.25rem .5rem;border-bottom:1px solid rgba(42,54,80,.5);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:top}
+.vx-row{cursor:pointer}.vx-row:hover{background:rgba(6,182,212,.07)}
+.vx-name{color:var(--text);font-weight:600}
+.vx-type{color:var(--blue)}.vx-size{color:var(--amber)}
+.vx-value{position:relative;color:#c9d1d9}
+.vx-value-text{display:block;overflow:hidden;text-overflow:ellipsis}
+.vx-actions{display:none;position:absolute;right:.3rem;top:.15rem;gap:.2rem;background:var(--card)}
+.vx-row:hover .vx-actions{display:flex}
+.vx-twisty{display:inline-block;width:1em;color:var(--cyan)}
+.vx-count{color:var(--muted);font-weight:400;margin-left:.3rem;font-size:.65rem}
+.vx-hist{cursor:pointer;background:rgba(13,17,23,.6)}.vx-hist:hover{background:rgba(6,182,212,.07)}
+.vx-hist-line{color:var(--muted);padding-left:1.6rem!important}
+.vx-hist-value{color:#c9d1d9}
+.vx-empty{color:var(--muted);text-align:center;padding:1.5rem!important;white-space:normal!important}
+.vx-footer{padding:.3rem .6rem;border-top:1px solid var(--border);color:var(--muted)}
+.vx-error{color:var(--red)}
+.vx-overlay{position:fixed;inset:0;z-index:50;background:rgba(10,14,23,.75);display:flex;align-items:center;justify-content:center}
+.vx-overlay[hidden]{display:none}
+.vx-modal{background:var(--card);border:1px solid var(--border);border-radius:8px;width:min(1100px,92vw);max-height:86vh;display:flex;flex-direction:column;font-size:.78rem}
+.vx-modal-head{display:flex;justify-content:space-between;align-items:center;padding:.6rem .8rem;border-bottom:1px solid var(--border)}
+.vx-modal-title{color:var(--cyan);font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vx-modal-meta{padding:.4rem .8rem;color:var(--muted)}
+.vx-modal-meta:empty{display:none}
+.vx-modal-body{flex:1;min-height:0;overflow:auto;padding:0 .8rem .6rem}
+.vx-modal-foot{display:flex;gap:1rem;align-items:center;justify-content:flex-end;padding:.5rem .8rem;border-top:1px solid var(--border);color:var(--muted)}
+.vx-pager{display:flex;gap:.4rem;align-items:center}
+.vx-grid{border-collapse:collapse;font-size:.75rem}
+.vx-grid th,.vx-grid td{border:1px solid var(--border);padding:.2rem .5rem;white-space:nowrap;max-width:420px;overflow:hidden;text-overflow:ellipsis}
+.vx-grid thead th{position:sticky;top:0;background:#0d1117;color:var(--cyan)}
+.vx-grid .vx-idx{background:#0d1117;color:var(--muted);text-align:right}
+.vx-grid .vx-num{text-align:right;color:var(--amber)}
+.vx-text{background:#0d1117;padding:.6rem;border-radius:4px;white-space:pre-wrap;word-break:break-word;color:#c9d1d9}
+.vx-src-line{white-space:pre}
+.vx-src-hit{background:rgba(245,158,11,.18);outline:1px solid rgba(245,158,11,.5)}
+.vx-src-no{display:inline-block;width:3em;color:var(--muted);user-select:none}
+.vx-input{width:100%;font-family:inherit;font-size:.8rem;padding:.45rem .6rem;background:#0d1117;color:var(--text);border:1px solid var(--border);border-radius:4px;margin-top:.4rem}
+.vx-input:focus{outline:none;border-color:var(--cyan)}
 .loading-overlay{position:fixed;inset:0;background:rgba(10,14,23,.95);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:100}
 .loading-overlay h2{color:var(--cyan);font-size:1.2rem;margin-bottom:.5rem}
 .loading-overlay p{color:var(--muted);font-size:.82rem}
@@ -53,6 +110,7 @@ body{font-family:'JetBrains Mono',monospace,system-ui,sans-serif;background:var(
     <span class="mode-toggle">
       <button id="mode-challenge" class="active" onclick="setMode('challenge')">Challenges</button>
       <button id="mode-repl" onclick="setMode('repl')">Free REPL</button>
+      <button id="vx-toggle" class="active" onclick="toggleVarPane()">Variables</button>
     </span>
     &nbsp; SCORE: <span class="v" id="score">0</span> / <span id="total">20</span>
   </div>
@@ -73,11 +131,16 @@ body{font-family:'JetBrains Mono',monospace,system-ui,sans-serif;background:var(
   </div>
 </div>
 
-<div id="terminal-container"></div>
+<div class="workspace" id="workspace">
+  <div id="terminal-container"></div>
+  <div class="splitter" id="splitter" title="Drag to resize"></div>
+  <div id="var-pane"></div>
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.js"></script>
 <script src="../shared/line-editor.js"></script>
+<script src="var-pane.js"></script>
 <script src="https://cdn.jsdelivr.net/pyodide/v314.0.7/full/pyodide.js"></script>
 <script>
 // ============ CHALLENGES ============
@@ -130,6 +193,10 @@ const PYTHON_PACKAGES = ['ipython'];
 const HIGHLIGHT_STYLE = 'github-dark';
 const IPYTHON_PROMPT_DOTS = '...: ';
 const MODE = Object.freeze({ CHALLENGE: 'challenge', REPL: 'repl' });
+const VAREXPLORER_SOURCE = 'varexplorer.py';
+const PANE_STORAGE_KEY = 'foc.varexplorer.layout';
+const PANE_MIN_WIDTH = 240;
+const TERMINAL_MIN_WIDTH = 320;
 const COMMANDS = Object.freeze({
   TEST: 'test()', NEXT: 'next()', PREV: 'prev()', HELP: 'help()',
   RESET: 'reset()', CLEAR: 'clear()', CHALLENGE: 'challenge()',
@@ -146,6 +213,7 @@ let term = null;
 let fitAddon = null;
 let editor = null;
 let currentMode = MODE.CHALLENGE;
+let varPane = null;
 
 // ============ PYTHON BOOTSTRAP ============
 // Runs once inside Pyodide. User code runs in the IPython shell's own
@@ -216,6 +284,12 @@ def has_callable(name):
 
 def reset_name(name):
     shell.user_ns.pop(name, None)
+
+def load_varexplorer(src):
+    """Exec the Variable Explorer back end privately; return its call() entry point."""
+    ns = {"__name__": "varexplorer", "get_ipython": lambda: shell}
+    exec(compile(src, "varexplorer.py", "exec"), ns)
+    return ns["call"]
 
 def test_challenge(func_name, test_calls):
     """test_calls is JSON [[call_str, expected_repr], ...]."""
@@ -336,6 +410,9 @@ async function initPyodide() {
   await pyodide.runPythonAsync(PYTHON_BOOTSTRAP);
   py = Object.fromEntries(PYTHON_HELPERS.map(name => [name, pyodide.globals.get(name)]));
 
+  setStatus('Starting Variable Explorer...');
+  await initVarPane();
+
   document.getElementById('loading').style.display = 'none';
   const versions = pyodide.runPython('import IPython; f"Python {sys.version.split()[0]} | IPython {IPython.__version__}"');
   term.write(`\x1b[32m${versions} (Pyodide) ready!\x1b[0m\r\n`);
@@ -371,6 +448,7 @@ async function handleCell(code) {
   const jump = trimmed.match(CHALLENGE_JUMP);
   if (jump) { jumpToChallenge(parseInt(jump[1], 10) - 1); return; }
   await executePython(code);
+  varPane.refresh();
   term.write('\r\n');
 }
 
@@ -454,6 +532,7 @@ function prevChallenge() {
 function resetChallenge() {
   const ch = CHALLENGES[currentChallenge];
   py.reset_name(ch.name);
+  varPane.refresh();
   writeLine(`\x1b[90mReset: ${ch.name} has been cleared.\x1b[0m`);
   showChallengeInTerminal();
 }
@@ -497,6 +576,64 @@ function showHelp() {
   ].join('\n'));
 }
 
+// ============ VARIABLE EXPLORER ============
+async function initVarPane() {
+  const response = await fetch(VAREXPLORER_SOURCE);
+  if (!response.ok) throw new Error(`Could not load ${VAREXPLORER_SOURCE} (HTTP ${response.status})`);
+  const vxCall = pyodide.globals.get('load_varexplorer')(await response.text());
+  varPane = new VarPane(document.getElementById('var-pane'), {
+    call: (method, params) => {
+      const reply = JSON.parse(vxCall(method, JSON.stringify(params || {})));
+      if (reply.error) throw new Error(reply.error);
+      return reply.result;
+    },
+  });
+  varPane.modal.onHide = () => term.focus();
+  varPane.start();
+}
+
+function loadPaneLayout() {
+  try { return JSON.parse(localStorage.getItem(PANE_STORAGE_KEY) || '{}'); } catch (e) { return {}; }
+}
+
+function savePaneLayout(patch) {
+  try { localStorage.setItem(PANE_STORAGE_KEY, JSON.stringify(Object.assign(loadPaneLayout(), patch))); } catch (e) { /* private mode */ }
+}
+
+function toggleVarPane(show) {
+  const visible = show ?? document.body.classList.contains('vx-hidden');
+  document.body.classList.toggle('vx-hidden', !visible);
+  document.getElementById('vx-toggle').classList.toggle('active', visible);
+  savePaneLayout({ visible });
+  if (visible && varPane) varPane.refresh();
+  if (term) term.focus();
+}
+
+function initSplitter() {
+  const pane = document.getElementById('var-pane');
+  const splitter = document.getElementById('splitter');
+  const workspace = document.getElementById('workspace');
+  const layout = loadPaneLayout();
+  if (layout.width) pane.style.width = layout.width + 'px';
+  if (layout.visible === false) toggleVarPane(false);
+
+  splitter.addEventListener('pointerdown', e => {
+    splitter.setPointerCapture(e.pointerId);
+    splitter.classList.add('dragging');
+  });
+  splitter.addEventListener('pointermove', e => {
+    if (!splitter.hasPointerCapture(e.pointerId)) return;
+    const box = workspace.getBoundingClientRect();
+    const width = Math.min(box.right - e.clientX, box.width - TERMINAL_MIN_WIDTH);
+    pane.style.width = Math.max(PANE_MIN_WIDTH, width) + 'px';
+  });
+  splitter.addEventListener('pointerup', e => {
+    splitter.releasePointerCapture(e.pointerId);
+    splitter.classList.remove('dragging');
+    savePaneLayout({ width: parseInt(pane.style.width, 10) });
+  });
+}
+
 function setMode(mode) {
   currentMode = mode;
   document.getElementById('mode-challenge').classList.toggle('active', mode === MODE.CHALLENGE);
@@ -515,12 +652,13 @@ function showLoadError(msg) {
     <a href="../../../hub/index.html" style="margin-top:1rem;padding:.5rem 1rem;background:var(--cyan);color:#000;border-radius:6px;text-decoration:none;font-size:.82rem;">&larr; Back to Home</a>`;
 }
 
-if (typeof Terminal === 'undefined' || typeof LineEditor === 'undefined') {
+if (typeof Terminal === 'undefined' || typeof LineEditor === 'undefined' || typeof VarPane === 'undefined') {
   showLoadError('Could not load the terminal library (xterm.js) from CDN. This may be caused by a network issue, ad blocker, or firewall. Try disabling extensions or using a different network.');
 } else if (typeof loadPyodide === 'undefined') {
   showLoadError('Could not load the Python runtime (Pyodide) from CDN. This is a ~30MB download. Try a faster connection or check if cdn.jsdelivr.net is accessible.');
 } else {
   updateChallengePanel();
+  initSplitter();
   initTerminal();
   initPyodide().catch(err => {
     console.error(err);

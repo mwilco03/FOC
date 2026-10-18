@@ -38,6 +38,8 @@ jobs:
             courses/scripting/bash/Challenges4.html \
             courses/scripting/bash/BashTerminal.html \
             courses/scripting/shared/line-editor.js \
+            courses/scripting/python/var-pane.js \
+            courses/scripting/python/varexplorer.py \
             courses/scripting/data-apis/Challenges5.html; do
             if [ ! -f "$f" ]; then
               echo "MISSING: $f"
@@ -50,7 +52,7 @@ jobs:
             echo "::error::$missing required file(s) missing"
             exit 1
           fi
-          echo "All $((23 - missing)) required files present."
+          echo "All $((25 - missing)) required files present."
 
       - name: Validate HTML files are well-formed
         run: |

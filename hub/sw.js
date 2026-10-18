@@ -14,6 +14,8 @@ const PAGES = [
   '../courses/scripting/bash/BashTerminal.html',
   '../courses/scripting/python/PythonTerminal.html',
   '../courses/scripting/shared/line-editor.js',
+  '../courses/scripting/python/var-pane.js',
+  '../courses/scripting/python/varexplorer.py',
   '../courses/networking-fundamentals/subnetting.html',
   '../courses/networking-fundamentals/syntax-drill.html',
   '../courses/networking-fundamentals/hex.html',
